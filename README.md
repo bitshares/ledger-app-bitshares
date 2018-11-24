@@ -1,3 +1,9 @@
+# Bitshares Wallet App for Ledger Nano S
+
+Bitshares wallet back-end for Ledger Nano S, adapted from ledger-app-eos.
+
+Original README from ledger-app-eos follows:
+
 # app-eos
 
 Eos wallet application framework for Ledger Nano S
