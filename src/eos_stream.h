@@ -1,4 +1,13 @@
 /*******************************************************************************
+*
+*  This file is a derivative work, and contains modifications from original
+*  form.  The modifications are copyright of their respective contributors,
+*  and are licensed under the same terms as the original work.
+*
+*  Portions Copyright (c) 2018 Christopher J. Sanborn
+*
+*  Original copyright and license notice follows:
+*
 *   Taras Shchybovyk
 *   (c) 2018 Taras Shchybovyk
 *
@@ -32,6 +41,38 @@ typedef struct txProcessingContent_t {
 } txProcessingContent_t;
 
 typedef enum txProcessingState_e {
+   /*  Lists the order of the DER fields when processing a BitShares serialized transaction.
+    *
+    *  To adapt from the EOS wallet, I selected just the BTS-relevant fields (moving the rest
+    *  below TLV_DONE) and repurposed a few. But to finish this, some will need to be removed
+    *  and some renamed, and we can't just take the operation payload as a monolithic unit
+    *  since we want to extract specifics for display to user for confirmation.
+    */
+    TLV_NONE = 0x0,
+    TLV_CHAIN_ID = 0x1,         // Not part of serialized Tx but is prepended for hashing/signing
+    TLV_HEADER_REF_BLOCK_NUM,
+    TLV_HEADER_REF_BLOCK_PREFIX,
+    TLV_HEADER_EXPITATION,      // TODO: Typo
+    TLV_ACTION_LIST_SIZE,       // This will become TLV_OPERATION_LIST_SIZE; Throws if not == 1 (But we may want to support chained ops eventually)
+    TLV_AUTHORIZATION_ACTOR,    // This will become TLV_OPERATION_ID
+    TLV_CONTEXT_FREE_DATA,      // Using as OPERATION_PAYLOAD for now but will need to decide how to handle differnt ops.
+    TLV_TX_EXTENSION_LIST_SIZE, // Size of Tx extension list.  Will throw if not zero.
+    TLV_DONE,
+    // Following state tags will likely be removed, or expanded into op-specific state tags
+    TLV_HEADER_MAX_NET_USAGE_WORDS,  // NOT USED in BitShares
+    TLV_HEADER_MAX_CPU_USAGE_MS,     // NOT USED in BitShares
+    TLV_HEADER_DELAY_SEC,            // NOT USED in BitShares
+    TLV_CFA_LIST_SIZE,               // No Parallel in BitShares
+    TLV_ACTION_ACCOUNT,
+    TLV_ACTION_NAME,
+    TLV_AUTHORIZATION_LIST_SIZE,
+    TLV_AUTHORIZATION_PERMISSION,
+    TLV_ACTION_DATA_SIZE,
+    TLV_ACTION_DATA
+} txProcessingState_e;
+
+/*
+typedef enum txProcessingState_e {
     TLV_NONE = 0x0, 
     TLV_CHAIN_ID = 0x1,
     TLV_HEADER_EXPITATION,
@@ -53,6 +94,7 @@ typedef enum txProcessingState_e {
     TLV_CONTEXT_FREE_DATA,
     TLV_DONE
 } txProcessingState_e;
+*/
 
 typedef struct txProcessingContext_t {
     txProcessingState_e state;

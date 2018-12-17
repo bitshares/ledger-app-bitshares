@@ -1,4 +1,13 @@
 /*******************************************************************************
+*
+*  This file is a derivative work, and contains modifications from original
+*  form.  The modifications are copyright of their respective contributors,
+*  and are licensed under the same terms as the original work.
+*
+*  Portions Copyright (c) 2018 Christopher J. Sanborn
+*
+*  Original copyright and license notice follows:
+*
 *   Taras Shchybovyk
 *   (c) 2018 Taras Shchybovyk
 *
@@ -327,7 +336,7 @@ const bagl_element_t ui_approval_nanos[] = {
      NULL},
     {{BAGL_LABELINE, 0x02, 23, 26, 82, 12, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 26},
-     (char *)txContent.contract,
+     "ctrctAA"/*(char *)txContent.contract*/,
      0,
      0,
      0,
@@ -346,7 +355,7 @@ const bagl_element_t ui_approval_nanos[] = {
      NULL},
     {{BAGL_LABELINE, 0x03, 23, 26, 82, 12, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 50},
-     (char *)txContent.action,
+     "actnBB"/*(char *)txContent.action*/,
      0,
      0,
      0,
@@ -356,7 +365,7 @@ const bagl_element_t ui_approval_nanos[] = {
 
     {{BAGL_LABELINE, 0x04, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     (char *)txContent.arg.label,
+     "arglblCC"/*(char *)txContent.arg.label*/,
      0,
      0,
      0,
@@ -365,7 +374,7 @@ const bagl_element_t ui_approval_nanos[] = {
      NULL},
     {{BAGL_LABELINE, 0x04, 23, 26, 82, 12, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 26},
-     (char *)txContent.arg.data,
+     "argdataDD"/*(char *)txContent.arg.data*/,
      0,
      0,
      0,
@@ -395,24 +404,27 @@ unsigned int ui_approval_prepro(const bagl_element_t *element)
 
                 break;
             case 2:
-                UX_CALLBACK_SET_INTERVAL(MAX(
-                    3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
+                UX_CALLBACK_SET_INTERVAL(2000);
+                /*UX_CALLBACK_SET_INTERVAL(MAX(
+                  3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));*/
 
                 PRINTF("Contract\n");
                 break;
             case 3:
-                UX_CALLBACK_SET_INTERVAL(MAX(
-                    3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
+                UX_CALLBACK_SET_INTERVAL(2000);
+                /*UX_CALLBACK_SET_INTERVAL(MAX(
+                  3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));*/
 
                 PRINTF("Action\n");    
                 break;
             case 4:
                 PRINTF("Argument: %d\n", ux_step - 3);
 
-                UX_CALLBACK_SET_INTERVAL(MAX(
+                UX_CALLBACK_SET_INTERVAL(2000);
+                /*UX_CALLBACK_SET_INTERVAL(MAX(
                     3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
                 
-                printArgument(ux_step - 3, &txProcessingCtx);
+                    printArgument(ux_step - 3, &txProcessingCtx);*/
                 break;
             }
         }
