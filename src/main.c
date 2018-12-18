@@ -85,6 +85,7 @@ typedef struct transactionContext_t
     uint8_t pathLength;
     uint32_t bip32Path[MAX_BIP32_PATH];
     uint8_t hash[32];
+    char txId[41];
 } transactionContext_t;
 
 cx_sha256_t sha256;
@@ -327,7 +328,7 @@ const bagl_element_t ui_approval_nanos[] = {
 
     {{BAGL_LABELINE, 0x02, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     "Contract",
+     "Tx ID",
      0,
      0,
      0,
@@ -336,7 +337,7 @@ const bagl_element_t ui_approval_nanos[] = {
      NULL},
     {{BAGL_LABELINE, 0x02, 23, 26, 82, 12, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 26},
-     "ctrctAA"/*(char *)txContent.contract*/,
+     (char *)tmpCtx.transactionContext.txId,
      0,
      0,
      0,
@@ -404,9 +405,9 @@ unsigned int ui_approval_prepro(const bagl_element_t *element)
 
                 break;
             case 2:
-                UX_CALLBACK_SET_INTERVAL(2000);
-                /*UX_CALLBACK_SET_INTERVAL(MAX(
-                  3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));*/
+                //UX_CALLBACK_SET_INTERVAL(2000);
+                UX_CALLBACK_SET_INTERVAL(MAX(
+                  3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 
                 PRINTF("Contract\n");
                 break;
@@ -769,6 +770,7 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
     cx_hash(&sha256.header, CX_LAST, tmpCtx.transactionContext.hash, 0,
             tmpCtx.transactionContext.hash);
 
+    array_hexstr(tmpCtx.transactionContext.txId, tmpCtx.transactionContext.hash, 20);  // Wait, no, not txid since txid does not incude chainid... ack TODO:
     skipWarning = !dataPresent;
     ux_step = 0;
     ux_step_count = 3 + txContent.argumentCount;
