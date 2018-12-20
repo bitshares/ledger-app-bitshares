@@ -348,6 +348,82 @@ static void processZeroSizeField(txProcessingContext_t *context) {
 }
 
 /**
+ * Process Operation Count Field. Initialize context members operationCount and
+ * operationsRemaining.  Checks permitted values against TX_MIN/MAX_OPERATIONS.
+ */
+static void processOperationListSizeField(txProcessingContext_t *context) {
+    if (context->currentFieldPos < context->currentFieldLength) {
+        uint32_t length =
+            (context->commandLength <
+                     ((context->currentFieldLength - context->currentFieldPos))
+                ? context->commandLength
+                : context->currentFieldLength - context->currentFieldPos);
+
+        hashTxData(context, context->workBuffer, length);
+
+        // Store data into a buffer
+        os_memmove(context->sizeBuffer + context->currentFieldPos, context->workBuffer, length);
+
+        context->workBuffer += length;
+        context->commandLength -= length;
+        context->currentFieldPos += length;
+    }
+
+    if (context->currentFieldPos == context->currentFieldLength) {
+        uint32_t sizeValue = 0;
+        unpack_variant32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
+        context->operationsRemaining = context->operationCount = sizeValue;
+
+        // Reset size buffer
+        os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
+
+        if (sizeValue < TX_MIN_OPERATIONS || sizeValue > TX_MAX_OPERATIONS) {
+            PRINTF("processOperationListSizeField: Too many or too few operations.\n");
+            THROW(EXCEPTION);
+        }
+
+        // Move to next state
+        context->state++;
+        context->processingField = false;
+    }
+}
+
+/**
+ * Process Operation ID Field. Initialize context member currentOperationId.
+ */
+static void processOperationIdField(txProcessingContext_t *context) {
+    if (context->currentFieldPos < context->currentFieldLength) {
+        uint32_t length =
+            (context->commandLength <
+                     ((context->currentFieldLength - context->currentFieldPos))
+                ? context->commandLength
+                : context->currentFieldLength - context->currentFieldPos);
+
+        hashTxData(context, context->workBuffer, length);
+
+        // Store data into a buffer
+        os_memmove(context->sizeBuffer + context->currentFieldPos, context->workBuffer, length);
+
+        context->workBuffer += length;
+        context->commandLength -= length;
+        context->currentFieldPos += length;
+    }
+
+    if (context->currentFieldPos == context->currentFieldLength) {
+        uint32_t sizeValue = 0;
+        unpack_variant32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
+        context->currentOperationId = sizeValue;
+
+        // Reset size buffer
+        os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
+
+        // Move to next state
+        context->state++;
+        context->processingField = false;
+    }
+}
+
+/**
  * Process Action Number Field. Except hashing the data, function
  * caches an incomming data. So, when all bytes for particulat field are received
  * do additional processing: Read actual number of actions encoded in buffer.
@@ -682,12 +758,9 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
         }
         switch (context->state) {
         case TLV_CHAIN_ID:
-        case TLV_HEADER_EXPITATION:
+        case TLV_HEADER_EXPIRATION:
         case TLV_HEADER_REF_BLOCK_NUM:
         case TLV_HEADER_REF_BLOCK_PREFIX:
-        case TLV_HEADER_MAX_CPU_USAGE_MS:
-        case TLV_HEADER_MAX_NET_USAGE_WORDS:
-        case TLV_HEADER_DELAY_SEC:
             processField(context);
             break;
 
@@ -695,8 +768,41 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
             processZeroSizeField(context);
             break;
 
-        case TLV_ACTION_LIST_SIZE:
-            processActionListSizeField(context);
+        case TLV_OPERATION_LIST_SIZE:
+            processOperationListSizeField(context);
+            break;
+
+        case TLV_OPERATION_CHECK_REMAIN:
+            if(context->operationsRemaining > 0) {
+                context->operationsRemaining--;
+                context->state = TLV_OPERATION_ID;
+            } else {
+                context->state = TLV_TX_EXTENSION_LIST_SIZE;
+            }
+            break;
+
+        case TLV_OPERATION_ID:
+            processOperationIdField(context);
+            if(!context->processingField) {             // if (we extracted an OpId) {
+                switch (context->currentOperationId) {  //    then pick next state based on OpId
+                    case 0x0:
+                        context->state = TLV_OP_TRANSFER;
+                        break;
+                    default:
+                        PRINTF("Unknown Operation ID");
+                        THROW(EXCEPTION);  // TODO: pick a status byte for this so user knows why
+                        break;
+                }
+            }
+            break;
+
+        case TLV_OP_TRANSFER_PAYLOAD:
+            // Temporary until operation actually mapped out
+            processField(context);
+            break;
+
+        case TLV_OP_TRANSFER_DONE:
+            context->state = TLV_OPERATION_CHECK_REMAIN;    // Go back and see if more operations
             break;
 
         case TLV_ACTION_ACCOUNT:
@@ -708,6 +814,7 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
             break;
 
         case TLV_AUTHORIZATION_LIST_SIZE:
+            // Here we have an example of keeping a list size to iterate over elements.
             processAuthorizationListSizeField(context);
             break;
 
@@ -740,10 +847,6 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
 
         case TLV_TX_EXTENSION_LIST_SIZE:
             processZeroSizeField(context);
-            break;
-
-        case TLV_CONTEXT_FREE_DATA:
-            processField(context);
             break;
 
         default:

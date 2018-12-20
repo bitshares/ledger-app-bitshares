@@ -48,28 +48,40 @@ typedef enum txProcessingState_e {
     *  and some renamed, and we can't just take the operation payload as a monolithic unit
     *  since we want to extract specifics for display to user for confirmation.
     */
-    TLV_NONE = 0x0,
+
+    TLV_NONE = 0x0,             // Implies processing context not initialized
     TLV_CHAIN_ID = 0x1,         // Not part of serialized Tx but is prepended for hashing/signing
-    TLV_HEADER_REF_BLOCK_NUM,
+    TLV_HEADER_REF_BLOCK_NUM,   // Transaction begins here
     TLV_HEADER_REF_BLOCK_PREFIX,
-    TLV_HEADER_EXPITATION,      // TODO: Typo
-    TLV_ACTION_LIST_SIZE,       // This will become TLV_OPERATION_LIST_SIZE; Throws if not == 1 (But we may want to support chained ops eventually)
-    TLV_AUTHORIZATION_ACTOR,    // This will become TLV_OPERATION_ID
-    TLV_CONTEXT_FREE_DATA,      // Using as OPERATION_PAYLOAD for now but will need to decide how to handle differnt ops.
-    TLV_TX_EXTENSION_LIST_SIZE, // Size of Tx extension list.  Will throw if not zero.
+    TLV_HEADER_EXPIRATION,
+    TLV_OPERATION_LIST_SIZE,
+    TLV_OPERATION_CHECK_REMAIN, // Branchpoint: Can go to _OPERATION_ID or _TX_EXTENSION_LIST_SIZE
+    TLV_OPERATION_ID,           // Branchpoint: Goes to _TX_OP_XXX
+    TLV_TX_EXTENSION_LIST_SIZE,
     TLV_DONE,
-    // Following state tags will likely be removed, or expanded into op-specific state tags
-    TLV_HEADER_MAX_NET_USAGE_WORDS,  // NOT USED in BitShares
-    TLV_HEADER_MAX_CPU_USAGE_MS,     // NOT USED in BitShares
-    TLV_HEADER_DELAY_SEC,            // NOT USED in BitShares
+
+    /* Following regions define specific operations: */
+
+    TLV_OP_TRANSFER,
+    TLV_OP_TRANSFER_PAYLOAD = TLV_OP_TRANSFER,
+    TLV_OP_TRANSFER_DONE,       // Return: goes back to _OPERATION_CHECK_REMAIN
+
+    /* Following state tags will be removed, but are temporarily being retained because
+     * their handling presents useful case studies. */
     TLV_CFA_LIST_SIZE,               // No Parallel in BitShares
     TLV_ACTION_ACCOUNT,
     TLV_ACTION_NAME,
+    TLV_AUTHORIZATION_ACTOR,
     TLV_AUTHORIZATION_LIST_SIZE,
     TLV_AUTHORIZATION_PERMISSION,
     TLV_ACTION_DATA_SIZE,
     TLV_ACTION_DATA
 } txProcessingState_e;
+
+/* Limits on allowed transaction parameters that we will accept. (These
+ * are not BitShares limits but rather limits in what we will handle.) */
+#define TX_MIN_OPERATIONS 1
+#define TX_MAX_OPERATIONS 1
 
 /*
 typedef enum txProcessingState_e {
@@ -105,8 +117,11 @@ typedef struct txProcessingContext_t {
     uint32_t currentAutorizationIndex;
     uint32_t currentAutorizationNumber;
     uint32_t currentActionDataBufferLength;
+    uint32_t operationCount;        // bitshares
+    uint32_t operationsRemaining;   // bitshares
+    uint32_t currentOperationId;    // bitshares
     bool processingField;
-    uint8_t tlvBuffer[5];
+    uint8_t tlvBuffer[5];  // TODO: Does this need to be six?
     uint32_t tlvBufferPos;
     uint8_t *workBuffer;
     uint32_t commandLength;
