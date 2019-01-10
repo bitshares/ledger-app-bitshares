@@ -29,7 +29,7 @@
 #define EOSIO_TOKEN          0x5530EA033482A600
 #define EOSIO_TOKEN_TRANSFER 0xCDCD3C2D57000000
 
-#define EOSIO                0x5530EA0000000000
+/*#define EOSIO                0x5530EA0000000000
 #define EOSIO_DELEGATEBW     0x4AA2A61B2A3F0000
 #define EOSIO_UNDELEGATEBW   0xD4D2A8A986CA8FC0
 #define EOSIO_VOTEPRODUCER   0xDD32AADE89D21570
@@ -40,7 +40,7 @@
 #define EOSIO_DELETE_AUTH    0x4AA2ACA8DACB4000
 #define EOSIO_REFUND         0xBA97A9A400000000
 #define EOSIO_LINK_AUTH      0x8BA7036B2D000000
-#define EOSIO_UNLINK_AUTH    0xD4E2E9C0DACB4000
+#define EOSIO_UNLINK_AUTH    0xD4E2E9C0DACB4000*/
 
 void initTxContext(txProcessingContext_t *context, 
                    cx_sha256_t *sha256, 
@@ -83,96 +83,6 @@ static void processTokenTransfer(txProcessingContext_t *context) {
     }
 }
 
-static void processEosioDelegate(txProcessingContext_t *context) {
-    context->content->argumentCount = 4;
-    uint32_t bufferLength = context->currentActionDataBufferLength;
-    uint8_t *buffer = context->actionDataBuffer;
-
-    buffer += 2 * sizeof(name_t) + 2 * sizeof(asset_t);
-    bufferLength -= 2 * sizeof(name_t) + 2 * sizeof(asset_t);
-
-    if (buffer[0] != 0) {
-        context->content->argumentCount += 1;
-    }
-}
-
-static void processEosioUndelegate(txProcessingContext_t *context) {
-    context->content->argumentCount = 4;
-}
-
-static void processEosioRefund(txProcessingContext_t *context) {
-    context->content->argumentCount = 1;
-}
-
-static void processEosioBuyRam(txProcessingContext_t *context) {
-    context->content->argumentCount = 3;
-}
-
-static void processEosioSellRam(txProcessingContext_t *context) {
-    context->content->argumentCount = 2;
-}
-
-static void processEosioVoteProducer(txProcessingContext_t *context) {
-    uint32_t bufferLength = context->currentActionDataBufferLength;
-    uint8_t *buffer = context->actionDataBuffer;
-
-    context->content->argumentCount = 1;
-    buffer += sizeof(name_t);
-
-    name_t proxy = 0;
-    os_memmove(&proxy, buffer, sizeof(name_t));
-    if (proxy != 0) {
-        context->content->argumentCount++;
-        return;
-    }
-    buffer += sizeof(name_t);
-
-    uint32_t totalProducers = 0;
-    unpack_variant32(buffer, bufferLength, &totalProducers);
-    context->content->argumentCount += totalProducers;
-}
-
-static void processEosioUpdateAuth(txProcessingContext_t *context) {
-    uint32_t bufferLength = context->currentActionDataBufferLength;
-    uint8_t *buffer = context->actionDataBuffer;
-
-    context->content->argumentCount = 4;
-
-    buffer += 3 * sizeof(name_t) + sizeof(uint32_t);
-    bufferLength -= 3 * sizeof(name_t) + sizeof(uint32_t);
-
-    uint32_t totalKeys = 0;
-    uint32_t read = unpack_variant32(buffer, bufferLength, &totalKeys);
-    context->content->argumentCount += totalKeys * 2;
-
-    // keys data begins here
-    buffer += read; bufferLength -= read;
-    buffer += (1 + sizeof(public_key_t) + sizeof(uint16_t)) * totalKeys;
-
-    uint32_t totalAccounts = 0;
-    read = unpack_variant32(buffer, bufferLength, &totalAccounts);
-    context->content->argumentCount += totalAccounts * 2;
-
-    // accounts data begins here
-    buffer += read; bufferLength -= read;
-    buffer += (sizeof(permisssion_level_t) + sizeof(uint16_t)) * totalAccounts;
-
-    uint32_t totalWaits = 0;
-    read = unpack_variant32(buffer, bufferLength, &totalWaits);
-    context->content->argumentCount += totalWaits * 2; 
-}
-
-static void processEosioDeleteAuth(txProcessingContext_t *context) {
-    context->content->argumentCount = 2;  
-}
-
-static void processEosioLinkAuth(txProcessingContext_t *context) {
-    context->content->argumentCount = 4;  
-}
-
-static void processEosioUnlinkAuth(txProcessingContext_t *context) {
-    context->content->argumentCount = 3;  
-}
 
 static void processUnknownAction(txProcessingContext_t *context) {
     cx_hash(&context->dataSha256->header, CX_LAST, context->dataChecksum, 0,
@@ -192,49 +102,6 @@ void printArgument(uint8_t argNum, txProcessingContext_t *context) {
         return;
     }
 
-    if (contractName == EOSIO) {
-        switch (actionName) {
-        case EOSIO_DELEGATEBW:
-            parseDelegate(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_UNDELEGATEBW:
-            parseUndelegate(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_REFUND:
-            parseRefund(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_BUYRAM:
-            parseBuyRam(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_BUYRAMBYTES:
-            parseBuyRamBytes(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_SELLRAM:
-            parseSellRam(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_VOTEPRODUCER:
-            parseVoteProducer(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_UPDATE_AUTH:
-            parseUpdateAuth(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_DELETE_AUTH:
-            parseDeleteAuth(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_LINK_AUTH:
-            parseLinkAuth(buffer, bufferLength, argNum, arg);
-            break;
-        case EOSIO_UNLINK_AUTH:
-            parseUnlinkAuth(buffer, bufferLength, argNum, arg);
-            break;
-        default:
-            if (context->dataAllowed == 1) {
-                parseUnknownAction(context->dataChecksum, sizeof(context->dataChecksum), argNum, arg);
-            }
-        }
-        return;
-    }
-    
     if (context->dataAllowed == 1) {
         parseUnknownAction(context->dataChecksum, sizeof(context->dataChecksum), argNum, arg);
     }
@@ -247,22 +114,6 @@ static bool isKnownAction(txProcessingContext_t *context) {
         return true;
     }
 
-    if (contractName == EOSIO) {
-        switch (actionName) {
-        case EOSIO_DELEGATEBW:
-        case EOSIO_UNDELEGATEBW:
-        case EOSIO_REFUND:
-        case EOSIO_BUYRAM:
-        case EOSIO_BUYRAMBYTES:
-        case EOSIO_SELLRAM:
-        case EOSIO_VOTEPRODUCER:
-        case EOSIO_UPDATE_AUTH:
-        case EOSIO_DELETE_AUTH:
-        case EOSIO_LINK_AUTH:
-        case EOSIO_UNLINK_AUTH:
-            return true;   
-        } 
-    }
     return false;
 }
 
@@ -423,177 +274,6 @@ static void processOperationIdField(txProcessingContext_t *context) {
     }
 }
 
-/**
- * Process Action Number Field. Except hashing the data, function
- * caches an incomming data. So, when all bytes for particulat field are received
- * do additional processing: Read actual number of actions encoded in buffer.
- * Throw exception if number is not '1'.
-*/
-static void processActionListSizeField(txProcessingContext_t *context) {
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-
-        // Store data into a buffer
-        os_memmove(context->sizeBuffer + context->currentFieldPos, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
-    }
-
-    if (context->currentFieldPos == context->currentFieldLength) {
-        uint32_t sizeValue = 0;
-        unpack_variant32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
-        if (sizeValue != 1) {
-            PRINTF("processActionListSizeField Action Number must be 1\n");
-            THROW(EXCEPTION);
-        }
-        // Reset size buffer
-        os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
-
-        context->state++;
-        context->processingField = false;
-    }
-}
-
-/**
- * Process Action Account Field. Cache a data of the field in order to 
- * display it for validation.
-*/
-static void processActionAccount(txProcessingContext_t *context) {
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-        
-        uint8_t *pContract = (uint8_t *)&context->contractName;
-        os_memmove(pContract + context->currentFieldPos, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
-    }
-
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->state++;
-        context->processingField = false;
-
-        os_memset(context->content->contract, 0, sizeof(context->content->contract));
-        name_to_string(context->contractName, context->content->contract, sizeof(context->content->contract));
-    }
-}
-
-/**
- * Process Action Name Field. Cache a data of the field in order to 
- * display it for validation.
-*/
-static void processActionName(txProcessingContext_t *context) {
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-
-        uint8_t *pAction = (uint8_t *)&context->contractActionName;
-        os_memmove(pAction + context->currentFieldPos, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
-    }
-
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->state++;
-        context->processingField = false;
-
-        os_memset(context->content->action, 0, sizeof(context->content->action));
-        name_to_string(context->contractActionName, context->content->action, sizeof(context->content->action));
-    }
-}
-
-/**
- * Process Authorization Number Field. Initializa context action number 
- * index and context action number. 
-*/
-static void processAuthorizationListSizeField(txProcessingContext_t *context) {
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-
-        // Store data into a buffer
-        os_memmove(context->sizeBuffer + context->currentFieldPos, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
-    }
-
-    if (context->currentFieldPos == context->currentFieldLength) {
-        unpack_variant32(context->sizeBuffer, context->currentFieldPos + 1, &context->currentAutorizationNumber);
-        context->currentAutorizationIndex = 0;
-        // Reset size buffer
-        os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
-
-        // Move to next state
-        context->state++;
-        context->processingField = false;
-    }
-}
-
-/**
- * Process Authorization Permission Field. When the field is processed 
- * start over authorization processing if the there is data for that.
-*/
-static void processAuthorizationPermission(txProcessingContext_t *context) {
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
-    }
-
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->currentAutorizationIndex++;
-        // Reset size buffer
-        os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
-
-        // Start over reading Authorization data or move to the next state
-        // if all authorization data have beed read
-        if (context->currentAutorizationIndex != context->currentAutorizationNumber) {
-            context->state = TLV_AUTHORIZATION_ACTOR;
-        } else {
-            context->state++;
-        }
-        context->processingField = false;
-    }
-}
-
-
 static void processUnknownActionDataSize(txProcessingContext_t *context) {
     if (context->currentFieldPos < context->currentFieldLength) {
         uint32_t length = 
@@ -675,37 +355,6 @@ static void processActionData(txProcessingContext_t *context) {
 
         if (context->contractActionName == EOSIO_TOKEN_TRANSFER) {
             processTokenTransfer(context);
-        } else if (context->contractName == EOSIO &&
-                  context->contractActionName == EOSIO_DELEGATEBW) {
-            processEosioDelegate(context);
-        } else if (context->contractName == EOSIO &&
-                  context->contractActionName == EOSIO_UNDELEGATEBW) {
-            processEosioUndelegate(context);
-        } else if (context->contractName == EOSIO && 
-                   context->contractActionName == EOSIO_VOTEPRODUCER) {
-            processEosioVoteProducer(context);
-        } else if (context->contractName == EOSIO && 
-                   context->contractActionName == EOSIO_REFUND) {
-            processEosioRefund(context);
-        } else if (context->contractName == EOSIO && 
-                  (context->contractActionName == EOSIO_BUYRAM ||
-                   context->contractActionName == EOSIO_BUYRAMBYTES)) {
-            processEosioBuyRam(context);
-        } else if (context->contractName == EOSIO &&
-                   context->contractActionName == EOSIO_SELLRAM) {
-            processEosioSellRam(context);
-        } else if (context->contractName == EOSIO &&
-                   context->contractActionName == EOSIO_UPDATE_AUTH) {
-            processEosioUpdateAuth(context);
-        } else if (context->contractName == EOSIO &&
-                   context->contractActionName == EOSIO_DELETE_AUTH) {
-            processEosioDeleteAuth(context);
-        } else if (context->contractName == EOSIO &&
-                   context->contractActionName == EOSIO_LINK_AUTH) {
-            processEosioLinkAuth(context);
-        } else if (context->contractName == EOSIO &&
-                   context->contractActionName == EOSIO_UNLINK_AUTH) {
-            processEosioUnlinkAuth(context);
         } else {
             THROW(EXCEPTION);
         }
@@ -764,10 +413,6 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
             processField(context);
             break;
 
-        case TLV_CFA_LIST_SIZE:
-            processZeroSizeField(context);
-            break;
-
         case TLV_OPERATION_LIST_SIZE:
             processOperationListSizeField(context);
             break;
@@ -805,27 +450,6 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
             context->state = TLV_OPERATION_CHECK_REMAIN;    // Go back and see if more operations
             break;
 
-        case TLV_ACTION_ACCOUNT:
-            processActionAccount(context);
-            break;
-
-        case TLV_ACTION_NAME:
-            processActionName(context);
-            break;
-
-        case TLV_AUTHORIZATION_LIST_SIZE:
-            // Here we have an example of keeping a list size to iterate over elements.
-            processAuthorizationListSizeField(context);
-            break;
-
-        case TLV_AUTHORIZATION_ACTOR:
-            processField(context);
-            break;
-
-        case TLV_AUTHORIZATION_PERMISSION:
-            processAuthorizationPermission(context);
-            break;
-        
         case TLV_ACTION_DATA_SIZE:
             if (isKnownAction(context) || context->dataAllowed == 0) {
                 processField(context);
