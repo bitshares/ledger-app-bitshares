@@ -118,6 +118,31 @@ static void hashActionData(txProcessingContext_t *context, uint8_t *buffer, uint
 }
 
 /**
+ * Used in processX(...) functions to gather and hash bytes from the APDU buffer.  If the
+ * remaining unread bytes in the APDU buffer number less than what's needed to complete
+ * current TLV field, then we stop at the end of the APDU buffer. (It will be refreshed
+ * on the next host communication cycle.) If `buffer` is non-NULL, then store the gathered
+ * bytes in `buffer`.  Else only hashing is needed for this field.
+*/
+static void processHelperGobbleCommandBytes(txProcessingContext_t *context, uint8_t *buffer) {
+    uint32_t length =
+        (context->commandLength <
+                 ((context->currentFieldLength - context->currentFieldPos))
+            ? context->commandLength
+            : context->currentFieldLength - context->currentFieldPos);
+
+    hashTxData(context, context->workBuffer, length);
+
+    if (buffer != NULL) {
+        os_memmove(buffer + context->currentFieldPos, context->workBuffer, length);
+    }
+
+    context->workBuffer += length;
+    context->commandLength -= length;
+    context->currentFieldPos += length;
+}
+
+/**
  * Process all fields that do not requre any processing except hashing.
  * The data comes in by chucks, so it may happen that buffer may contain 
  * incomplete data for particular field. Function designed to process 
@@ -125,18 +150,9 @@ static void hashActionData(txProcessingContext_t *context, uint8_t *buffer, uint
  * and after that will move to next field.
 */
 static void processField(txProcessingContext_t *context) {
+
     if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
+        processHelperGobbleCommandBytes(context, NULL);
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -152,21 +168,9 @@ static void processField(txProcessingContext_t *context) {
  * Throw exception if number is not '0'.
 */
 static void processZeroSizeField(txProcessingContext_t *context) {
+
     if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-
-        // Store data into a buffer
-        os_memmove(context->sizeBuffer + context->currentFieldPos, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
+        processHelperGobbleCommandBytes(context, context->sizeBuffer);
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -190,21 +194,9 @@ static void processZeroSizeField(txProcessingContext_t *context) {
  * operationsRemaining.  Checks permitted values against TX_MIN/MAX_OPERATIONS.
  */
 static void processOperationListSizeField(txProcessingContext_t *context) {
+
     if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-
-        // Store data into a buffer
-        os_memmove(context->sizeBuffer + context->currentFieldPos, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
+        processHelperGobbleCommandBytes(context, context->sizeBuffer);
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -230,21 +222,9 @@ static void processOperationListSizeField(txProcessingContext_t *context) {
  * Process Operation ID Field. Initialize context member currentOperationId.
  */
 static void processOperationIdField(txProcessingContext_t *context) {
+
     if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length =
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-
-        // Store data into a buffer
-        os_memmove(context->sizeBuffer + context->currentFieldPos, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
+        processHelperGobbleCommandBytes(context, context->sizeBuffer);
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {
@@ -317,24 +297,14 @@ static void processUnknownActionData(txProcessingContext_t *context) {
  * Process current action data field and store in into data buffer.
 */
 static void processActionData(txProcessingContext_t *context) {
+
     if (context->currentFieldLength > sizeof(context->actionDataBuffer) - 1) {
         PRINTF("processActionData data overflow\n");
         THROW(EXCEPTION);
     }
 
     if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-        os_memmove(context->actionDataBuffer + context->currentFieldPos, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
+        processHelperGobbleCommandBytes(context, context->actionDataBuffer);
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {

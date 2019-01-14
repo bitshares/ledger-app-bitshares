@@ -89,16 +89,16 @@ typedef struct txProcessingContext_t {
     uint32_t operationCount;        // bitshares
     uint32_t operationsRemaining;   // bitshares
     uint32_t currentOperationId;    // bitshares
-    bool processingField;
-    uint8_t tlvBuffer[5];  // TODO: Does this need to be six?
+    bool processingField;     // True: processing a field; False: decoding TLV header.
+    uint8_t tlvBuffer[5];     // TODO: Does this need to be six?
     uint32_t tlvBufferPos;
-    uint8_t *workBuffer;
-    uint32_t commandLength;
+    uint8_t *workBuffer;      // Points into the APDU buffer. Increment as we process.
+    uint32_t commandLength;   // Bytes remaining in APDU buffer rel to workBuffer.
     name_t contractName;
     name_t contractActionName;
-    uint8_t sizeBuffer[12];
-    uint8_t actionDataBuffer[512];
-    uint8_t dataAllowed;
+    uint8_t sizeBuffer[12];   // Used for caching VarInts for decoding
+    uint8_t actionDataBuffer[512];  // Used for caching Operation data
+    uint8_t dataAllowed;      // Accept unknown Operation types?  Or throw?
     checksum256 dataChecksum;
     txProcessingContent_t *content;
 } txProcessingContext_t;
