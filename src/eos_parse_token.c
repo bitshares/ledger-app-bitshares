@@ -1,4 +1,13 @@
 /*******************************************************************************
+*
+*  This file is a derivative work, and contains modifications from original
+*  form.  The modifications are copyright of their respective contributors,
+*  and are licensed under the same terms as the original work.
+*
+*  Portions Copyright (c) 2019 Christopher J. Sanborn
+*
+*  Original copyright and license notice follows:
+*
 *   Taras Shchybovyk
 *   (c) 2018 Taras Shchybovyk
 *
@@ -17,7 +26,9 @@
 
 #include "eos_parse_token.h"
 #include "eos_types.h"
+#include "os.h"
 
+// EOS version - DEPRECATED
 void parseTokenTransfer(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
     uint32_t read = 0;
     uint32_t written = 0;
@@ -33,5 +44,43 @@ void parseTokenTransfer(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, 
     } else if (argNum == 3) {
         buffer += 2 * sizeof(name_t) + sizeof(asset_t); bufferLength -= 2 * sizeof(name_t) + sizeof(asset_t);
         parseStringField(buffer, bufferLength, "Memo", arg, &read, &written);
+    }
+}
+
+/**
+ * This is for testing with dummy arguments given as string literals.  Should be removed after.
+*/
+void parseStringLiteral(const char fieldText[], const char fieldName[], actionArgument_t *arg) {
+    uint32_t labelLength = strlen(fieldName);
+    uint32_t fieldTextLength = strlen(fieldText);
+    if (labelLength > sizeof(arg->label) - 1) {
+        PRINTF("parseOperationData Label too long\n");
+        THROW(EXCEPTION);
+    }
+    if (fieldTextLength > sizeof(arg->data) - 1) {
+        PRINTF("parseOperationData Insufficient buffer\n");
+        THROW(EXCEPTION);
+    }
+
+    os_memset(arg->label, 0, sizeof(arg->label));
+    os_memset(arg->data, 0, sizeof(arg->data));
+
+    os_memmove(arg->label, fieldName, labelLength);
+    os_memmove(arg->data, fieldText, fieldTextLength);
+
+}
+
+void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
+    uint32_t read = 0;
+    uint32_t written = 0;
+
+    if (argNum == 0) {  // TEMP dummy args for now TODO: extract actual args
+        parseStringLiteral("Transfer", "Operation", arg);
+    } else if (argNum == 1) {
+        parseStringLiteral("Somebody", "From", arg);
+    } else if (argNum == 2) {
+        parseStringLiteral("Somebody Else", "To", arg);
+    } else if (argNum == 3) {
+        parseStringLiteral("1000000 satoshis", "Amount", arg);
     }
 }

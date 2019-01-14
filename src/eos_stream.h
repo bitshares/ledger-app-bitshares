@@ -89,6 +89,7 @@ typedef struct txProcessingContext_t {
     uint32_t operationCount;        // bitshares
     uint32_t operationsRemaining;   // bitshares
     uint32_t currentOperationId;    // bitshares
+    uint32_t currentOperationDataLength;  // bitshares
     bool processingField;     // True: processing a field; False: decoding TLV header.
     uint8_t tlvBuffer[5];     // TODO: Does this need to be six?
     uint32_t tlvBufferPos;
@@ -97,10 +98,11 @@ typedef struct txProcessingContext_t {
     name_t contractName;
     name_t contractActionName;
     uint8_t sizeBuffer[12];   // Used for caching VarInts for decoding
-    uint8_t actionDataBuffer[512];  // Used for caching Operation data
+    uint8_t actionDataBuffer[8];        // Used for caching Action data (DEPRECATED EOS)
+    uint8_t operationDataBuffer[512];   // Cache for Operation data for later parsing
     uint8_t dataAllowed;      // Accept unknown Operation types?  Or throw?
     checksum256 dataChecksum;
-    txProcessingContent_t *content;
+    txProcessingContent_t *content; // TODO: Since this points to a global it seems we could just use the global and save the pointer.
 } txProcessingContext_t;
 
 typedef enum parserStatus_e {

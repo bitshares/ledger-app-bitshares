@@ -366,7 +366,7 @@ const bagl_element_t ui_approval_nanos[] = {
 
     {{BAGL_LABELINE, 0x04, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     "arglblCC"/*(char *)txContent.arg.label*/,
+     (char *)txContent.arg.label,
      0,
      0,
      0,
@@ -375,7 +375,7 @@ const bagl_element_t ui_approval_nanos[] = {
      NULL},
     {{BAGL_LABELINE, 0x04, 23, 26, 82, 12, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 26},
-     "argdataDD"/*(char *)txContent.arg.data*/,
+     (char *)txContent.arg.data,
      0,
      0,
      0,
@@ -421,11 +421,10 @@ unsigned int ui_approval_prepro(const bagl_element_t *element)
             case 4:
                 PRINTF("Argument: %d\n", ux_step - 3);
 
-                UX_CALLBACK_SET_INTERVAL(2000);
-                /*UX_CALLBACK_SET_INTERVAL(MAX(
+                UX_CALLBACK_SET_INTERVAL(MAX(
                     3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
-                
-                    printArgument(ux_step - 3, &txProcessingCtx);*/
+
+                printArgument(ux_step - 3, &txProcessingCtx);
                 break;
             }
         }

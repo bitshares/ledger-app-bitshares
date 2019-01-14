@@ -47,6 +47,7 @@ void initTxContext(txProcessingContext_t *context,
     context->sha256 = sha256;
     context->dataSha256 = dataSha256;
     context->content = processingContent;
+    context->content->argumentCount = 0;
     context->state = TLV_CHAIN_ID;
     context->dataAllowed = dataAllowed;
     cx_sha256_init(context->sha256);
@@ -87,14 +88,16 @@ static void processUnknownAction(txProcessingContext_t *context) {
 }
 
 void printArgument(uint8_t argNum, txProcessingContext_t *context) {
+    /*
     name_t contractName = context->contractName;
     name_t actionName = context->contractActionName;
-    uint8_t *buffer = context->actionDataBuffer;
-    uint32_t bufferLength = context->currentActionDataBufferLength;
+    */ // TODO: Need to extract OpID instead of Action here for bitshares
+    uint8_t *buffer = context->operationDataBuffer;
+    uint32_t bufferLength = context->currentOperationDataLength;
     actionArgument_t *arg =  &context->content->arg;
 
-    if (actionName == EOSIO_TOKEN_TRANSFER) {
-        parseTokenTransfer(buffer, bufferLength, argNum, arg);
+    if (true /* TODO: needs to select TRANSFER op */) {
+        parseTransferOperation(buffer, bufferLength, argNum, arg);
         return;
     }
 
@@ -329,6 +332,38 @@ static void processActionData(txProcessingContext_t *context) {
     }
 }
 
+/**
+ * Process current operation payload field and store in into operation data buffer.
+*/
+static void processOperationDataField(txProcessingContext_t *context) {
+
+    if (context->currentFieldLength > sizeof(context->operationDataBuffer) - 1) {
+        PRINTF("processOperationData buffer overflow\n");
+        THROW(EXCEPTION);
+    }
+
+    if (context->currentFieldPos < context->currentFieldLength) {
+        processHelperGobbleCommandBytes(context, context->operationDataBuffer);
+    }
+
+    if (context->currentFieldPos == context->currentFieldLength) {
+        context->currentOperationDataLength = context->currentFieldLength;
+
+        /*
+        if (context->contractActionName == EOSIO_TOKEN_TRANSFER) {
+            processTokenTransfer(context);
+        } else {
+            THROW(EXCEPTION);
+        }
+        */
+        // TODO: Specific preprocessing based on OperationID instead of ActionName
+        /* TEMP */ context->content->argumentCount = 4; /* should be in specific preprocess */
+
+        context->state++;
+        context->processingField = false;
+    }
+}
+
 static parserStatus_e processTxInternal(txProcessingContext_t *context) {
     for(;;) {
         if (context->state == TLV_DONE) {
@@ -409,7 +444,7 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
 
         case TLV_OP_TRANSFER_PAYLOAD:
             // Temporary until operation actually mapped out
-            processField(context);
+            processOperationDataField(context);
             break;
 
         case TLV_OP_TRANSFER_DONE:
