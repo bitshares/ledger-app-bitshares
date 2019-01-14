@@ -1,4 +1,13 @@
 /*******************************************************************************
+*
+*  This file is a derivative work, and contains modifications from original
+*  form.  The modifications are copyright of their respective contributors,
+*  and are licensed under the same terms as the original work.
+*
+*  Portions Copyright (c) 2018, 2019 Christopher J. Sanborn
+*
+*  Original copyright and license notice follows:
+*
 *   Taras Shchybovyk
 *   (c) 2018 Taras Shchybovyk
 *
@@ -64,7 +73,7 @@ static void processTokenTransfer(txProcessingContext_t *context) {
     buffer += 2 * sizeof(name_t) + sizeof(asset_t); 
     bufferLength -= 2 * sizeof(name_t) + sizeof(asset_t);
     uint32_t memoLength = 0;
-    unpack_variant32(buffer, bufferLength, &memoLength);
+    unpack_varint32(buffer, bufferLength, &memoLength);
     if (memoLength > 0) {
         context->content->argumentCount++;
     }
@@ -175,7 +184,7 @@ static void processZeroSizeField(txProcessingContext_t *context) {
 
     if (context->currentFieldPos == context->currentFieldLength) {
         uint32_t sizeValue = 0;
-        unpack_variant32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
+        unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
         if (sizeValue != 0) {
             PRINTF("processCtxFreeAction Action Number must be 0\n");
             THROW(EXCEPTION);
@@ -201,7 +210,7 @@ static void processOperationListSizeField(txProcessingContext_t *context) {
 
     if (context->currentFieldPos == context->currentFieldLength) {
         uint32_t sizeValue = 0;
-        unpack_variant32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
+        unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
         context->operationsRemaining = context->operationCount = sizeValue;
 
         // Reset size buffer
@@ -229,7 +238,7 @@ static void processOperationIdField(txProcessingContext_t *context) {
 
     if (context->currentFieldPos == context->currentFieldLength) {
         uint32_t sizeValue = 0;
-        unpack_variant32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
+        unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
         context->currentOperationId = sizeValue;
 
         // Reset size buffer

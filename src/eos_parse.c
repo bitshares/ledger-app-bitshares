@@ -1,4 +1,13 @@
 /*******************************************************************************
+*
+*  This file is a derivative work, and contains modifications from original
+*  form.  The modifications are copyright of their respective contributors,
+*  and are licensed under the same terms as the original work.
+*
+*  Portions Copyright (c) 2019 Christopher J. Sanborn
+*
+*  Original copyright and license notice follows:
+*
 *   Taras Shchybovyk
 *   (c) 2018 Taras Shchybovyk
 *
@@ -181,7 +190,7 @@ void parseStringField(uint8_t *in, uint32_t inLength, const char fieldName[], ac
     os_memmove(arg->label, fieldName, labelLength);
 
     uint32_t fieldLength = 0;
-    uint32_t readFromBuffer = unpack_variant32(in, inLength, &fieldLength);
+    uint32_t readFromBuffer = unpack_varint32(in, inLength, &fieldLength);
     if (fieldLength > sizeof(arg->data) - 1) {
         PRINTF("parseActionData Insufficient bufferg\n");
         THROW(EXCEPTION);

@@ -1,4 +1,13 @@
 /*******************************************************************************
+*
+*  This file is a derivative work, and contains modifications from original
+*  form.  The modifications are copyright of their respective contributors,
+*  and are licensed under the same terms as the original work.
+*
+*  Portions Copyright (c) 2019 Christopher J. Sanborn
+*
+*  Original copyright and license notice follows:
+*
 *   Taras Shchybovyk
 *   (c) 2018 Taras Shchybovyk
 *
@@ -20,7 +29,6 @@
 
 #include <stdint.h>
 
-typedef uint32_t variant32_t;
 typedef uint64_t name_t;
 typedef uint64_t symbol_t;
 typedef uint8_t checksum256[32];
@@ -30,9 +38,9 @@ typedef struct transaction_header_t {
     uint32_t expiration;
     uint16_t ref_block_num;
     uint32_t ref_block_prefix;
-    variant32_t max_net_usage_words;
+    uint32_t max_net_usage_words;
     uint8_t max_cpu_usage_ms;
-    variant32_t delay_sec;
+    uint32_t delay_sec;
 } transaction_header_t;
 
 typedef struct action_t {
@@ -52,7 +60,13 @@ typedef struct asset_t {
     symbol_t symbol;
 } asset_t;
 
-uint32_t unpack_variant32(uint8_t *in, uint32_t length, variant32_t *value);
+/** Unpacks variable-length encoded unsigned integer values from a byte buffer to a uint32.
+ *  Decoded value is written at `value`.  Returns number of bytes read from input buffer.
+ *  Fails silently if decoded value overflows uint32. (Truncates to lower 32 bits.)
+ *  TODO: Should we throw on overflow?
+ *  TODO: `length` parameter is unused. Refactor.
+*/
+uint32_t unpack_varint32(uint8_t *in, uint32_t length, uint32_t *value);
 
 name_t buffer_to_name_type(uint8_t *in, uint32_t size);
 uint8_t name_to_string(name_t value, char *out, uint32_t size);

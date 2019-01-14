@@ -1,4 +1,13 @@
 /*******************************************************************************
+*
+*  This file is a derivative work, and contains modifications from original
+*  form.  The modifications are copyright of their respective contributors,
+*  and are licensed under the same terms as the original work.
+*
+*  Portions Copyright (c) 2019 Christopher J. Sanborn
+*
+*  Original copyright and license notice follows:
+*
 *   Taras Shchybovyk
 *   (c) 2018 Taras Shchybovyk
 *
@@ -152,7 +161,7 @@ uint8_t asset_to_string(asset_t *asset, char *out, uint32_t size) {
     return assetTextLength;
 }
 
-uint32_t unpack_variant32(uint8_t *in, uint32_t length, variant32_t *value) {
+uint32_t unpack_varint32(uint8_t *in, uint32_t length, uint32_t *value) {
     uint32_t i = 0;
     uint64_t v = 0; char b = 0; uint8_t by = 0;
     do {
@@ -160,7 +169,8 @@ uint32_t unpack_variant32(uint8_t *in, uint32_t length, variant32_t *value) {
         v |= (uint32_t)((uint8_t)b & 0x7f) << by;
         by += 7;
     } while( ((uint8_t)b) & 0x80 && by < 32 );
-    
+    // TODO: Should we throw if we fail to meet terminating byte before overflowing 32-bit uint?
+
     *value = v;
     return i;
 }

@@ -1,4 +1,13 @@
 /*******************************************************************************
+*
+*  This file is a derivative work, and contains modifications from original
+*  form.  The modifications are copyright of their respective contributors,
+*  and are licensed under the same terms as the original work.
+*
+*  Portions Copyright (c) 2019 Christopher J. Sanborn
+*
+*  Original copyright and license notice follows:
+*
 *   Taras Shchybovyk
 *   (c) 2018 Taras Shchybovyk
 *
@@ -130,7 +139,7 @@ void parseVoteProducer(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, a
     bufferLength -= 2 * sizeof(name_t);
 
     uint32_t totalProducers = 0;
-    read = unpack_variant32(buffer, bufferLength, &totalProducers);
+    read = unpack_varint32(buffer, bufferLength, &totalProducers);
     buffer += read; bufferLength -= read;
 
     uint32_t producerIndex = argNum - 1;
@@ -179,7 +188,7 @@ void parseUpdateAuth(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, act
     uint32_t keyBufferLength = bufferLength - 3 * sizeof(name_t) + sizeof(uint32_t);
 
     uint32_t totalKeys = 0;
-    read = unpack_variant32(keys, keyBufferLength, &totalKeys);
+    read = unpack_varint32(keys, keyBufferLength, &totalKeys);
     keys += read; keyBufferLength -= read;
     
     uint8_t keysArgStart = 3;
@@ -215,7 +224,7 @@ void parseUpdateAuth(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, act
     uint32_t accountsBufferLen = keyBufferLength - keyStep * totalKeys;
     
     uint32_t totalAccounts = 0;
-    read = unpack_variant32(accounts, accountsBufferLen, &totalAccounts);
+    read = unpack_varint32(accounts, accountsBufferLen, &totalAccounts);
     accounts += read; accountsBufferLen -= read;
     
     uint32_t accountsArgStart = keysArgStart + totalKeys * 2;
@@ -247,7 +256,7 @@ void parseUpdateAuth(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, act
     uint32_t delayBufferLen = accountsBufferLen - accountStep * totalAccounts;
 
     uint32_t totalDelays = 0;
-    read = unpack_variant32(delays, delayBufferLen, &totalDelays);
+    read = unpack_varint32(delays, delayBufferLen, &totalDelays);
     delays += read; delayBufferLen -= read;
     
     uint32_t delaysArgStart = keysArgStart + totalKeys * 2 + totalAccounts * 2;

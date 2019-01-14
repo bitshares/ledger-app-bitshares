@@ -4,7 +4,7 @@
 *  form.  The modifications are copyright of their respective contributors,
 *  and are licensed under the same terms as the original work.
 *
-*  Portions Copyright (c) 2018 Christopher J. Sanborn
+*  Portions Copyright (c) 2018, 2019 Christopher J. Sanborn
 *
 *  Original copyright and license notice follows:
 *
