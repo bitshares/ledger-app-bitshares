@@ -84,20 +84,21 @@ typedef struct transactionContext_t
 {
     uint8_t pathLength;
     uint32_t bip32Path[MAX_BIP32_PATH];
-    uint8_t hash[32];
-    char txId[41];
+    uint8_t hash[32];         // Message hash for which we will provide signature.
 } transactionContext_t;
 
-cx_sha256_t sha256;
-cx_sha256_t dataSha256;
+cx_sha256_t sha256;           // Message hash context (produces hash that we will sign)
+cx_sha256_t txIdSha256;       // Separate hash for txId (since it excludes ChainID)
+cx_sha256_t dataSha256;       // For hashes of payloads of unrecognized Operation types
+                              //   (a next-best-thing to decoding Op arguments)
 
 union {
     publicKeyContext_t publicKeyContext;
     transactionContext_t transactionContext;
-} tmpCtx;
+} tmpCtx; // Input and Output of app lifecycle, broadly.
 
-txProcessingContext_t txProcessingCtx;
-txProcessingContent_t txContent;
+txProcessingContext_t txProcessingCtx;  // For decoding tx as it arrives on APDU
+txProcessingContent_t txContent;        // For decoded data to parse and display
 
 volatile uint8_t dataAllowed;
 volatile char fullAddress[60];
@@ -337,7 +338,7 @@ const bagl_element_t ui_approval_nanos[] = {
      NULL},
     {{BAGL_LABELINE, 0x02, 23, 26, 82, 12, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 26},
-     (char *)tmpCtx.transactionContext.txId,
+     (char *)txContent.txParamDisplayBuffer,
      0,
      0,
      0,
@@ -356,7 +357,7 @@ const bagl_element_t ui_approval_nanos[] = {
      NULL},
     {{BAGL_LABELINE, 0x03, 23, 26, 82, 12, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 50},
-     (char *)txContent.operationName,
+     (char *)txContent.txParamDisplayBuffer,
      0,
      0,
      0,
@@ -405,15 +406,14 @@ unsigned int ui_approval_prepro(const bagl_element_t *element)
 
                 break;
             case 2:
+                PRINTF("Transaction Id or Hash)\n");
                 UX_CALLBACK_SET_INTERVAL(MAX(
                   3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 
-                // TODO: Print into buffer should be here instead of where it is
-                PRINTF("Transaction Id or Hash)\n");
+                printTxId(&txProcessingCtx);
                 break;
             case 3:
                 PRINTF("Operation\n");
-
                 UX_CALLBACK_SET_INTERVAL(MAX(
                   3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 
@@ -740,7 +740,8 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
             dataLength -= 4;
         }
         dataPresent = false;
-        initTxContext(&txProcessingCtx, &sha256, &dataSha256, &txContent, N_storage.dataAllowed);
+        initTxContext(&txProcessingCtx, &sha256, &txIdSha256, &dataSha256,
+                      &txContent, N_storage.dataAllowed);
     }
     else if (p1 != P1_MORE)
     {
@@ -769,11 +770,13 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
         THROW(0x6A80);
     }
 
-    // store hash
+    // store message hash
     cx_hash(&sha256.header, CX_LAST, tmpCtx.transactionContext.hash, 0,
             tmpCtx.transactionContext.hash);
 
-    array_hexstr(tmpCtx.transactionContext.txId, tmpCtx.transactionContext.hash, 20);  // Wait, no, not txid since txid does not incude chainid... ack TODO:
+    // store txid hash
+    cx_hash(&txIdSha256.header, CX_LAST, txContent.txIdHash, 0, txContent.txIdHash);
+
     skipWarning = !dataPresent;
     ux_step = 0;
     ux_step_count = 3 + txContent.argumentCount;

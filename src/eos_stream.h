@@ -61,10 +61,11 @@ typedef struct txProcessingContent_t {
     char argumentCount;       // Argument count for *current* operation being parsed
     char contract[14];        // EOS - DEPRECATE
     char action[14];          // EOS - DEPRECATE
-    char operationName[42];   // Text name of current operation NOTE: TODO: should be possible to share this buffer with TxID display buffer and maybe others
     actionArgument_t arg;     // We step through args and buffer display text in here
-    // TODO: operationDataBuffer probably more properly belongs here, rather than conteXt
     uint32_t operationIds[TX_MAX_OPERATIONS];  // OpId's of cached operation payloads
+    uint8_t txIdHash[32];     // Not same as message hash
+    char txParamDisplayBuffer[48];  // Text buffer for UI display of TxID, Operaton Name, etc.
+    // TODO: operationDataBuffer probably more properly belongs here, rather than conteXt
 } txProcessingContent_t;
 
 typedef enum txProcessingState_e {
@@ -102,6 +103,7 @@ typedef enum txProcessingState_e {
 typedef struct txProcessingContext_t {
     txProcessingState_e state;
     cx_sha256_t *sha256;
+    cx_sha256_t *txIdSha256;
     cx_sha256_t *dataSha256;
     uint32_t currentFieldLength;
     uint32_t currentFieldPos;
@@ -134,7 +136,8 @@ typedef enum parserStatus_e {
 
 void initTxContext(
     txProcessingContext_t *context, 
-    cx_sha256_t *sha256, 
+    cx_sha256_t *sha256,
+    cx_sha256_t *txIdSha256,
     cx_sha256_t *dataSha256,
     txProcessingContent_t *processingContent, 
     uint8_t dataAllowed

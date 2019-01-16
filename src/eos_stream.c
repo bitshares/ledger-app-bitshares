@@ -39,18 +39,21 @@
 #define EOSIO_TOKEN_TRANSFER 0xCDCD3C2D57000000
 
 void initTxContext(txProcessingContext_t *context, 
-                   cx_sha256_t *sha256, 
-                   cx_sha256_t *dataSha256, 
+                   cx_sha256_t *sha256,
+                   cx_sha256_t *txIdSha256,
+                   cx_sha256_t *dataSha256,
                    txProcessingContent_t *processingContent,
                    uint8_t dataAllowed) {
     os_memset(context, 0, sizeof(txProcessingContext_t));
     context->sha256 = sha256;
+    context->txIdSha256 = txIdSha256;
     context->dataSha256 = dataSha256;
     context->content = processingContent;
     context->content->argumentCount = 0;
     context->state = TLV_CHAIN_ID;
     context->dataAllowed = dataAllowed;
     cx_sha256_init(context->sha256);
+    cx_sha256_init(context->txIdSha256);
     cx_sha256_init(context->dataSha256);
 }
 
@@ -87,16 +90,29 @@ static void processUnknownAction(txProcessingContext_t *context) {
     context->content->argumentCount = 3;  
 }
 
+
+/**
+ *  TxID is first 20-bytes of hash of serialized transaction (excluding ChainID),
+ *  displayed as 40 hex characters.  We display first and last 6 hex chars with
+ *  '...' in the middle.
+ */
+void printTxId(txProcessingContext_t *context) {
+    os_memset(context->content->txParamDisplayBuffer, 0, sizeof(context->content->txParamDisplayBuffer));
+    array_hexstr(context->content->txParamDisplayBuffer, context->content->txIdHash, 3);
+    os_memset(context->content->txParamDisplayBuffer+6, '.', 3);
+    array_hexstr(context->content->txParamDisplayBuffer+9, context->content->txIdHash+17, 3);
+}
+
 void printOperationName(uint32_t opId, txProcessingContext_t *context) {
     char * opName;
     if(opId == 0) {  // TODO: Implement proper map to known OpIds
         opName = "Transfer";
     } else {
-        opName = "**Unknown Op**";
+        opName = "**Unknown Operation**";
     }
-    os_memset(context->content->operationName, 0, sizeof(context->content->operationName));
-    os_memmove(context->content->operationName, opName,
-               MIN(sizeof(context->content->operationName)-1,strlen(opName)));
+    os_memset(context->content->txParamDisplayBuffer, 0, sizeof(context->content->txParamDisplayBuffer));
+    os_memmove(context->content->txParamDisplayBuffer, opName,
+               MIN(sizeof(context->content->txParamDisplayBuffer)-1,strlen(opName)));
 }
 
 void printArgument(uint8_t argNum, txProcessingContext_t *context) {
@@ -135,6 +151,9 @@ static bool isKnownAction(txProcessingContext_t *context) {
 */
 static void hashTxData(txProcessingContext_t *context, uint8_t *buffer, uint32_t length) {
     cx_hash(&context->sha256->header, 0, buffer, length, NULL);
+    cx_hash(&context->txIdSha256->header, 0, buffer, length, NULL);
+    /* Second hash because TxId excludes ChainID but message hash (what we sign)
+     * includes it. (We just reinitialize txIdSha256 after reading ChainID.) */
 }
 
 static void hashActionData(txProcessingContext_t *context, uint8_t *buffer, uint32_t length) {
@@ -180,6 +199,23 @@ static void processField(txProcessingContext_t *context) {
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {
+        context->state++;
+        context->processingField = false;
+    }
+}
+
+/**
+ * Same as the generic processField() function, except we reinitialize the txIdSha256
+ * hashing context so that ChainID is effectively excluded from that hash.
+*/
+static void processChainIdField(txProcessingContext_t *context) {
+
+    if (context->currentFieldPos < context->currentFieldLength) {
+        processHelperGobbleCommandBytes(context, NULL);
+    }
+
+    if (context->currentFieldPos == context->currentFieldLength) {
+        cx_sha256_init(context->txIdSha256);  // (Re-init to exclude ChainID)
         context->state++;
         context->processingField = false;
     }
@@ -425,6 +461,9 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
         }
         switch (context->state) {
         case TLV_CHAIN_ID:
+            processChainIdField(context);
+            break;
+
         case TLV_HEADER_EXPIRATION:
         case TLV_HEADER_REF_BLOCK_NUM:
         case TLV_HEADER_REF_BLOCK_PREFIX:
