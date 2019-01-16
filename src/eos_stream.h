@@ -33,11 +33,38 @@
 #include "eos_types.h"
 #include "eos_parse.h"
 
+/* Limits on allowed transaction parameters that we will accept. (These
+ * are not BitShares limits but rather limits in what we will handle.) */
+#define TX_MIN_OPERATIONS 1
+#define TX_MAX_OPERATIONS 1
+
+/***
+ *  On Difference Between txProcessingContent_t and txProcessingContext_t:
+ *
+ *  (ConteNt vs ConteXt) ConteXt is used during decoding of the APDU workbuffer.  We are
+ *  working with the DER-encoded serialized transaction data.  By the time we are done
+ *  with that, we move on to the display-to-user phase, and we will have populated
+ *  ConteNt.  The display phase reads from ConteNt and has no more need of ConteXt.
+ *
+ *  On Difference Between "processing" and "parsing":
+ *
+ *  Same distinction as above. You'll see functions named as "processTokenTransfer" or
+ *  "parseTokenTransfer", e.g.  Processing is decoding from APDU workbuffer, and happens
+ *  before display phase.  Parsing happens during display phase when we may need to
+ *  extract text representation of a cached serialized argument.  There are also
+ *  "printXXX" functions that write strings into the buffers refered to in the
+ *  bagl_element arrays. (called from the _prepro UI phase.)
+ */
+
 typedef struct txProcessingContent_t {
-    char argumentCount;
-    char contract[14];
-    char action[14];
-    actionArgument_t arg;
+    uint32_t operationCount;  // How many operation payloads written to operationDataBuffer
+    char argumentCount;       // Argument count for *current* operation being parsed
+    char contract[14];        // EOS - DEPRECATE
+    char action[14];          // EOS - DEPRECATE
+    char operationName[42];   // Text name of current operation NOTE: TODO: should be possible to share this buffer with TxID display buffer and maybe others
+    actionArgument_t arg;     // We step through args and buffer display text in here
+    // TODO: operationDataBuffer probably more properly belongs here, rather than conteXt
+    uint32_t operationIds[TX_MAX_OPERATIONS];  // OpId's of cached operation payloads
 } txProcessingContent_t;
 
 typedef enum txProcessingState_e {
@@ -72,11 +99,6 @@ typedef enum txProcessingState_e {
     TLV_ACTION_DATA
 } txProcessingState_e;
 
-/* Limits on allowed transaction parameters that we will accept. (These
- * are not BitShares limits but rather limits in what we will handle.) */
-#define TX_MIN_OPERATIONS 1
-#define TX_MAX_OPERATIONS 1
-
 typedef struct txProcessingContext_t {
     txProcessingState_e state;
     cx_sha256_t *sha256;
@@ -86,7 +108,6 @@ typedef struct txProcessingContext_t {
     uint32_t currentAutorizationIndex;
     uint32_t currentAutorizationNumber;
     uint32_t currentActionDataBufferLength;
-    uint32_t operationCount;        // bitshares
     uint32_t operationsRemaining;   // bitshares
     uint32_t currentOperationId;    // bitshares
     uint32_t currentOperationDataLength;  // bitshares
@@ -120,6 +141,7 @@ void initTxContext(
 );
 parserStatus_e parseTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length);
 
+void printOperationName(uint32_t opId, txProcessingContext_t *processingContext);
 void printArgument(uint8_t argNum, txProcessingContext_t *processingContext);
 
 #endif // __EOS_STREAM_H__

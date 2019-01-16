@@ -87,6 +87,18 @@ static void processUnknownAction(txProcessingContext_t *context) {
     context->content->argumentCount = 3;  
 }
 
+void printOperationName(uint32_t opId, txProcessingContext_t *context) {
+    char * opName;
+    if(opId == 0) {  // TODO: Implement proper map to known OpIds
+        opName = "Transfer";
+    } else {
+        opName = "**Unknown Op**";
+    }
+    os_memset(context->content->operationName, 0, sizeof(context->content->operationName));
+    os_memmove(context->content->operationName, opName,
+               MIN(sizeof(context->content->operationName)-1,strlen(opName)));
+}
+
 void printArgument(uint8_t argNum, txProcessingContext_t *context) {
     /*
     name_t contractName = context->contractName;
@@ -214,7 +226,8 @@ static void processOperationListSizeField(txProcessingContext_t *context) {
     if (context->currentFieldPos == context->currentFieldLength) {
         uint32_t sizeValue = 0;
         unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
-        context->operationsRemaining = context->operationCount = sizeValue;
+        context->operationsRemaining = sizeValue;
+        context->content->operationCount = 0;   // (Initial; Increments as OpIds read.)
 
         // Reset size buffer
         os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
@@ -243,6 +256,10 @@ static void processOperationIdField(txProcessingContext_t *context) {
         uint32_t sizeValue = 0;
         unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
         context->currentOperationId = sizeValue;
+
+        // Push-back into Content structure
+        uint32_t opIdx = context->content->operationCount++;
+        context->content->operationIds[opIdx] = sizeValue;
 
         // Reset size buffer
         os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));

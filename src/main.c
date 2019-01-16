@@ -347,7 +347,7 @@ const bagl_element_t ui_approval_nanos[] = {
 
     {{BAGL_LABELINE, 0x03, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     "Action",
+     "Operation n of m",
      0,
      0,
      0,
@@ -356,7 +356,7 @@ const bagl_element_t ui_approval_nanos[] = {
      NULL},
     {{BAGL_LABELINE, 0x03, 23, 26, 82, 12, 0x80 | 10, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_EXTRABOLD_11px | BAGL_FONT_ALIGNMENT_CENTER, 50},
-     "actnBB"/*(char *)txContent.action*/,
+     (char *)txContent.operationName,
      0,
      0,
      0,
@@ -401,22 +401,26 @@ unsigned int ui_approval_prepro(const bagl_element_t *element)
             {
             case 1:
                 UX_CALLBACK_SET_INTERVAL(2000);
-                PRINTF("Transaction\n");
+                PRINTF("Transaction Confirmation Notice\n");
 
                 break;
             case 2:
-                //UX_CALLBACK_SET_INTERVAL(2000);
                 UX_CALLBACK_SET_INTERVAL(MAX(
                   3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 
-                PRINTF("Contract\n");
+                // TODO: Print into buffer should be here instead of where it is
+                PRINTF("Transaction Id or Hash)\n");
                 break;
             case 3:
-                UX_CALLBACK_SET_INTERVAL(2000);
-                /*UX_CALLBACK_SET_INTERVAL(MAX(
-                  3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));*/
+                PRINTF("Operation\n");
 
-                PRINTF("Action\n");    
+                UX_CALLBACK_SET_INTERVAL(MAX(
+                  3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
+
+                printOperationName(txContent.operationIds[0/*TEMP*/], &txProcessingCtx);
+                // TODO: Need to extract actual current operation.  This will break when
+                // process >1 ops in a tx because I put explicit index 0.
+
                 break;
             case 4:
                 PRINTF("Argument: %d\n", ux_step - 3);
