@@ -406,7 +406,7 @@ unsigned int ui_approval_prepro(const bagl_element_t *element)
 
                 break;
             case 2:
-                PRINTF("Transaction Id or Hash)\n");
+                PRINTF("Transaction Id or Hash\n");
                 UX_CALLBACK_SET_INTERVAL(MAX(
                   3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 

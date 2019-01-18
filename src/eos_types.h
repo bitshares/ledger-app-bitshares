@@ -60,13 +60,20 @@ typedef struct asset_t {
     symbol_t symbol;
 } asset_t;
 
-/** Unpacks variable-length encoded unsigned integer values from a byte buffer to a uint32.
- *  Decoded value is written at `value`.  Returns number of bytes read from input buffer.
- *  Fails silently if decoded value overflows uint32. (Truncates to lower 32 bits.)
- *  TODO: Should we throw on overflow?
- *  TODO: `length` parameter is unused. Refactor.
-*/
+/**
+ * Unpacks a variable-length encoded unsigned integer from a byte buffer into a
+ * uint32.  Decoded value is written at `value`.  Returns number of bytes read from
+ * input buffer.  Throws EXCEPTION_OVERFLOW if decoding exceeds 32 bits.
+ * TODO: `length` parameter is unused. Refactor.
+ */
 uint32_t unpack_varint32(uint8_t *in, uint32_t length, uint32_t *value);
+
+/**
+ * Unpacks a variable-length unsigned integer up to 48-bits into a uint64. Similar
+ * to 32-bit version, but this one can be used for BitShares instance_id's which can
+ * be up to 48 bits. Throws EXCEPTION_OVERFLOW if decoding exceeds 48 bits.
+ */
+uint32_t unpack_varint48(uint8_t *in, uint64_t *value);
 
 name_t buffer_to_name_type(uint8_t *in, uint32_t size);
 uint8_t name_to_string(name_t value, char *out, uint32_t size);

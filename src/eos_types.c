@@ -166,10 +166,36 @@ uint32_t unpack_varint32(uint8_t *in, uint32_t length, uint32_t *value) {
     uint64_t v = 0; char b = 0; uint8_t by = 0;
     do {
         b = *in; ++in; ++i;
-        v |= (uint32_t)((uint8_t)b & 0x7f) << by;
+        v |= (uint64_t)((uint8_t)b & 0x7f) << by;
         by += 7;
-    } while( ((uint8_t)b) & 0x80 && by < 32 );
-    // TODO: Should we throw if we fail to meet terminating byte before overflowing 32-bit uint?
+    } while( ((uint8_t)b) & 0x80 && by < 35 );
+
+    if( ((uint8_t)b) & 0x80 ) {         // Didn't hit terminating byte
+      THROW(EXCEPTION_OVERFLOW);
+    }
+    if ( v>>32 != 0 ) {                 // Too big
+      THROW(EXCEPTION_OVERFLOW);
+    }
+
+    *value = v;
+    return i;
+}
+
+uint32_t unpack_varint48(uint8_t *in, uint64_t *value) {
+    uint32_t i = 0;
+    uint64_t v = 0; char b = 0; uint8_t by = 0;
+    do {
+        b = *in; ++in; ++i;
+        v |= (uint64_t)((uint8_t)b & 0x7f) << by;
+        by += 7;
+    } while( ((uint8_t)b) & 0x80 && by < 49 );
+
+    if( ((uint8_t)b) & 0x80 ) {         // Didn't hit terminating byte
+      THROW(EXCEPTION_OVERFLOW);
+    }
+    if ( v>>48 != 0 ) {                 // Too big
+      THROW(EXCEPTION_OVERFLOW);
+    }
 
     *value = v;
     return i;

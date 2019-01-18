@@ -24,6 +24,7 @@
 *  limitations under the License.
 ********************************************************************************/
 
+#include "bts_operation_transfer.h"
 #include "eos_parse_token.h"
 #include "eos_types.h"
 #include "os.h"
@@ -73,14 +74,22 @@ void parseStringLiteral(const char fieldText[], const char fieldName[], actionAr
 void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
     uint32_t read = 0;
     uint32_t written = 0;
+    bts_operation_transfer_t op;
 
-    if (argNum == 0) {  // TEMP dummy args for now TODO: extract actual args
-        parseStringLiteral("Transfer", "Operation", arg);
+    // Read fields:
+    read += deserializeBtsOperationTransfer(buffer, bufferLength, &op);
+
+    if (argNum == 0) {
+        parseStringLiteral("", "Amount", arg);
+        ui64toa(op.transferAsset.amount, arg->data);
     } else if (argNum == 1) {
-        parseStringLiteral("Somebody", "From", arg);
+        parseStringLiteral("", "From", arg);
+        ui64toa(op.fromId, arg->data);
     } else if (argNum == 2) {
-        parseStringLiteral("Somebody Else", "To", arg);
+        parseStringLiteral("", "To", arg);
+        ui64toa(op.toId, arg->data);
     } else if (argNum == 3) {
-        parseStringLiteral("1000000 satoshis", "Amount", arg);
+        parseStringLiteral("", "Fee", arg);
+        ui64toa(op.feeAsset.amount, arg->data);
     }
 }
