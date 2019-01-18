@@ -156,8 +156,7 @@ class Transaction:
         encoder.start()
 
         length = len(chain_id)
-        parameters = Transaction.pack_fc_uint(length)
-        parameters += struct.pack(str(length) + 's', chain_id)
+        parameters = struct.pack(str(length) + 's', chain_id)
         encoder.write(parameters, Numbers.OctetString)
 
         encoder.write(self.ref_block_num, Numbers.OctetString)
