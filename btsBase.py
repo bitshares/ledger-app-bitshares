@@ -139,7 +139,7 @@ class Transaction:
         for op in operations:
             tx.operations.append(Transaction.pack_fc_uint(op[0]))
             # TODO: other parsers.
-            if 'fee' in op[1] and 'from' in op[1] and 'to' in op[1] and 'amount' in op[1]:
+            if op[0] == 0:
                 parameters = Transaction.parse_transfer(op[1])
             else:
                 parameters = Transaction.parse_unknown(op[1])
