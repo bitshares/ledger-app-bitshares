@@ -32,11 +32,7 @@
 #include "eos_utils.h"
 #include "eos_parse.h"
 #include "eos_parse_token.h"
-#include "eos_parse_eosio.h"
 #include "eos_parse_unknown.h"
-
-#define EOSIO_TOKEN          0x5530EA033482A600
-#define EOSIO_TOKEN_TRANSFER 0xCDCD3C2D57000000
 
 void initTxContext(txProcessingContext_t *context, 
                    cx_sha256_t *sha256,
@@ -134,16 +130,6 @@ void printArgument(uint8_t argNum, txProcessingContext_t *context) {
     }
 }
 
-static bool isKnownAction(txProcessingContext_t *context) {
-    name_t contractName = context->contractName;
-    name_t actionName = context->contractActionName;
-    if (actionName == EOSIO_TOKEN_TRANSFER) {
-        return true;
-    }
-
-    return false;
-}
-
 /**
  * Sequentially hash an incoming data.
  * Hash functionality is moved out here in order to reduce 
@@ -154,10 +140,6 @@ static void hashTxData(txProcessingContext_t *context, uint8_t *buffer, uint32_t
     cx_hash(&context->txIdSha256->header, 0, buffer, length, NULL);
     /* Second hash because TxId excludes ChainID but message hash (what we sign)
      * includes it. (We just reinitialize txIdSha256 after reading ChainID.) */
-}
-
-static void hashActionData(txProcessingContext_t *context, uint8_t *buffer, uint32_t length) {
-    cx_hash(&context->dataSha256->header, 0, buffer, length, NULL);
 }
 
 /**
@@ -306,85 +288,6 @@ static void processOperationIdField(txProcessingContext_t *context) {
     }
 }
 
-static void processUnknownActionDataSize(txProcessingContext_t *context) {
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-        hashActionData(context, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
-    }
-
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->state++;
-        context->processingField = false;
-    }
-}
-
-
-/**
- * Process current unknown action data field and calculate checksum.
-*/
-static void processUnknownActionData(txProcessingContext_t *context) {
-    if (context->currentFieldPos < context->currentFieldLength) {
-        uint32_t length = 
-            (context->commandLength <
-                     ((context->currentFieldLength - context->currentFieldPos))
-                ? context->commandLength
-                : context->currentFieldLength - context->currentFieldPos);
-
-        hashTxData(context, context->workBuffer, length);
-        hashActionData(context, context->workBuffer, length);
-
-        context->workBuffer += length;
-        context->commandLength -= length;
-        context->currentFieldPos += length;
-    }
-
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->currentActionDataBufferLength = context->currentFieldLength;
-
-        processUnknownAction(context);
-
-        context->state = TLV_TX_EXTENSION_LIST_SIZE;
-        context->processingField = false;
-    }
-}
-
-/**
- * Process current action data field and store in into data buffer.
-*/
-static void processActionData(txProcessingContext_t *context) {
-
-    if (context->currentFieldLength > sizeof(context->actionDataBuffer) - 1) {
-        PRINTF("processActionData data overflow\n");
-        THROW(EXCEPTION);
-    }
-
-    if (context->currentFieldPos < context->currentFieldLength) {
-        processHelperGobbleCommandBytes(context, context->actionDataBuffer);
-    }
-
-    if (context->currentFieldPos == context->currentFieldLength) {
-        context->currentActionDataBufferLength = context->currentFieldLength;
-
-        if (context->contractActionName == EOSIO_TOKEN_TRANSFER) {
-            processTokenTransfer(context);
-        } else {
-            THROW(EXCEPTION);
-        }
-        context->state = TLV_TX_EXTENSION_LIST_SIZE;
-        context->processingField = false;
-    }
-}
-
 /**
  * Process current operation payload field and store in into operation data buffer.
 */
@@ -505,25 +408,6 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
 
         case TLV_OP_TRANSFER_DONE:
             context->state = TLV_OPERATION_CHECK_REMAIN;    // Go back and see if more operations
-            break;
-
-        case TLV_ACTION_DATA_SIZE:
-            if (isKnownAction(context) || context->dataAllowed == 0) {
-                processField(context);
-            } else {
-                processUnknownActionDataSize(context);
-            }
-            break;
-        
-        case TLV_ACTION_DATA:
-            if (isKnownAction(context)) {
-                processActionData(context);
-            } else if (context->dataAllowed == 1) {
-                processUnknownActionData(context);
-            } else {
-                PRINTF("UNKNOWN ACTION");
-                THROW(EXCEPTION);
-            }
             break;
 
         case TLV_TX_EXTENSION_LIST_SIZE:

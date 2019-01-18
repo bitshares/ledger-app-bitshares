@@ -93,11 +93,6 @@ typedef enum txProcessingState_e {
     TLV_OP_TRANSFER,
     TLV_OP_TRANSFER_PAYLOAD = TLV_OP_TRANSFER,
     TLV_OP_TRANSFER_DONE,       // Return: goes back to _OPERATION_CHECK_REMAIN
-
-    /* Following state tags will be removed, but are temporarily being retained because
-     * their handling presents useful case studies. */
-    TLV_ACTION_DATA_SIZE,
-    TLV_ACTION_DATA
 } txProcessingState_e;
 
 typedef struct txProcessingContext_t {
