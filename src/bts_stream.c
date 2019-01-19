@@ -25,7 +25,7 @@
 ********************************************************************************/
 
 #include <string.h>
-#include "eos_stream.h"
+#include "bts_stream.h"
 #include "os.h"
 #include "cx.h"
 #include "eos_types.h"

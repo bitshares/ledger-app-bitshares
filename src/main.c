@@ -31,7 +31,7 @@
 #include "os_io_seproxyhal.h"
 #include "string.h"
 #include "eos_utils.h"
-#include "eos_stream.h"
+#include "bts_stream.h"
 
 #include "glyphs.h"
 

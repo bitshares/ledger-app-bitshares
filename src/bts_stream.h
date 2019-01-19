@@ -24,8 +24,8 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __EOS_STREAM_H__
-#define __EOS_STREAM_H__
+#ifndef __BTS_STREAM_H__
+#define __BTS_STREAM_H__
 
 #include "os.h"
 #include "cx.h"
@@ -68,17 +68,13 @@ typedef struct txProcessingContent_t {
     // TODO: operationDataBuffer probably more properly belongs here, rather than conteXt
 } txProcessingContent_t;
 
+/**
+ *  Defines the order of the DER fields when processing a BitShares serialized transaction.
+ *  See processTxInternal() for where this enum gets used.
+ */
 typedef enum txProcessingState_e {
-   /*  Lists the order of the DER fields when processing a BitShares serialized transaction.
-    *
-    *  To adapt from the EOS wallet, I selected just the BTS-relevant fields (moving the rest
-    *  below TLV_DONE) and repurposed a few. But to finish this, some will need to be removed
-    *  and some renamed, and we can't just take the operation payload as a monolithic unit
-    *  since we want to extract specifics for display to user for confirmation.
-    */
-
     TLV_NONE = 0x0,             // Implies processing context not initialized
-    TLV_CHAIN_ID = 0x1,         // Not part of serialized Tx but is prepended for hashing/signing
+    TLV_CHAIN_ID = 0x1,         // Not part of serialized Tx; Prepended for hashing/signing
     TLV_HEADER_REF_BLOCK_NUM,   // Transaction begins here
     TLV_HEADER_REF_BLOCK_PREFIX,
     TLV_HEADER_EXPIRATION,
@@ -87,9 +83,7 @@ typedef enum txProcessingState_e {
     TLV_OPERATION_ID,           // Branchpoint: Goes to _TX_OP_XXX
     TLV_TX_EXTENSION_LIST_SIZE,
     TLV_DONE,
-
     /* Following regions define specific operations: */
-
     TLV_OP_TRANSFER,
     TLV_OP_TRANSFER_PAYLOAD = TLV_OP_TRANSFER,
     TLV_OP_TRANSFER_DONE,       // Return: goes back to _OPERATION_CHECK_REMAIN
@@ -142,4 +136,4 @@ parserStatus_e parseTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t
 void printOperationName(uint32_t opId, txProcessingContext_t *processingContext);
 void printArgument(uint8_t argNum, txProcessingContext_t *processingContext);
 
-#endif // __EOS_STREAM_H__
+#endif // __BTS_STREAM_H__
