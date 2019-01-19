@@ -26,12 +26,12 @@
 
 #include <string.h>
 #include "bts_stream.h"
+#include "bts_parse_operations.h"
 #include "os.h"
 #include "cx.h"
 #include "eos_types.h"
 #include "eos_utils.h"
 #include "eos_parse.h"
-#include "eos_parse_token.h"
 #include "eos_parse_unknown.h"
 
 void initTxContext(txProcessingContext_t *context, 
@@ -64,28 +64,6 @@ uint8_t readTxByte(txProcessingContext_t *context) {
     context->commandLength--;
     return data;
 }
-
-static void processTokenTransfer(txProcessingContext_t *context) {
-    context->content->argumentCount = 3;
-    uint32_t bufferLength = context->currentActionDataBufferLength;
-    uint8_t *buffer = context->actionDataBuffer;
-
-    buffer += 2 * sizeof(name_t) + sizeof(asset_t); 
-    bufferLength -= 2 * sizeof(name_t) + sizeof(asset_t);
-    uint32_t memoLength = 0;
-    unpack_varint32(buffer, bufferLength, &memoLength);
-    if (memoLength > 0) {
-        context->content->argumentCount++;
-    }
-}
-
-
-static void processUnknownAction(txProcessingContext_t *context) {
-    cx_hash(&context->dataSha256->header, CX_LAST, context->dataChecksum, 0,
-            context->dataChecksum);
-    context->content->argumentCount = 3;  
-}
-
 
 /**
  *  TxID is first 20-bytes of hash of serialized transaction (excluding ChainID),
@@ -469,7 +447,7 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
  * TX_EXTENSION_NUMBER theoretically is not fixed due to serialization. Ledger accepts only 0 as encoded value.
  * CTX_FREE_ACTION_DATA_NUMBER theoretically is not fixed due to serialization. Ledger accepts only 0 as encoded value.
 */
-parserStatus_e parseTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length) {
+parserStatus_e processTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length) {
     parserStatus_e result;
 #ifdef DEBUG_APP
     // Do not catch exceptions.

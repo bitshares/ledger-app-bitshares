@@ -24,29 +24,10 @@
 *  limitations under the License.
 ********************************************************************************/
 
+#include "bts_parse_operations.h"
 #include "bts_operation_transfer.h"
-#include "eos_parse_token.h"
 #include "eos_types.h"
 #include "os.h"
-
-// EOS version - DEPRECATED
-void parseTokenTransfer(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
-    uint32_t read = 0;
-    uint32_t written = 0;
-
-    if (argNum == 0) {
-        parseNameField(buffer, bufferLength, "From", arg, &read, &written);
-    } else if (argNum == 1) {
-        buffer += sizeof(name_t); bufferLength -= sizeof(name_t);
-        parseNameField(buffer, bufferLength, "To", arg, &read, &written);
-    } else if (argNum == 2) {
-        buffer += 2 * sizeof(name_t); bufferLength -= 2 * sizeof(name_t);
-        parseAssetField(buffer, bufferLength, "Quantity", arg, &read, &written);
-    } else if (argNum == 3) {
-        buffer += 2 * sizeof(name_t) + sizeof(asset_t); bufferLength -= 2 * sizeof(name_t) + sizeof(asset_t);
-        parseStringField(buffer, bufferLength, "Memo", arg, &read, &written);
-    }
-}
 
 /**
  * This is for testing with dummy arguments given as string literals.  Should be removed after.

@@ -756,7 +756,7 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
         PRINTF("Parser not initialized\n");
         THROW(0x6985);
     }
-    txResult = parseTx(&txProcessingCtx, workBuffer, dataLength);
+    txResult = processTx(&txProcessingCtx, workBuffer, dataLength);
     switch (txResult)
     {
     case STREAM_FINISHED:

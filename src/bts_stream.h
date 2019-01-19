@@ -131,9 +131,10 @@ void initTxContext(
     txProcessingContent_t *processingContent, 
     uint8_t dataAllowed
 );
-parserStatus_e parseTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length);
+parserStatus_e processTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length);
 
 void printOperationName(uint32_t opId, txProcessingContext_t *processingContext);
 void printArgument(uint8_t argNum, txProcessingContext_t *processingContext);
+void printTxId(txProcessingContext_t *processingContext);
 
 #endif // __BTS_STREAM_H__

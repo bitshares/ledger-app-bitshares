@@ -1,6 +1,7 @@
 /*******************************************************************************
-*   Taras Shchybovyk
-*   (c) 2018 Taras Shchybovyk
+*  Copyright of the Contributing Authors, including:
+*
+*   (c) 2019 Christopher J. Sanborn
 *
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
@@ -15,11 +16,11 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __EOS_PARSE_TOKEN_H__
-#define __EOS_PARSE_TOKEN_H__
+#ifndef __BTS_PARSE_OPERATIONS_H__
+#define __BTS_PARSE_OPERATIONS_H__
 
 #include "eos_parse.h"
 
-void parseTokenTransfer(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg);
+void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg);
 
 #endif
