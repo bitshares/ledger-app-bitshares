@@ -27,7 +27,9 @@
 #include "bts_parse_operations.h"
 #include "bts_operation_transfer.h"
 #include "eos_types.h"
+#include "eos_utils.h"
 #include "os.h"
+#include <string.h>
 
 /**
  * This is for testing with dummy arguments given as string literals.  Should be removed after.
@@ -62,7 +64,7 @@ void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argN
 
     if (argNum == 0) {
         parseStringLiteral("", "Amount", arg);
-        ui64toa(op.transferAsset.amount, arg->data);
+        prettyPrintBtsAssetType(op.transferAsset, arg->data);
     } else if (argNum == 1) {
         parseStringLiteral("", "From", arg);
         ui64toa(op.fromId, arg->data);
@@ -71,6 +73,6 @@ void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argN
         ui64toa(op.toId, arg->data);
     } else if (argNum == 3) {
         parseStringLiteral("", "Fee", arg);
-        ui64toa(op.feeAsset.amount, arg->data);
+        prettyPrintBtsAssetType(op.feeAsset, arg->data);
     }
 }

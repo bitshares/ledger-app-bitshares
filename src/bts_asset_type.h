@@ -19,6 +19,7 @@
 #ifndef __BTS_ASSET_TYPE_H__
 #define __BTS_ASSET_TYPE_H__
 
+#include <stdbool.h>
 #include "os.h"
 
 typedef struct bts_asset_type_t {
@@ -26,6 +27,16 @@ typedef struct bts_asset_type_t {
     uint64_t     instanceId;
 } bts_asset_type_t;
 
+typedef struct bts_asset_description_t {
+    uint8_t precision;
+    char    symbol[23]; // More than enough to accomodate longest symbol or
+                        // '[1.3.xxx]' for largest instanceId
+} bts_asset_description_t;
+
 uint32_t deserializeBtsAssetType(uint8_t *buffer, uint32_t bufferLength, bts_asset_type_t * asset);
+
+uint32_t prettyPrintBtsAssetType(bts_asset_type_t asset, char * buffer);
+
+bool getBtsAssetDescription(bts_asset_type_t asset, bts_asset_description_t *desc);
 
 #endif

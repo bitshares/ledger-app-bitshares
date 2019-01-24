@@ -18,7 +18,9 @@
 
 #include "bts_asset_type.h"
 #include "eos_types.h"
+#include "eos_utils.h"
 #include "os.h"
+#include <string.h>
 
 uint32_t deserializeBtsAssetType(uint8_t *buffer, uint32_t bufferLength, bts_asset_type_t * asset) {
 
@@ -43,4 +45,92 @@ uint32_t deserializeBtsAssetType(uint8_t *buffer, uint32_t bufferLength, bts_ass
 
     return read;
 
+}
+
+uint32_t prettyPrintBtsAssetType(const bts_asset_type_t asset, char * buffer) {
+
+    uint32_t written = 0;
+    bts_asset_description_t desc;
+    getBtsAssetDescription(asset, &desc);
+
+    int64_t p = desc.precision;
+    int64_t p10 = 1;
+    while (p > 0) {
+        p10 *= 10; --p;
+    }
+
+    // Separate whole from fractional:
+    uint64_t fractional = asset.amount % p10;
+    uint64_t integral = (asset.amount - fractional)/p10;
+
+    while (fractional>0 && fractional%10==0) {
+        fractional /= 10; // (Gobble trailing zeros)
+    }
+
+    // To ASCII:
+    ui64toa(integral, buffer+written);          // Whole number part
+    written = strlen(buffer);
+    if (fractional > 0) {
+        buffer[written] = '.';                  // Decimal separator
+        written++;
+        ui64toa(fractional, buffer+written);    // Fractional part
+        written = strlen(buffer);
+    }
+    buffer[written] = ' ';                      // Space
+    written++;
+    strcpy(buffer+written, desc.symbol);        // Symbol
+    written = strlen(buffer);
+
+    return written;
+}
+
+bool getBtsAssetDescription(const bts_asset_type_t asset, bts_asset_description_t *desc) {
+
+    uint32_t written = 0;
+    bool known = true;
+
+    // TODO: Hand-coded popular known assets, but need to code this
+    // more as a look up table.
+    switch (asset.instanceId) {
+    case 0:
+        desc->precision = 5;
+        strcpy(desc->symbol, "BTS");
+        break;
+    case 113:
+        desc->precision = 4;
+        strcpy(desc->symbol, "CNY");
+        break;
+    case 121:
+        desc->precision = 4;
+        strcpy(desc->symbol, "USD");
+        break;
+    case 850:
+        desc->precision = 6;
+        strcpy(desc->symbol, "OPEN.ETH");
+        break;
+    case 1570:
+        desc->precision = 8;
+        strcpy(desc->symbol, "BRIDGE.BTC");
+        break;
+    case 1999:
+        desc->precision = 6;
+        strcpy(desc->symbol, "OPEN.EOS");
+        break;
+    case 3428:
+        desc->precision = 4;
+        strcpy(desc->symbol, "OPEN.XRP");
+        break;
+
+    default:
+        known = false;
+        desc->precision = 0;
+        strcpy(desc->symbol, "[1.3.");
+        written = strlen(desc->symbol);
+        ui64toa(asset.instanceId, desc->symbol+written);
+        written = strlen(desc->symbol);
+        strcpy(desc->symbol+written, "]");
+        break;
+    }
+
+    return known;
 }
