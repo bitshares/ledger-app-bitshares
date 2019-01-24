@@ -123,7 +123,7 @@ typedef enum parserStatus_e {
     STREAM_FAULT
 } parserStatus_e;
 
-void initTxContext(
+void initTxProcessingContext(
     txProcessingContext_t *context, 
     cx_sha256_t *sha256,
     cx_sha256_t *txIdSha256,
@@ -131,6 +131,7 @@ void initTxContext(
     txProcessingContent_t *processingContent, 
     uint8_t dataAllowed
 );
+
 parserStatus_e processTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length);
 
 void printOperationName(uint32_t opId, txProcessingContext_t *processingContext);

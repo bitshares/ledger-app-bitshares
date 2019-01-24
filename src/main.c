@@ -740,8 +740,8 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
             dataLength -= 4;
         }
         dataPresent = false;
-        initTxContext(&txProcessingCtx, &sha256, &txIdSha256, &dataSha256,
-                      &txContent, N_storage.dataAllowed);
+        initTxProcessingContext(&txProcessingCtx, &sha256, &txIdSha256, &dataSha256,
+                                &txContent, N_storage.dataAllowed);
     }
     else if (p1 != P1_MORE)
     {
