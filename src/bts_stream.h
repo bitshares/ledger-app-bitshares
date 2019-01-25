@@ -59,8 +59,6 @@
 typedef struct txProcessingContent_t {
     uint32_t operationCount;  // How many operation payloads written to operationDataBuffer
     char argumentCount;       // Argument count for *current* operation being parsed
-    char contract[14];        // EOS - DEPRECATE
-    char action[14];          // EOS - DEPRECATE
     actionArgument_t arg;     // We step through args and buffer display text in here
     uint32_t operationIds[TX_MAX_OPERATIONS];  // OpId's of cached operation payloads
     uint8_t txIdHash[32];     // Not same as message hash
@@ -93,12 +91,8 @@ typedef struct txProcessingContext_t {
     txProcessingState_e state;
     cx_sha256_t *sha256;
     cx_sha256_t *txIdSha256;
-    cx_sha256_t *dataSha256;
     uint32_t currentFieldLength;
     uint32_t currentFieldPos;
-    uint32_t currentAutorizationIndex;
-    uint32_t currentAutorizationNumber;
-    uint32_t currentActionDataBufferLength;
     uint32_t operationsRemaining;   // bitshares
     uint32_t currentOperationId;    // bitshares
     uint32_t currentOperationDataLength;  // bitshares
@@ -108,7 +102,6 @@ typedef struct txProcessingContext_t {
     uint8_t *workBuffer;      // Points into the APDU buffer. Increment as we process.
     uint32_t commandLength;   // Bytes remaining in APDU buffer rel to workBuffer.
     uint8_t sizeBuffer[12];   // Used for caching VarInts for decoding
-    uint8_t actionDataBuffer[8];        // Used for caching Action data (DEPRECATED EOS)
     uint8_t operationDataBuffer[512];   // Cache for Operation data for later parsing
     uint8_t dataAllowed;      // Accept unknown Operation types?  Or throw?
     checksum256 dataChecksum;
@@ -125,7 +118,6 @@ void initTxProcessingContext(
     txProcessingContext_t *context, 
     cx_sha256_t *sha256,
     cx_sha256_t *txIdSha256,
-    cx_sha256_t *dataSha256,
     txProcessingContent_t *processingContent, 
     uint8_t dataAllowed
 );

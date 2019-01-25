@@ -89,8 +89,6 @@ typedef struct transactionContext_t
 
 cx_sha256_t sha256;           // Message hash context (produces hash that we will sign)
 cx_sha256_t txIdSha256;       // Separate hash for txId (since it excludes ChainID)
-cx_sha256_t dataSha256;       // For hashes of payloads of unrecognized Operation types
-                              //   (a next-best-thing to decoding Op arguments)
 
 union {
     publicKeyContext_t publicKeyContext;
@@ -740,7 +738,7 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
             dataLength -= 4;
         }
         dataPresent = false;
-        initTxProcessingContext(&txProcessingCtx, &sha256, &txIdSha256, &dataSha256,
+        initTxProcessingContext(&txProcessingCtx, &sha256, &txIdSha256,
                                 &txContent, N_storage.dataAllowed);
     }
     else if (p1 != P1_MORE)
