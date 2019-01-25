@@ -96,17 +96,49 @@ bool getBtsAssetDescription(const bts_asset_type_t asset, bts_asset_description_
         desc->precision = 5;
         strcpy(desc->symbol, "BTS");
         break;
+    case 102:
+        desc->precision = 4;
+        strcpy(desc->symbol, "bitKRW");
+        break;
+    case 103:
+        desc->precision = 8;
+        strcpy(desc->symbol, "bitBTC");
+        break;
+    case 105:
+        desc->precision = 4;
+        strcpy(desc->symbol, "bitSILVER");
+        break;
+    case 106:
+        desc->precision = 6;
+        strcpy(desc->symbol, "bitGOLD");
+        break;
     case 113:
         desc->precision = 4;
-        strcpy(desc->symbol, "CNY");
+        strcpy(desc->symbol, "bitCNY");
+        break;
+    case 114:
+        desc->precision = 4;
+        strcpy(desc->symbol, "bitMXN");
+        break;
+    case 120:
+        desc->precision = 4;
+        strcpy(desc->symbol, "bitEUR");
         break;
     case 121:
         desc->precision = 4;
-        strcpy(desc->symbol, "USD");
+        strcpy(desc->symbol, "bitUSD");
         break;
     case 850:
         desc->precision = 6;
         strcpy(desc->symbol, "OPEN.ETH");
+        break;
+    case 861:
+        desc->precision = 8;
+        strcpy(desc->symbol, "OPEN.BTC");
+        break;
+    case 1325:
+        desc->precision = 5;
+        strcpy(desc->symbol, "bitRUBLE");
         break;
     case 1570:
         desc->precision = 8;
@@ -119,6 +151,10 @@ bool getBtsAssetDescription(const bts_asset_type_t asset, bts_asset_description_
     case 3428:
         desc->precision = 4;
         strcpy(desc->symbol, "OPEN.XRP");
+        break;
+    case 3458:
+        desc->precision = 8;
+        strcpy(desc->symbol, "ESCODEX.BTC");
         break;
 
     default:
