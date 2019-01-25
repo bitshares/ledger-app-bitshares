@@ -107,8 +107,6 @@ typedef struct txProcessingContext_t {
     uint32_t tlvBufferPos;
     uint8_t *workBuffer;      // Points into the APDU buffer. Increment as we process.
     uint32_t commandLength;   // Bytes remaining in APDU buffer rel to workBuffer.
-    name_t contractName;
-    name_t contractActionName;
     uint8_t sizeBuffer[12];   // Used for caching VarInts for decoding
     uint8_t actionDataBuffer[8];        // Used for caching Action data (DEPRECATED EOS)
     uint8_t operationDataBuffer[512];   // Cache for Operation data for later parsing

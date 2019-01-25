@@ -29,36 +29,8 @@
 
 #include <stdint.h>
 
-typedef uint64_t name_t;
-typedef uint64_t symbol_t;
 typedef uint8_t checksum256[32];
 typedef uint8_t public_key_t[33];
-
-typedef struct transaction_header_t {
-    uint32_t expiration;
-    uint16_t ref_block_num;
-    uint32_t ref_block_prefix;
-    uint32_t max_net_usage_words;
-    uint8_t max_cpu_usage_ms;
-    uint32_t delay_sec;
-} transaction_header_t;
-
-typedef struct action_t {
-    name_t account;
-    name_t name;
-    // vector<permission_level> autorization;
-    // vector<char> bytes;
-} action_t;
-
-typedef struct permisssion_level_t {
-    name_t actor;
-    name_t permission;
-} permisssion_level_t;
-
-typedef struct asset_t {
-    int64_t amount;
-    symbol_t symbol;
-} asset_t;
 
 /**
  * Unpacks a variable-length encoded unsigned integer from a byte buffer into a
@@ -74,11 +46,6 @@ uint32_t unpack_varint32(uint8_t *in, uint32_t length, uint32_t *value);
  * be up to 48 bits. Throws EXCEPTION_OVERFLOW if decoding exceeds 48 bits.
  */
 uint32_t unpack_varint48(uint8_t *in, uint64_t *value);
-
-name_t buffer_to_name_type(uint8_t *in, uint32_t size);
-uint8_t name_to_string(name_t value, char *out, uint32_t size);
-
-uint8_t asset_to_string(asset_t *asset, char *out, uint32_t size);
 
 uint32_t public_key_to_wif(uint8_t *publicKey, uint32_t keyLength, char *out, uint32_t outLength);
 uint32_t compressed_public_key_to_wif(uint8_t *publicKey, uint32_t keyLength, char *out, uint32_t outLength);

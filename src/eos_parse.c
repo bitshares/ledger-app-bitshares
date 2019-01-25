@@ -28,7 +28,9 @@
 #include "os.h"
 #include "cx.h"
 #include "eos_types.h"
+#include "eos_utils.h"
 #include <stdbool.h>
+#include <string.h>
 
 void printString(const char in[], const char fieldName[], actionArgument_t *arg) {
     uint32_t inLength = strlen(in);
@@ -39,28 +41,6 @@ void printString(const char in[], const char fieldName[], actionArgument_t *arg)
 
     os_memmove(arg->label, fieldName, labelLength);
     os_memmove(arg->data, in, inLength);
-}
-
-void parseNameField(uint8_t *in, uint32_t inLength, const char fieldName[], actionArgument_t *arg, uint32_t *read, uint32_t *written) {
-    if (inLength < sizeof(name_t)) {
-        PRINTF("parseActionData Insufficient buffer\n");
-        THROW(EXCEPTION);
-    }
-    uint32_t labelLength = strlen(fieldName);
-    if (labelLength > sizeof(arg->label)) {
-        PRINTF("parseActionData Label too long\n");
-        THROW(EXCEPTION);
-    }
-
-    os_memset(arg->label, 0, sizeof(arg->label));
-    os_memset(arg->data, 0, sizeof(arg->data));
-    
-    os_memmove(arg->label, fieldName, labelLength);
-    name_t name = buffer_to_name_type(in, sizeof(name_t));
-    uint32_t writtenToBuff = name_to_string(name, arg->data, sizeof(arg->data)-1);
-
-    *read = sizeof(name_t);
-    *written = writtenToBuff;
 }
 
 void parsePublicKeyField(uint8_t *in, uint32_t inLength, const char fieldName[], actionArgument_t *arg, uint32_t *read, uint32_t *written) {
@@ -153,30 +133,6 @@ void parseUInt64Field(uint8_t *in, uint32_t inLength, const char fieldName[], ac
     *written = strlen(arg->data);
 }
 
-void parseAssetField(uint8_t *in, uint32_t inLength, const char fieldName[], actionArgument_t *arg, uint32_t *read, uint32_t *written) {
-    if (inLength < sizeof(asset_t)) {
-        PRINTF("parseActionData Insufficient buffer\n");
-        THROW(EXCEPTION);
-    }
-
-    uint32_t labelLength = strlen(fieldName);
-    if (labelLength > sizeof(arg->label)) {
-        PRINTF("parseActionData Label too long\n");
-        THROW(EXCEPTION);
-    }
-
-    os_memset(arg->label, 0, sizeof(arg->label));
-    os_memset(arg->data, 0, sizeof(arg->data));
-
-    os_memmove(arg->label, fieldName, labelLength);
-    asset_t asset;
-    os_memmove(&asset, in, sizeof(asset));
-    uint32_t writtenToBuff = asset_to_string(&asset, arg->data, sizeof(arg->data)-1); 
-
-    *read = sizeof(asset_t);
-    *written = writtenToBuff;
-}
-
 void parseStringField(uint8_t *in, uint32_t inLength, const char fieldName[], actionArgument_t *arg, uint32_t *read, uint32_t *written) {
     uint32_t labelLength = strlen(fieldName);
     if (labelLength > sizeof(arg->label)) {
@@ -211,21 +167,4 @@ void parseStringField(uint8_t *in, uint32_t inLength, const char fieldName[], ac
 
     *read = readFromBuffer + fieldLength;
     *written = fieldLength;
-}
-
-void parsePermissionField(uint8_t *in, uint32_t inLength, const char fieldName[], actionArgument_t *arg, uint32_t *read, uint32_t *written) {
-    uint32_t accountWrittenLength = 0;
-    
-    parseNameField(in, inLength, fieldName, arg, read, &accountWrittenLength);
-    strcat(arg->data, "@");
-    
-    in += *read; inLength -= *read;
-    if (inLength < sizeof(name_t)) {
-        PRINTF("parseActionData Insufficient buffer\n");
-        THROW(EXCEPTION);
-    }
-    name_t name = buffer_to_name_type(in, sizeof(name_t));
-    
-    *written = name_to_string(name, arg->data + accountWrittenLength + 1, sizeof(arg->data) - accountWrittenLength - 1) + accountWrittenLength;
-    *read += sizeof(name_t);
 }
