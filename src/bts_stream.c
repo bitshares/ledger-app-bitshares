@@ -101,7 +101,7 @@ void printArgument(uint8_t argNum, txProcessingContent_t *content) {
  * Hash functionality is moved out here in order to reduce 
  * dependencies on specific hash implementation.
 */
-static void hashTxData(txProcessingContext_t *context, uint8_t *buffer, uint32_t length) {
+static void hashTxData(txProcessingContext_t *context, const uint8_t *buffer, uint32_t length) {
     cx_hash(&context->sha256->header, 0, buffer, length, NULL);
     cx_hash(&context->txIdSha256->header, 0, buffer, length, NULL);
     /* Second hash because TxId excludes ChainID but message hash (what we sign)
@@ -433,7 +433,7 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
  * TX_EXTENSION_NUMBER theoretically is not fixed due to serialization. Ledger accepts only 0 as encoded value.
  * CTX_FREE_ACTION_DATA_NUMBER theoretically is not fixed due to serialization. Ledger accepts only 0 as encoded value.
 */
-parserStatus_e processTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length) {
+parserStatus_e processTx(txProcessingContext_t *context, const uint8_t *buffer, uint32_t length) {
     parserStatus_e result;
 #ifdef DEBUG_APP
     // Do not catch exceptions.

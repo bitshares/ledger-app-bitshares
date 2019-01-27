@@ -121,7 +121,7 @@ typedef struct txProcessingContext_t {
     bool processingField;     // True: processing a field; False: decoding TLV header.
     uint8_t tlvBuffer[5];     // TODO: Does this need to be six?
     uint32_t tlvBufferPos;
-    uint8_t *workBuffer;      // Points into the APDU buffer. Increment as we process.
+    const uint8_t *workBuffer;// Points into the APDU buffer. Increment as we process.
     uint32_t commandLength;   // Bytes remaining in APDU buffer rel to workBuffer.
     uint8_t sizeBuffer[12];   // Used for caching VarInts for decoding
     uint8_t dataAllowed;      // Accept unknown Operation types?  Or throw?
@@ -144,7 +144,7 @@ void initTxProcessingContext(
 );
 void initTxProcessingContent(txProcessingContent_t *content);
 
-parserStatus_e processTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length);
+parserStatus_e processTx(txProcessingContext_t *context, const uint8_t *buffer, uint32_t length);
 
 void printArgument(uint8_t argNum, txProcessingContent_t *content);
 void printTxId(txProcessingContext_t *processingContext);

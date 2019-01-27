@@ -632,7 +632,7 @@ uint32_t set_result_get_publicKey()
     return tx;
 }
 
-void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer,
+void handleGetPublicKey(uint8_t p1, uint8_t p2, const uint8_t *dataBuffer,
                         uint16_t dataLength, volatile unsigned int *flags,
                         volatile unsigned int *tx)
 {
@@ -694,7 +694,7 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, uint8_t *dataBuffer,
     }
 }
 
-void handleGetAppConfiguration(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
+void handleGetAppConfiguration(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
                                uint16_t dataLength,
                                volatile unsigned int *flags,
                                volatile unsigned int *tx)
@@ -712,7 +712,7 @@ void handleGetAppConfiguration(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
     THROW(0x9000);
 }
 
-void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
+void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
                 uint16_t dataLength, volatile unsigned int *flags,
                 volatile unsigned int *tx)
 {
