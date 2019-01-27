@@ -22,7 +22,7 @@
 #include "os.h"
 #include <string.h>
 
-uint32_t deserializeBtsAssetType(uint8_t *buffer, uint32_t bufferLength, bts_asset_type_t * asset) {
+uint32_t deserializeBtsAssetType(const uint8_t *buffer, uint32_t bufferLength, bts_asset_type_t * asset) {
 
     uint32_t read = 0;
     uint32_t gobbled = 0;

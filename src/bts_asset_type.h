@@ -33,7 +33,7 @@ typedef struct bts_asset_description_t {
                         // '[1.3.xxx]' for largest instanceId
 } bts_asset_description_t;
 
-uint32_t deserializeBtsAssetType(uint8_t *buffer, uint32_t bufferLength, bts_asset_type_t * asset);
+uint32_t deserializeBtsAssetType(const uint8_t *buffer, uint32_t bufferLength, bts_asset_type_t * asset);
 
 uint32_t prettyPrintBtsAssetType(bts_asset_type_t asset, char * buffer);
 

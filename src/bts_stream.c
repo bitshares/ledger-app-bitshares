@@ -78,7 +78,7 @@ void printTxId(txProcessingContext_t *context) {
     array_hexstr(context->content->txParamDisplayBuffer+9, context->content->txIdHash+17, 3);
 }
 
-void printArgument(uint8_t argNum, const txProcessingContent_t *content) {
+void printArgument(uint8_t argNum, txProcessingContent_t *content) {
 
     const uint32_t opIdx = content->currentOperation;
     const operationId_t opId = content->operationIds[opIdx];
@@ -112,10 +112,10 @@ static void hashTxData(txProcessingContext_t *context, uint8_t *buffer, uint32_t
  * Used in processX(...) functions to gather and hash bytes from the APDU buffer.  If the
  * remaining unread bytes in the APDU buffer number less than what's needed to complete
  * current TLV field, then we stop at the end of the APDU buffer. (It will be refreshed
- * on the next host communication cycle.) If `buffer` is non-NULL, then store the gathered
- * bytes in `buffer`.  Else only hashing is needed for this field.
-*/
-static void processHelperGobbleCommandBytes(txProcessingContext_t *context, const uint8_t *buffer) {
+ * on the next host communication cycle.) If `copybuffer` is non-NULL, then store the
+ * gathered bytes in `copybuffer`.  Else only hashing is needed for this field.
+ */
+static void processHelperGobbleCommandBytes(txProcessingContext_t *context, uint8_t *copybuffer) {
     uint32_t length =
         (context->commandLength <
                  ((context->currentFieldLength - context->currentFieldPos))
@@ -124,8 +124,8 @@ static void processHelperGobbleCommandBytes(txProcessingContext_t *context, cons
 
     hashTxData(context, context->workBuffer, length);
 
-    if (buffer != NULL) {
-        os_memmove(buffer + context->currentFieldPos, context->workBuffer, length);
+    if (copybuffer != NULL) {
+        os_memmove(copybuffer + context->currentFieldPos, context->workBuffer, length);
     }
 
     context->workBuffer += length;
@@ -261,7 +261,7 @@ static void processOperationDataField(txProcessingContext_t *context) {
 
     const uint32_t currentOpIdx = context->content->operationCount-1;
     const uint32_t opDataOffset = (currentOpIdx == 0) ? 0 : context->content->operationOffsets[currentOpIdx-1];
-    const uint8_t* currentOpBuffer = context->content->operationDataBuffer + opDataOffset;
+    uint8_t* const currentOpBuffer = context->content->operationDataBuffer + opDataOffset;
     const uint32_t opBufferRemaining = (opDataOffset >= sizeof(context->content->operationDataBuffer))
         ? 0: sizeof(context->content->operationDataBuffer) - opDataOffset;
 

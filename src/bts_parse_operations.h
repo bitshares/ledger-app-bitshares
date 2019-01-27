@@ -35,6 +35,6 @@ void printCurrentOperationName(txProcessingContent_t *content);
  */
 uint32_t getOperationArgumentCount(txProcessingContent_t *content);
 
-void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg);
+void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg);
 
 #endif

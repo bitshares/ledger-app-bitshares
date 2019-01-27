@@ -29,6 +29,6 @@ typedef struct bts_operation_transfer_t {
     char             memoPresent;
 } bts_operation_transfer_t;
 
-uint32_t deserializeBtsOperationTransfer(uint8_t *buffer, uint32_t bufferLength, bts_operation_transfer_t * op);
+uint32_t deserializeBtsOperationTransfer(const uint8_t *buffer, uint32_t bufferLength, bts_operation_transfer_t * op);
 
 #endif

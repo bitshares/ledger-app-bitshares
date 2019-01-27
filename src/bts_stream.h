@@ -146,7 +146,7 @@ void initTxProcessingContent(txProcessingContent_t *content);
 
 parserStatus_e processTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length);
 
-void printArgument(uint8_t argNum, const txProcessingContent_t *content);
+void printArgument(uint8_t argNum, txProcessingContent_t *content);
 void printTxId(txProcessingContext_t *processingContext);
 
 #endif // __BTS_STREAM_H__

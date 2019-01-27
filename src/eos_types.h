@@ -38,14 +38,14 @@ typedef uint8_t public_key_t[33];
  * input buffer.  Throws EXCEPTION_OVERFLOW if decoding exceeds 32 bits.
  * TODO: `length` parameter is unused. Refactor.
  */
-uint32_t unpack_varint32(uint8_t *in, uint32_t length, uint32_t *value);
+uint32_t unpack_varint32(const uint8_t *in, uint32_t length, uint32_t *value);
 
 /**
  * Unpacks a variable-length unsigned integer up to 48-bits into a uint64. Similar
  * to 32-bit version, but this one can be used for BitShares instance_id's which can
  * be up to 48 bits. Throws EXCEPTION_OVERFLOW if decoding exceeds 48 bits.
  */
-uint32_t unpack_varint48(uint8_t *in, uint64_t *value);
+uint32_t unpack_varint48(const uint8_t *in, uint64_t *value);
 
 uint32_t public_key_to_wif(uint8_t *publicKey, uint32_t keyLength, char *out, uint32_t outLength);
 uint32_t compressed_public_key_to_wif(uint8_t *publicKey, uint32_t keyLength, char *out, uint32_t outLength);

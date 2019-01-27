@@ -20,7 +20,7 @@
 #include "eos_types.h"
 #include "os.h"
 
-uint32_t deserializeBtsOperationTransfer(uint8_t *buffer, uint32_t bufferLength, bts_operation_transfer_t * op) {
+uint32_t deserializeBtsOperationTransfer(const uint8_t *buffer, uint32_t bufferLength, bts_operation_transfer_t * op) {
 
     uint32_t read = 0;
     uint32_t gobbled = 0;

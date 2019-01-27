@@ -86,7 +86,7 @@ uint32_t getOperationArgumentCount(txProcessingContent_t *content) {
     }
 }
 
-void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
+void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
     uint32_t read = 0;
     uint32_t written = 0;
     bts_operation_transfer_t op;
