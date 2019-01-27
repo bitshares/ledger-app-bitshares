@@ -32,6 +32,7 @@
 #include "string.h"
 #include "eos_utils.h"
 #include "bts_stream.h"
+#include "bts_parse_operations.h"
 
 #include "glyphs.h"
 
@@ -346,7 +347,7 @@ const bagl_element_t ui_approval_nanos[] = {
 
     {{BAGL_LABELINE, 0x03, 0, 12, 128, 32, 0, 0, 0, 0xFFFFFF, 0x000000,
       BAGL_FONT_OPEN_SANS_REGULAR_11px | BAGL_FONT_ALIGNMENT_CENTER, 0},
-     "Operation n of m",
+     (char *)txContent.txLabelDisplayBuffer,
      0,
      0,
      0,
@@ -415,18 +416,17 @@ unsigned int ui_approval_prepro(const bagl_element_t *element)
                 UX_CALLBACK_SET_INTERVAL(MAX(
                   3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 
-                printOperationName(txContent.operationIds[0/*TEMP*/], &txProcessingCtx);
-                // TODO: Need to extract actual current operation.  This will break when
-                // process >1 ops in a tx because I put explicit index 0.
+                printCurrentOperationName(&txContent);
 
                 break;
             case 4:
-                PRINTF("Argument: %d\n", ux_step - 3);
+                PRINTF("Argument: %d - (step: %d count %d)\n", ux_step - 3, ux_step, ux_step_count);
+                PRINTF("  CurrentOpIdx: %d\n", txContent.currentOperation);
 
                 UX_CALLBACK_SET_INTERVAL(MAX(
                     3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 
-                printArgument(ux_step - 3, &txProcessingCtx);
+                printArgument(ux_step - 3, &txContent);
                 break;
             }
         }
@@ -740,6 +740,7 @@ void handleSign(uint8_t p1, uint8_t p2, uint8_t *workBuffer,
         dataPresent = false;
         initTxProcessingContext(&txProcessingCtx, &sha256, &txIdSha256,
                                 &txContent, N_storage.dataAllowed);
+        initTxProcessingContent(&txContent);
     }
     else if (p1 != P1_MORE)
     {
@@ -974,7 +975,19 @@ unsigned char io_event(unsigned char channel)
                 if (ux_step_count)
                 {
                     // prepare next screen
-                    ux_step = (ux_step + 1) % ux_step_count;
+                    ux_step = (ux_step + 1);// % ux_step_count;
+                    if (ux_step >= ux_step_count) {
+                        txContent.currentOperation = (txContent.currentOperation + 1) % txContent.operationCount;
+                        if (txContent.currentOperation==0) {
+                            ux_step = 0;
+                        } else {
+                            ux_step = 2;
+                        }
+                    }
+                    if (ux_step == 2) {
+                        txContent.argumentCount = getOperationArgumentCount(&txContent);
+                        ux_step_count = 3 + txContent.argumentCount;
+                    }
                     // redisplay screen
                     UX_REDISPLAY();
                 }

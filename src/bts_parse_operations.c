@@ -54,6 +54,38 @@ void parseStringLiteral(const char fieldText[], const char fieldName[], actionAr
 
 }
 
+void printCurrentOperationName(txProcessingContent_t *content) {
+
+    PRINTF("Content @ opCount member: %.*H\n", 32, &(content->operationCount));
+    char * opName;
+    const uint32_t opId = content->operationIds[content->currentOperation];
+
+    switch(opId) {
+    case OP_TRANSFER:
+        opName = "Transfer";
+        break;
+    default:
+        opName = "**Unknown Operation**";
+        break;
+    }
+    os_memset(content->txParamDisplayBuffer, 0, sizeof(content->txParamDisplayBuffer));
+    os_memmove(content->txParamDisplayBuffer, opName,
+               MIN(sizeof(content->txParamDisplayBuffer)-1,strlen(opName)));
+    os_memset(content->txLabelDisplayBuffer, 0, sizeof(content->txLabelDisplayBuffer));
+    snprintf(content->txLabelDisplayBuffer, sizeof(content->txLabelDisplayBuffer),
+             "Operation %u of %u", content->currentOperation+1, content->operationCount);
+
+}
+// TODO: These two functions ^^vv could be merged...
+uint32_t getOperationArgumentCount(txProcessingContent_t *content) {
+    switch (content->operationIds[content->currentOperation]) {
+    case OP_TRANSFER:
+        return 4;
+    default:
+        return 0;
+    }
+}
+
 void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
     uint32_t read = 0;
     uint32_t written = 0;

@@ -50,6 +50,10 @@ void initTxProcessingContext(txProcessingContext_t *context,
     cx_sha256_init(context->txIdSha256);
 }
 
+void initTxProcessingContent(txProcessingContent_t *content) { /* ConteNt */
+    os_memset(content, 0, sizeof(txProcessingContent_t));
+}
+
 uint8_t readTxByte(txProcessingContext_t *context) {
     uint8_t data;
     if (context->commandLength < 1) {
@@ -74,35 +78,22 @@ void printTxId(txProcessingContext_t *context) {
     array_hexstr(context->content->txParamDisplayBuffer+9, context->content->txIdHash+17, 3);
 }
 
-void printOperationName(uint32_t opId, txProcessingContext_t *context) {
-    char * opName;
-    if(opId == 0) {  // TODO: Implement proper map to known OpIds
-        opName = "Transfer";
-    } else {
-        opName = "**Unknown Operation**";
-    }
-    os_memset(context->content->txParamDisplayBuffer, 0, sizeof(context->content->txParamDisplayBuffer));
-    os_memmove(context->content->txParamDisplayBuffer, opName,
-               MIN(sizeof(context->content->txParamDisplayBuffer)-1,strlen(opName)));
-}
+void printArgument(uint8_t argNum, const txProcessingContent_t *content) {
 
-void printArgument(uint8_t argNum, txProcessingContext_t *context) {
-    /*
-    name_t contractName = context->contractName;
-    name_t actionName = context->contractActionName;
-    */ // TODO: Need to extract OpID instead of Action here for bitshares
-    uint8_t *buffer = context->operationDataBuffer;
-    uint32_t bufferLength = context->currentOperationDataLength;
-    actionArgument_t *arg =  &context->content->arg;
+    const uint32_t opIdx = content->currentOperation;
+    const operationId_t opId = content->operationIds[opIdx];
+    const uint32_t offset = (opIdx == 0) ? 0 : content->operationOffsets[opIdx-1];
+    const uint8_t *buffer = content->operationDataBuffer + offset;
+    const uint32_t bufferLength = content->operationOffsets[opIdx] - offset;
+    actionArgument_t *arg =  &content->arg;
+    PRINTF("Printing arg %u to op %u (id %u) at offset %u length %u\n",
+           (uint32_t)argNum, opIdx, (uint32_t)opId, offset, bufferLength);
 
     if (true /* TODO: needs to select TRANSFER op */) {
         parseTransferOperation(buffer, bufferLength, argNum, arg);
         return;
     }
 
-    if (context->dataAllowed == 1) {
-        parseUnknownAction(context->dataChecksum, sizeof(context->dataChecksum), argNum, arg);
-    }
 }
 
 /**
@@ -124,7 +115,7 @@ static void hashTxData(txProcessingContext_t *context, uint8_t *buffer, uint32_t
  * on the next host communication cycle.) If `buffer` is non-NULL, then store the gathered
  * bytes in `buffer`.  Else only hashing is needed for this field.
 */
-static void processHelperGobbleCommandBytes(txProcessingContext_t *context, uint8_t *buffer) {
+static void processHelperGobbleCommandBytes(txProcessingContext_t *context, const uint8_t *buffer) {
     uint32_t length =
         (context->commandLength <
                  ((context->currentFieldLength - context->currentFieldPos))
@@ -246,13 +237,13 @@ static void processOperationIdField(txProcessingContext_t *context) {
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {
-        uint32_t sizeValue = 0;
-        unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
-        context->currentOperationId = sizeValue;
+        uint32_t opIdValue = 0;
+        unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &opIdValue);
+        context->currentOperationId = opIdValue;
 
         // Push-back into Content structure
         uint32_t opIdx = context->content->operationCount++;
-        context->content->operationIds[opIdx] = sizeValue;
+        context->content->operationIds[opIdx] = opIdValue;
 
         // Reset size buffer
         os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
@@ -268,27 +259,25 @@ static void processOperationIdField(txProcessingContext_t *context) {
 */
 static void processOperationDataField(txProcessingContext_t *context) {
 
-    if (context->currentFieldLength > sizeof(context->operationDataBuffer) - 1) {
+    const uint32_t currentOpIdx = context->content->operationCount-1;
+    const uint32_t opDataOffset = (currentOpIdx == 0) ? 0 : context->content->operationOffsets[currentOpIdx-1];
+    const uint8_t* currentOpBuffer = context->content->operationDataBuffer + opDataOffset;
+    const uint32_t opBufferRemaining = (opDataOffset >= sizeof(context->content->operationDataBuffer))
+        ? 0: sizeof(context->content->operationDataBuffer) - opDataOffset;
+
+    if (context->currentFieldLength > opBufferRemaining) {
         PRINTF("processOperationData buffer overflow\n");
         THROW(EXCEPTION);
     }
 
     if (context->currentFieldPos < context->currentFieldLength) {
-        processHelperGobbleCommandBytes(context, context->operationDataBuffer);
+        processHelperGobbleCommandBytes(context, currentOpBuffer);
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {
-        context->currentOperationDataLength = context->currentFieldLength;
+        context->content->operationOffsets[currentOpIdx] = opDataOffset + context->currentFieldLength;
 
-        /*
-        if (context->contractActionName == EOSIO_TOKEN_TRANSFER) {
-            processTokenTransfer(context);
-        } else {
-            THROW(EXCEPTION);
-        }
-        */
-        // TODO: Specific preprocessing based on OperationID instead of ActionName
-        /* TEMP */ context->content->argumentCount = 4; /* should be in specific preprocess */
+        PRINTF("Added %d bytes to Op buffer; Offsets: %.*H\n", context->currentFieldLength, 12, context->content->operationOffsets);
 
         context->state++;
         context->processingField = false;

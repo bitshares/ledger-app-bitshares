@@ -36,7 +36,12 @@
 /* Limits on allowed transaction parameters that we will accept. (These
  * are not BitShares limits but rather limits in what we will handle.) */
 #define TX_MIN_OPERATIONS 1
-#define TX_MAX_OPERATIONS 1
+#define TX_MAX_OPERATIONS 2
+
+enum {
+    OP_TRANSFER = 0,
+};
+typedef uint32_t operationId_t;
 
 /***
  *  On Difference Between txProcessingContent_t and txProcessingContext_t:
@@ -57,13 +62,31 @@
  */
 
 typedef struct txProcessingContent_t {
-    uint32_t operationCount;  // How many operation payloads written to operationDataBuffer
-    char argumentCount;       // Argument count for *current* operation being parsed
-    actionArgument_t arg;     // We step through args and buffer display text in here
-    uint32_t operationIds[TX_MAX_OPERATIONS];  // OpId's of cached operation payloads
-    uint8_t txIdHash[32];     // Not same as message hash
-    char txParamDisplayBuffer[48];  // Text buffer for UI display of TxID, Operaton Name, etc.
-    // TODO: operationDataBuffer probably more properly belongs here, rather than conteXt
+
+    char txParamDisplayBuffer[48];      /* Text buffer for UI display of TxID, Operation
+                                         * Name, etc. */
+    char txLabelDisplayBuffer[48];      /* Text buffer for UI display of label for TxID,
+                                         * Operation Name, etc. */
+    uint8_t txIdHash[32];               /* Not same as message hash; this is for TxID as
+                                         * would be shown on a block explorer. */
+    uint8_t argumentCount;              /* Argument count for *current* operation being
+                                         * parsed */
+    actionArgument_t arg;               /* ASCII buffer for current op arg being
+                                         * displayed */
+    uint32_t operationCount;            /* How many operation payloads have been written
+                                         *  to operationDataBuffer */
+    uint32_t currentOperation;          /* Index of currently displaying operation */
+    operationId_t operationIds[TX_MAX_OPERATIONS];/* OpId's of cached operation
+                                                   * payloads */
+    uint32_t operationOffsets[TX_MAX_OPERATIONS]; /* Offsets of NEXT payloads in buffer.
+                                                   * Last used is offset to end+1 of the
+                                                   * buffer and gives a total used length
+                                                   * of the buffer */
+    uint8_t operationDataBuffer[512];   /* Cache for Operation data.  We transcribe
+                                         * recognized transaction payloads back-to-back in
+                                         * this buffer for later parsing.  We use the
+                                         * offset array to figure out where each next one
+                                         * begins. */
 } txProcessingContent_t;
 
 /**
@@ -95,14 +118,12 @@ typedef struct txProcessingContext_t {
     uint32_t currentFieldPos;
     uint32_t operationsRemaining;   // bitshares
     uint32_t currentOperationId;    // bitshares
-    uint32_t currentOperationDataLength;  // bitshares
     bool processingField;     // True: processing a field; False: decoding TLV header.
     uint8_t tlvBuffer[5];     // TODO: Does this need to be six?
     uint32_t tlvBufferPos;
     uint8_t *workBuffer;      // Points into the APDU buffer. Increment as we process.
     uint32_t commandLength;   // Bytes remaining in APDU buffer rel to workBuffer.
     uint8_t sizeBuffer[12];   // Used for caching VarInts for decoding
-    uint8_t operationDataBuffer[512];   // Cache for Operation data for later parsing
     uint8_t dataAllowed;      // Accept unknown Operation types?  Or throw?
     checksum256 dataChecksum;
     txProcessingContent_t *content; // TODO: Since this points to a global it seems we could just use the global and save the pointer.
@@ -121,11 +142,11 @@ void initTxProcessingContext(
     txProcessingContent_t *processingContent, 
     uint8_t dataAllowed
 );
+void initTxProcessingContent(txProcessingContent_t *content);
 
 parserStatus_e processTx(txProcessingContext_t *context, uint8_t *buffer, uint32_t length);
 
-void printOperationName(uint32_t opId, txProcessingContext_t *processingContext);
-void printArgument(uint8_t argNum, txProcessingContext_t *processingContext);
+void printArgument(uint8_t argNum, const txProcessingContent_t *content);
 void printTxId(txProcessingContext_t *processingContext);
 
 #endif // __BTS_STREAM_H__

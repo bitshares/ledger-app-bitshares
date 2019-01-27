@@ -20,6 +20,20 @@
 #define __BTS_PARSE_OPERATIONS_H__
 
 #include "eos_parse.h"
+#include "bts_stream.h"
+
+/**
+ * Prints current operation name into a buffer inside the `content` structure.
+ */
+void printCurrentOperationName(txProcessingContent_t *content);
+
+/**
+ * Retrieves the number of arguments that need display for the current Operation
+ * identified in the `content` structure.  If need be, it will parse the operation
+ * data to determine if there are optional args.  (E.g. if memo is present in a
+ * transfer operation, then arg count will be 5 instead of 4.)
+ */
+uint32_t getOperationArgumentCount(txProcessingContent_t *content);
 
 void parseTransferOperation(uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg);
 
