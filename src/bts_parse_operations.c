@@ -54,20 +54,33 @@ void parseStringLiteral(const char fieldText[], const char fieldName[], actionAr
 
 }
 
-void printCurrentOperationName(txProcessingContent_t *content) {
+void updateOperationContent(txProcessingContent_t *content) {
 
-    PRINTF("Content @ opCount member: %.*H\n", 32, &(content->operationCount));
     char * opName;
-    const uint32_t opId = content->operationIds[content->currentOperation];
 
-    switch(opId) {
+    switch (content->operationIds[content->currentOperation]) {
     case OP_TRANSFER:
+        content->argumentCount = 4;
+        content->operationParser = parseTransferOperation;
         opName = "Transfer";
         break;
+    case OP_LIMIT_ORDER_CREATE:
+        content->argumentCount = 2;
+        content->operationParser = parseUnsupportedOperation;
+        opName = "Create Limit Order";
+        break;
+    case OP_LIMIT_ORDER_CANCEL:
+        content->argumentCount = 2;
+        content->operationParser = parseUnsupportedOperation;
+        opName = "Cancel Limit Order";
+        break;
     default:
-        opName = "**Unknown Operation**";
+        content->argumentCount = 2;
+        content->operationParser = parseUnknownOperation;
+        opName = "** Unknown Operation **";
         break;
     }
+
     os_memset(content->txParamDisplayBuffer, 0, sizeof(content->txParamDisplayBuffer));
     os_memmove(content->txParamDisplayBuffer, opName,
                MIN(sizeof(content->txParamDisplayBuffer)-1,strlen(opName)));
@@ -76,19 +89,9 @@ void printCurrentOperationName(txProcessingContent_t *content) {
              "Operation %u of %u", content->currentOperation+1, content->operationCount);
 
 }
-// TODO: These two functions ^^vv could be merged...
-uint32_t getOperationArgumentCount(txProcessingContent_t *content) {
-    switch (content->operationIds[content->currentOperation]) {
-    case OP_TRANSFER:
-        return 4;
-    default:
-        return 0;
-    }
-}
 
 void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
     uint32_t read = 0;
-    uint32_t written = 0;
     bts_operation_transfer_t op;
 
     // Read fields:
@@ -106,5 +109,23 @@ void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_
     } else if (argNum == 3) {
         parseStringLiteral("", "Fee", arg);
         prettyPrintBtsAssetType(op.feeAsset, arg->data);
+    }
+}
+
+void parseUnsupportedOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
+
+    if (argNum == 0) {
+        parseStringLiteral("Cannot display details.", "Unsupported Operation", arg);
+    } else if (argNum == 1) {
+        parseStringLiteral("Use Discretion; Confirm at Own Risk.", "Warning!", arg);
+    }
+}
+
+void parseUnknownOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
+
+    if (argNum == 0) {
+        parseStringLiteral("Cannot display details.", "Unrecognized Operation", arg);
+    } else if (argNum == 1) {
+        parseStringLiteral("Use Discretion; Confirm at Own Risk.", "Warning!", arg);
     }
 }

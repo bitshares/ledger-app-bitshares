@@ -36,12 +36,27 @@
 /* Limits on allowed transaction parameters that we will accept. (These
  * are not BitShares limits but rather limits in what we will handle.) */
 #define TX_MIN_OPERATIONS 1
-#define TX_MAX_OPERATIONS 2
+#define TX_MAX_OPERATIONS 4
 
 enum {
     OP_TRANSFER = 0,
+    OP_LIMIT_ORDER_CREATE,
+    OP_LIMIT_ORDER_CANCEL,
+    OP_CALL_ORDER_UPDATE,
+    OP_FILL_ORDER,
+    OP_ACCOUNT_CREATE,
+    OP_ACCOUNT_UPDATE,
+    OP_ACCOUNT_WHITELIST,
+    OP_ACCOUNT_UPGRADE,
+    OP_ACCOUNT_TRANSFER,
 };
 typedef uint32_t operationId_t;
+
+/**
+ * Function prototype for operation parsers.  Used so we can pass function reference as an
+ * argument and resolve parser for correct operation type.
+ */
+typedef void operation_parser_f (const uint8_t *buffer, uint32_t bufferLength, uint8_t argIdx, actionArgument_t *arg);
 
 /***
  *  On Difference Between txProcessingContent_t and txProcessingContext_t:
@@ -75,14 +90,17 @@ typedef struct txProcessingContent_t {
                                          * displayed */
     uint32_t operationCount;            /* How many operation payloads have been written
                                          *  to operationDataBuffer */
-    uint32_t currentOperation;          /* Index of currently displaying operation */
+    uint32_t currentOperation;          /* Index of currently displaying operation
+                                         */
+    operation_parser_f *operationParser;/* Function pointer to parser appropriate for
+                                         * current operation */
     operationId_t operationIds[TX_MAX_OPERATIONS];/* OpId's of cached operation
                                                    * payloads */
     uint32_t operationOffsets[TX_MAX_OPERATIONS]; /* Offsets of NEXT payloads in buffer.
                                                    * Last used is offset to end+1 of the
                                                    * buffer and gives a total used length
                                                    * of the buffer */
-    uint8_t operationDataBuffer[512];   /* Cache for Operation data.  We transcribe
+    uint8_t operationDataBuffer[768];   /* Cache for Operation data.  We transcribe
                                          * recognized transaction payloads back-to-back in
                                          * this buffer for later parsing.  We use the
                                          * offset array to figure out where each next one

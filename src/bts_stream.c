@@ -85,14 +85,11 @@ void printArgument(uint8_t argNum, txProcessingContent_t *content) {
     const uint32_t offset = (opIdx == 0) ? 0 : content->operationOffsets[opIdx-1];
     const uint8_t *buffer = content->operationDataBuffer + offset;
     const uint32_t bufferLength = content->operationOffsets[opIdx] - offset;
-    actionArgument_t *arg =  &content->arg;
-    PRINTF("Printing arg %u to op %u (id %u) at offset %u length %u\n",
-           (uint32_t)argNum, opIdx, (uint32_t)opId, offset, bufferLength);
+    PRINTF("Printing arg %u to op %u (id %u) at offset %u length %u; parser %p\n",
+           (uint32_t)argNum, opIdx, (uint32_t)opId, offset, bufferLength, content->operationParser);
 
-    if (true /* TODO: needs to select TRANSFER op */) {
-        parseTransferOperation(buffer, bufferLength, argNum, arg);
-        return;
-    }
+    /* Parser was pre-selected, call by function pointer: */
+    content->operationParser(buffer, bufferLength, argNum, &content->arg);
 
 }
 

@@ -415,8 +415,8 @@ unsigned int ui_approval_prepro(const bagl_element_t *element)
                 PRINTF("Operation\n");
                 UX_CALLBACK_SET_INTERVAL(MAX(
                   3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
-
-                printCurrentOperationName(&txContent);
+                /* Operation name and label are already printed as side effect of
+                 * updateOperationContent(). */
 
                 break;
             case 4:
@@ -985,7 +985,9 @@ unsigned char io_event(unsigned char channel)
                         }
                     }
                     if (ux_step == 2) {
-                        txContent.argumentCount = getOperationArgumentCount(&txContent);
+                        updateOperationContent(&txContent); // sets argcount, parser, and
+                                                            // prints operation name into
+                                                            // display buffer
                         ux_step_count = 3 + txContent.argumentCount;
                     }
                     // redisplay screen
