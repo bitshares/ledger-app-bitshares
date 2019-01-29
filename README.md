@@ -6,6 +6,16 @@ The app follows the specification available in the doc/ folder, which documents 
 
 To use the generic wallet refer to `signTransaction.py`, `getPublicKey.py`.
 
+### Features:
+
+* Decodes parameters of recognized operations and displays them so that the user may be assured that the transaction is as intended.
+* Can process transactions with up to four operations in the transaction.
+* For unrecognized operations, displays a warning that the details cannot be extracted, but still allows the user to sign the transaction if they wish.
+
+### Supported Operations:
+
+* Transfer
+
 # How to Install developer version
 ## Configuring Ledger Environment
 
