@@ -61,7 +61,7 @@ parser.add_argument('--file', help="Serialized transaction in ascii hex format")
 args = parser.parse_args()
 
 if args.path is None:
-    args.path = "44'/194'/0'/0/0"
+    args.path = "48'/1'/1'/0/0"
 
 if args.file is None:
     args.file = 'transaction.hex'
@@ -91,11 +91,11 @@ with open(args.file, 'r') as f:
 
         if first:
             totalSize = len(donglePath) + 1 + len(chunk)
-            apdu = "D4040000".decode('hex') + chr(totalSize) + chr(pathSize) + donglePath + chunk
+            apdu = "B5040000".decode('hex') + chr(totalSize) + chr(pathSize) + donglePath + chunk
             first = False
         else:
             totalSize = len(chunk)
-            apdu = "D4048000".decode('hex') + chr(totalSize) + chunk
+            apdu = "B5048000".decode('hex') + chr(totalSize) + chunk
 
         offset += len(chunk)
         result = dongle.exchange(bytes(apdu))

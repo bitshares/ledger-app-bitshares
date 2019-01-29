@@ -52,7 +52,7 @@ else:
     chain_id = binascii.unhexlify(args.chain_id)
 
 if args.path is None:
-    args.path = "44'/194'/0'/0/0"
+    args.path = "48'/1'/1'/0/0"
 
 if args.file is None:
     args.file = 'bts_transaction_transfer_usd_with_memo.json'
@@ -79,11 +79,11 @@ with file(args.file) as f:
 
         if first:
             totalSize = len(donglePath) + 1 + len(chunk)
-            apdu = "D4040000".decode('hex') + chr(totalSize) + chr(pathSize) + donglePath + chunk
+            apdu = "B5040000".decode('hex') + chr(totalSize) + chr(pathSize) + donglePath + chunk
             first = False
         else:
             totalSize = len(chunk)
-            apdu = "D4048000".decode('hex') + chr(totalSize) + chunk
+            apdu = "B5048000".decode('hex') + chr(totalSize) + chunk
 
         offset += len(chunk)
         result = dongle.exchange(bytes(apdu))

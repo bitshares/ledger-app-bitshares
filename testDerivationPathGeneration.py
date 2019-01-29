@@ -38,13 +38,13 @@ def parse_bip32_path(path):
 
 
 dongle = getDongle(False)
-path = "44'/194'/0'/0/"
+path = "48'/1'/1'/0/"
 for i in range(0, 20):
     derPath = path + str(i)
     print "------------- {} -------------".format(derPath)
 
     donglePath = parse_bip32_path(derPath)
-    apdu = "D4020001".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath
+    apdu = "B5020001".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath
 
     result = dongle.exchange(bytes(apdu))
     offset = 1 + result[0]
