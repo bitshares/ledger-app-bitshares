@@ -1,16 +1,10 @@
 # Bitshares Wallet App for Ledger Nano S
 
-Bitshares wallet back-end for Ledger Nano S, adapted from ledger-app-eos.
+Bitshares wallet for Ledger Nano S.  This is the app that runs on the Nano S and signs transactions recieved via USB from a host wallet interface.  It also manages your keys, safeguarding the private keys and deriving the public and private keys from the wallet seed following [BIP-0032](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) and [SLIP-0048](https://github.com/satoshilabs/slips/blob/master/slip-0048.md).  A set of python scripts are provided to allow command-line signing of transactions where the transaction is read from a file in JSON format.  The main purpose of these scripts, aside from testing and verifying that the Nano app works as intended, is to provide a reference for developers developing GUI wallets.
 
-Original README from ledger-app-eos follows:
+The app follows the specification available in the doc/ folder, which documents the communication protocol with the device.
 
-# app-eos
-
-Eos wallet application framework for Ledger Nano S
-
-This follows the specification available in the doc/ folder
-
-To use the generic wallet refer to `signTransaction.py`, `getPublicKey.py` or Ledger EOS Wallet application available on Github at https://github.com/tarassh/fairy-wallet
+To use the generic wallet refer to `signTransaction.py`, `getPublicKey.py`.
 
 # How to Install developer version
 ## Configuring Ledger Environment
@@ -31,14 +25,14 @@ This will take a few minutes to install
 * install your app under apps/ for instance:
 ```
 cd apps/
-git clone https://github.com/tarassh/eos-ledger
+git clone https://github.com/christophersanborn/ledger-app-bitshares
 
 ```
 * connect to the machine with `ssh vagrant`
 * build eos app
 
 ```
-cd apps/eos-ledger
+cd apps/ledger-app-bitshares
 make clean
 make
 ```
