@@ -99,6 +99,8 @@ union {
 txProcessingContext_t txProcessingCtx;  // For decoding tx as it arrives on APDU
 txProcessingContent_t txContent;        // For decoded data to parse and display
 
+uint8_t instruction = 0x00;             // APDU INS byte.  Some ux steps need to know
+                                        // which instruction we are handling.
 volatile uint8_t dataAllowed;
 volatile char fullAddress[60];
 volatile bool dataPresent;
@@ -800,6 +802,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx)
             switch (G_io_apdu_buffer[OFFSET_INS])
             {
             case INS_GET_PUBLIC_KEY:
+                instruction = INS_GET_PUBLIC_KEY;
                 handleGetPublicKey(G_io_apdu_buffer[OFFSET_P1],
                                    G_io_apdu_buffer[OFFSET_P2],
                                    G_io_apdu_buffer + OFFSET_CDATA,
@@ -807,6 +810,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx)
                 break;
 
             case INS_SIGN:
+                instruction = INS_SIGN;
                 handleSign(G_io_apdu_buffer[OFFSET_P1],
                            G_io_apdu_buffer[OFFSET_P2],
                            G_io_apdu_buffer + OFFSET_CDATA,
@@ -814,6 +818,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx)
                 break;
 
             case INS_GET_APP_CONFIGURATION:
+                instruction = INS_GET_APP_CONFIGURATION;
                 handleGetAppConfiguration(
                     G_io_apdu_buffer[OFFSET_P1], G_io_apdu_buffer[OFFSET_P2],
                     G_io_apdu_buffer + OFFSET_CDATA,
@@ -821,6 +826,7 @@ void handleApdu(volatile unsigned int *flags, volatile unsigned int *tx)
                 break;
 
             default:
+                instruction = 0x00;
                 THROW(0x6D00);
                 break;
             }
@@ -975,21 +981,25 @@ unsigned char io_event(unsigned char channel)
                 if (ux_step_count)
                 {
                     // prepare next screen
+                    PRINTF("TICKER.in:  Step: %u, Count %u; Ins: %d; CurrentOp: %u, OpCount: %u\n",
+                           ux_step, ux_step_count, (int)instruction, txContent.currentOperation, txContent.operationCount);
                     ux_step = (ux_step + 1);// % ux_step_count;
                     if (ux_step >= ux_step_count) {
                         txContent.currentOperation = (txContent.currentOperation + 1) % txContent.operationCount;
-                        if (txContent.currentOperation==0) {
-                            ux_step = 0;
-                        } else {
-                            ux_step = 2;
+                        if (txContent.currentOperation != 0 && instruction == INS_SIGN) {
+                            ux_step = 2;    // If we are signing a Tx with multiple Ops,
+                        } else {            // only go back to step zero when we cycle back
+                            ux_step = 0;    // to the first op in the list.
                         }
                     }
-                    if (ux_step == 2) {
+                    if (ux_step == 2 && instruction == INS_SIGN) {
                         updateOperationContent(&txContent); // sets argcount, parser, and
                                                             // prints operation name into
                                                             // display buffer
                         ux_step_count = 3 + txContent.argumentCount;
                     }
+                    PRINTF("TICKER.out: Step: %u, Count %u; Ins: %d; CurrentOp: %u, OpCount: %u\n",
+                           ux_step, ux_step_count, (int)instruction, txContent.currentOperation, txContent.operationCount);
                     // redisplay screen
                     UX_REDISPLAY();
                 }
