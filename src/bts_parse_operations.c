@@ -26,7 +26,7 @@
 
 #include "bts_parse_operations.h"
 #include "bts_operation_transfer.h"
-#include "eos_types.h"
+#include "bts_types.h"
 #include "eos_utils.h"
 #include "os.h"
 #include <string.h>

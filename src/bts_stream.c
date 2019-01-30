@@ -27,9 +27,9 @@
 #include <string.h>
 #include "bts_stream.h"
 #include "bts_parse_operations.h"
+#include "bts_types.h"
 #include "os.h"
 #include "cx.h"
-#include "eos_types.h"
 #include "eos_utils.h"
 #include "eos_parse.h"
 #include "eos_parse_unknown.h"

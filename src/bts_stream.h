@@ -30,7 +30,7 @@
 #include "os.h"
 #include "cx.h"
 #include <stdbool.h>
-#include "eos_types.h"
+#include "bts_types.h"
 #include "eos_parse.h"
 
 /* Limits on allowed transaction parameters that we will accept. (These

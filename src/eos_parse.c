@@ -24,10 +24,10 @@
 *  limitations under the License.
 ********************************************************************************/
 
+#include "bts_types.h"
 #include "eos_parse.h"
 #include "os.h"
 #include "cx.h"
-#include "eos_types.h"
 #include "eos_utils.h"
 #include <stdbool.h>
 #include <string.h>

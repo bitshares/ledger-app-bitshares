@@ -24,7 +24,7 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include "eos_types.h"
+#include "bts_types.h"
 #include "eos_utils.h"
 #include "os.h"
 #include <stdbool.h>
@@ -104,8 +104,8 @@ uint32_t compressed_public_key_to_wif(uint8_t *publicKey, uint32_t keyLength, ch
     os_memmove(temp + 33, check, 4);
     
     os_memset(out, 0, outLength);
-    out[0] = 'E';
-    out[1] = 'O';
+    out[0] = 'B';
+    out[1] = 'T';
     out[2] = 'S';
     uint32_t addressLen = outLength - 3;
     b58enc(temp, sizeof(temp), out + 3, &addressLen);

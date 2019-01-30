@@ -24,8 +24,8 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __EOS_TYPES_H__
-#define __EOS_TYPES_H__
+#ifndef __BTS_TYPES_H__
+#define __BTS_TYPES_H__
 
 #include <stdint.h>
 
@@ -50,4 +50,4 @@ uint32_t unpack_varint48(const uint8_t *in, uint64_t *value);
 uint32_t public_key_to_wif(uint8_t *publicKey, uint32_t keyLength, char *out, uint32_t outLength);
 uint32_t compressed_public_key_to_wif(uint8_t *publicKey, uint32_t keyLength, char *out, uint32_t outLength);
 
-#endif // __EOS_TYPES_H__
+#endif // __BTS_TYPES_H__

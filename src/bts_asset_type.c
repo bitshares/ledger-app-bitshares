@@ -17,7 +17,7 @@
 ********************************************************************************/
 
 #include "bts_asset_type.h"
-#include "eos_types.h"
+#include "bts_types.h"
 #include "eos_utils.h"
 #include "os.h"
 #include <string.h>
