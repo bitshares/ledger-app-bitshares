@@ -65,7 +65,7 @@ ripemd.update(public_key_compressed)
 check = ripemd.digest()[:4]
 
 buff = public_key_compressed + check
-print "Calculated from public key: Address EOS" + b58encode(str(buff))
+print "Calculated from public key: Address BTS" + b58encode(str(buff))
 print "      Received from ledger: Address " + str(address)
 
 apdu = "B5020101".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath

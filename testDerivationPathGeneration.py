@@ -62,7 +62,7 @@ for i in range(0, 20):
     check = ripemd.digest()[:4]
 
     buff = public_key_compressed + check
-    wif_public_key = "EOS" + b58encode(str(buff))
+    wif_public_key = "BTS" + b58encode(str(buff))
     print "Calculated from public key: Address " + wif_public_key
     print "      Received from ledger: Address " + str(address)
     assert wif_public_key == str(address)
