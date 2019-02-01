@@ -31,8 +31,6 @@
 #include "os.h"
 #include "cx.h"
 #include "eos_utils.h"
-#include "eos_parse.h"
-#include "eos_parse_unknown.h"
 
 void initTxProcessingContext(txProcessingContext_t *context,
                    cx_sha256_t *sha256,

@@ -31,7 +31,6 @@
 #include "cx.h"
 #include <stdbool.h>
 #include "bts_types.h"
-#include "eos_parse.h"
 
 /* Limits on allowed transaction parameters that we will accept. (These
  * are not BitShares limits but rather limits in what we will handle.) */

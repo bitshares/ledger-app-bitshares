@@ -19,7 +19,6 @@
 #ifndef __BTS_PARSE_OPERATIONS_H__
 #define __BTS_PARSE_OPERATIONS_H__
 
-#include "eos_parse.h"
 #include "bts_stream.h"
 
 
