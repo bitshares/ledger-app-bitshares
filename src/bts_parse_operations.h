@@ -22,6 +22,7 @@
 #include "eos_parse.h"
 #include "bts_stream.h"
 
+
 /**
  * Updates operation-related members of the `content` structure to reflect `currentOperation`
  * member, which we assume has already been set.  Specifically, we update `argumentCount` and
@@ -34,16 +35,16 @@ void updateOperationContent(txProcessingContent_t *content);
  * Parser for the Transfer operation. Handles stringification of operation arguments
  * for display to user.
  */
-void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg);
+void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum);
 
 /**
  * For operations that we know the name of but haven't written a parser for yet.
  */
-void parseUnsupportedOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg);
+void parseUnsupportedOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum);
 
 /**
  * For operations that we just haven't a clue about.
  */
-void parseUnknownOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg);
+void parseUnknownOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum);
 
 #endif

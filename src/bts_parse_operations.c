@@ -32,27 +32,10 @@
 #include <string.h>
 
 /**
- * This is for testing with dummy arguments given as string literals.  Should be removed after.
-*/
-void parseStringLiteral(const char fieldText[], const char fieldName[], actionArgument_t *arg) {
-    uint32_t labelLength = strlen(fieldName);
-    uint32_t fieldTextLength = strlen(fieldText);
-    if (labelLength > sizeof(arg->label) - 1) {
-        PRINTF("parseOperationData Label too long\n");
-        THROW(EXCEPTION);
-    }
-    if (fieldTextLength > sizeof(arg->data) - 1) {
-        PRINTF("parseOperationData Insufficient buffer\n");
-        THROW(EXCEPTION);
-    }
-
-    os_memset(arg->label, 0, sizeof(arg->label));
-    os_memset(arg->data, 0, sizeof(arg->data));
-
-    os_memmove(arg->label, fieldName, labelLength);
-    os_memmove(arg->data, fieldText, fieldTextLength);
-
-}
+ * Shortcuts for printing into the txContent Display buffers:
+ */
+#define printfContentLabel(...) snprintf(txContent.txLabelDisplayBuffer, sizeof(txContent.txLabelDisplayBuffer), __VA_ARGS__)
+#define printfContentParam(...) snprintf(txContent.txParamDisplayBuffer, sizeof(txContent.txParamDisplayBuffer), __VA_ARGS__)
 
 void updateOperationContent(txProcessingContent_t *content) {
 
@@ -90,7 +73,7 @@ void updateOperationContent(txProcessingContent_t *content) {
 
 }
 
-void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
+void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
     uint32_t read = 0;
     bts_operation_transfer_t op;
 
@@ -98,34 +81,38 @@ void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_
     read += deserializeBtsOperationTransfer(buffer, bufferLength, &op);
 
     if (argNum == 0) {
-        parseStringLiteral("", "Amount", arg);
-        prettyPrintBtsAssetType(op.transferAsset, arg->data);
+        printfContentLabel("Amount");
+        prettyPrintBtsAssetType(op.transferAsset, txContent.txParamDisplayBuffer);
     } else if (argNum == 1) {
-        parseStringLiteral("", "From", arg);
-        ui64toa(op.fromId, arg->data);
+        printfContentLabel("From");
+        ui64toa(op.fromId, txContent.txParamDisplayBuffer);
     } else if (argNum == 2) {
-        parseStringLiteral("", "To", arg);
-        ui64toa(op.toId, arg->data);
+        printfContentLabel("To");
+        ui64toa(op.toId, txContent.txParamDisplayBuffer);
     } else if (argNum == 3) {
-        parseStringLiteral("", "Fee", arg);
-        prettyPrintBtsAssetType(op.feeAsset, arg->data);
+        printfContentLabel("Fee");
+        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
     }
 }
 
-void parseUnsupportedOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
+void parseUnsupportedOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
 
     if (argNum == 0) {
-        parseStringLiteral("Cannot display details.", "Unsupported Operation", arg);
+        printfContentLabel("Unsupported Operation");
+        printfContentParam("Cannot display details.");
     } else if (argNum == 1) {
-        parseStringLiteral("Use Discretion; Confirm at Own Risk.", "Warning!", arg);
+        printfContentLabel("Warning!");
+        printfContentParam("Use Discretion; Confirm at Own Risk.");
     }
 }
 
-void parseUnknownOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum, actionArgument_t *arg) {
+void parseUnknownOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
 
     if (argNum == 0) {
-        parseStringLiteral("Cannot display details.", "Unrecognized Operation", arg);
+        printfContentLabel("Unrecognized Operation");
+        printfContentParam("Cannot display details.");
     } else if (argNum == 1) {
-        parseStringLiteral("Use Discretion; Confirm at Own Risk.", "Warning!", arg);
+        printfContentLabel("Warning!");
+        printfContentParam("Use Discretion; Confirm at Own Risk.");
     }
 }

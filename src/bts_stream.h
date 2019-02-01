@@ -56,7 +56,7 @@ typedef uint32_t operationId_t;
  * Function prototype for operation parsers.  Used so we can pass function reference as an
  * argument and resolve parser for correct operation type.
  */
-typedef void operation_parser_f (const uint8_t *buffer, uint32_t bufferLength, uint8_t argIdx, actionArgument_t *arg);
+typedef void operation_parser_f (const uint8_t *buffer, uint32_t bufferLength, uint8_t argIdx);
 
 /***
  *  On Difference Between txProcessingContent_t and txProcessingContext_t:
@@ -78,7 +78,7 @@ typedef void operation_parser_f (const uint8_t *buffer, uint32_t bufferLength, u
 
 typedef struct txProcessingContent_t {
 
-    char txParamDisplayBuffer[48];      /* Text buffer for UI display of TxID, Operation
+    char txParamDisplayBuffer[128];     /* Text buffer for UI display of TxID, Operation
                                          * Name, etc. */
     char txLabelDisplayBuffer[48];      /* Text buffer for UI display of label for TxID,
                                          * Operation Name, etc. */
@@ -86,8 +86,6 @@ typedef struct txProcessingContent_t {
                                          * would be shown on a block explorer. */
     uint8_t argumentCount;              /* Argument count for *current* operation being
                                          * parsed */
-    actionArgument_t arg;               /* ASCII buffer for current op arg being
-                                         * displayed */
     uint32_t operationCount;            /* How many operation payloads have been written
                                          *  to operationDataBuffer */
     uint32_t currentOperation;          /* Index of currently displaying operation
@@ -106,6 +104,7 @@ typedef struct txProcessingContent_t {
                                          * offset array to figure out where each next one
                                          * begins. */
 } txProcessingContent_t;
+extern txProcessingContent_t txContent;
 
 /**
  *  Defines the order of the DER fields when processing a BitShares serialized transaction.

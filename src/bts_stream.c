@@ -89,7 +89,7 @@ void printArgument(uint8_t argNum, txProcessingContent_t *content) {
            (uint32_t)argNum, opIdx, (uint32_t)opId, offset, bufferLength, content->operationParser);
 
     /* Parser was pre-selected, call by function pointer: */
-    content->operationParser(buffer, bufferLength, argNum, &content->arg);
+    content->operationParser(buffer, bufferLength, argNum);
 
 }
 
