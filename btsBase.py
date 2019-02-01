@@ -73,6 +73,32 @@ class Transaction:
         return parameters
 
     @staticmethod
+    def parse_limit_order_create(data):
+        fee = data['fee']
+        parameters = struct.pack('<Q', fee['amount'])
+        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(fee['asset_id']))
+        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['seller']))
+        amount = data['amount_to_sell']
+        parameters += struct.pack('<Q', amount['amount'])
+        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(amount['asset_id']))
+        minreceive = data['min_to_receive']
+        parameters += struct.pack('<Q', minreceive['amount'])
+        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(minreceive['asset_id']))
+
+        expiration = int(datetime.strptime(data['expiration'], '%Y-%m-%dT%H:%M:%S').strftime("%s"))
+        parameters += struct.pack('<I', expiration)
+
+        if bool(data['fill_or_kill']):
+            parameters += struct.pack('B', 1)
+        else:
+            parameters += struct.pack('B', 0)
+
+        # TODO: extensions
+        parameters += struct.pack('B', 0)
+
+        return parameters
+
+    @staticmethod
     def pack_fc_uint(value):
         out = ''
         i = 0
@@ -141,6 +167,8 @@ class Transaction:
             # TODO: other parsers.
             if op[0] == 0:
                 parameters = Transaction.parse_transfer(op[1])
+            elif op[0] == 1:
+                parameters = Transaction.parse_limit_order_create(op[1])
             else:
                 parameters = Transaction.parse_unknown(op[1])
             tx.operations.append(parameters)
