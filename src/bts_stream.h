@@ -120,10 +120,16 @@ typedef enum txProcessingState_e {
     TLV_OPERATION_ID,           // Branchpoint: Goes to _TX_OP_XXX
     TLV_TX_EXTENSION_LIST_SIZE,
     TLV_DONE,
-    /* Following regions define specific operations: */
-    TLV_OP_TRANSFER,
-    TLV_OP_TRANSFER_PAYLOAD = TLV_OP_TRANSFER,
-    TLV_OP_TRANSFER_DONE,       // Return: goes back to _OPERATION_CHECK_REMAIN
+    /* Following regions define specific operation classes: */
+    TLV_OP_SIMPLE,              // For simple, known operations. Hash and cache payload.
+    TLV_OP_SIMPLE_PAYLOAD = TLV_OP_SIMPLE,
+    TLV_OP_SIMPLE_DONE,         //   Return: goes back to _OPERATION_CHECK_REMAIN
+    TLV_OP_COMPLEX,             // For complex ops where payload needs special handling
+    TLV_OP_COMPLEX_PAYLOAD = TLV_OP_COMPLEX,            // before cacheing.
+    TLV_OP_COMPLEX_DONE,        //   Return: goes back to _OPERATION_CHECK_REMAIN
+    TLV_OP_UNSUPPORTED,         // For unknown or unsupported operations. Hash, but
+    TLV_OP_UNSUPPORTED_PAYLOAD = TLV_OP_UNSUPPORTED,    // do not cache.
+    TLV_OP_UNSUPPORTED_DONE,    //   Return: goes back to _OPERATION_CHECK_REMAIN
 } txProcessingState_e;
 
 typedef struct txProcessingContext_t {

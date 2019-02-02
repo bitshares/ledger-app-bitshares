@@ -279,6 +279,33 @@ static void processOperationDataField(txProcessingContext_t *context) {
     }
 }
 
+/**
+ * Process current operation payload field; hash but do not store in into operation
+ * data buffer, since we don't support deserializing for this operation.
+ */
+static void processUnsupportedOperationDataField(txProcessingContext_t *context) {
+
+    const uint32_t currentOpIdx = txContent.operationCount-1;
+    const uint32_t opDataOffset = (currentOpIdx == 0) ? 0 : txContent.operationOffsets[currentOpIdx-1];
+
+    /* No need to check currentFieldLength against opBufferRemaining since
+     * we won't be caching the unknown/unsupported operation payload. */
+
+    if (context->currentFieldPos < context->currentFieldLength) {
+        processHelperGobbleCommandBytes(context, NULL);
+    }
+
+    if (context->currentFieldPos == context->currentFieldLength) {
+        txContent.operationOffsets[currentOpIdx] = opDataOffset /* + 0 */;
+
+        PRINTF("Elided %d bytes from Op buffer for unknown op; Offsets: %.*H\n",
+               context->currentFieldLength, sizeof(txContent.operationOffsets), txContent.operationOffsets);
+
+        context->state++;
+        context->processingField = false;
+    }
+}
+
 static parserStatus_e processTxInternal(txProcessingContext_t *context) {
     for(;;) {
         if (context->state == TLV_DONE) {
@@ -349,23 +376,29 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
             processOperationIdField(context);
             if(!context->processingField) {             // if (we extracted an OpId) {
                 switch (context->currentOperationId) {  //    then pick next state based on OpId
-                    case 0x0:
-                        context->state = TLV_OP_TRANSFER;
+                    case OP_TRANSFER:
+                        context->state = TLV_OP_SIMPLE;
                         break;
                     default:
-                        PRINTF("Unknown Operation ID");
-                        THROW(EXCEPTION);  // TODO: pick a status byte for this so user knows why
+                        context->state = TLV_OP_UNSUPPORTED;
                         break;
                 }
             }
             break;
 
-        case TLV_OP_TRANSFER_PAYLOAD:
-            // Temporary until operation actually mapped out
+        case TLV_OP_SIMPLE_PAYLOAD:
             processOperationDataField(context);
             break;
 
-        case TLV_OP_TRANSFER_DONE:
+        case TLV_OP_SIMPLE_DONE:
+            context->state = TLV_OPERATION_CHECK_REMAIN;    // Go back and see if more operations
+            break;
+
+        case TLV_OP_UNSUPPORTED_PAYLOAD:
+            processUnsupportedOperationDataField(context);
+            break;
+
+        case TLV_OP_UNSUPPORTED_DONE:
             context->state = TLV_OPERATION_CHECK_REMAIN;    // Go back and see if more operations
             break;
 
