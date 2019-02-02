@@ -26,6 +26,7 @@
 
 #include "bts_parse_operations.h"
 #include "bts_operation_transfer.h"
+#include "bts_operation_limit_order_create.h"
 #include "bts_types.h"
 #include "eos_utils.h"
 #include "os.h"
@@ -48,8 +49,8 @@ void updateOperationContent(txProcessingContent_t *content) {
         opName = "Transfer";
         break;
     case OP_LIMIT_ORDER_CREATE:
-        content->argumentCount = 2;
-        content->operationParser = parseUnsupportedOperation;
+        content->argumentCount = 6;
+        content->operationParser = parseLimitOrderCreateOperation;
         opName = "Create Limit Order";
         break;
     case OP_LIMIT_ORDER_CANCEL:
@@ -90,6 +91,34 @@ void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_
         printfContentLabel("To");
         ui64toa(op.toId, txContent.txParamDisplayBuffer);
     } else if (argNum == 3) {
+        printfContentLabel("Fee");
+        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+    }
+}
+
+void parseLimitOrderCreateOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
+    uint32_t read = 0;
+    bts_operation_limit_order_create_t op;
+
+    // Read fields:
+    read += deserializeBtsOperationLimitOrderCreate(buffer, bufferLength, &op);
+
+    if (argNum == 0) {
+        printfContentLabel("Seller");
+        ui64toa(op.sellerId, txContent.txParamDisplayBuffer);
+    } else if (argNum == 1) {
+        printfContentLabel("Amount to Sell");
+        prettyPrintBtsAssetType(op.sellAsset, txContent.txParamDisplayBuffer);
+    } else if (argNum == 2) {
+        printfContentLabel("Amount to Buy");
+        prettyPrintBtsAssetType(op.buyAsset, txContent.txParamDisplayBuffer);
+    } else if (argNum == 3) {
+        printfContentLabel("Expires");
+        printfContentParam("[date]");
+    } else if (argNum == 4) {
+        printfContentLabel("Fill or Kill");
+        printfContentParam("[bool]");
+    } else if (argNum == 5) {
         printfContentLabel("Fee");
         prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
     }

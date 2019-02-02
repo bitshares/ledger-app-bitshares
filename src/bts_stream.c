@@ -377,6 +377,8 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
             if(!context->processingField) {             // if (we extracted an OpId) {
                 switch (context->currentOperationId) {  //    then pick next state based on OpId
                     case OP_TRANSFER:
+                    case OP_LIMIT_ORDER_CREATE:
+                    case OP_LIMIT_ORDER_CANCEL:
                         context->state = TLV_OP_SIMPLE;
                         break;
                     default:
