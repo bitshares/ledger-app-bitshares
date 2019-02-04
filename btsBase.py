@@ -112,6 +112,76 @@ class Transaction:
         return parameters
 
     @staticmethod
+    def parse_owner_or_active(data):
+        parameters = struct.pack('<I', data['weight_threshold'])
+
+        account_auths = data['account_auths']
+        parameters += struct.pack('B', len(account_auths))
+        for account in account_auths:
+            parameters += Transaction.pack_fc_uint(Transaction.id_to_number(account[0]))
+            parameters += struct.pack('<H', account[1])
+
+        key_auths = data['key_auths']
+        parameters += struct.pack('B', len(key_auths))
+        for key in key_auths:
+            parameters += Transaction.parse_public_key(key[0])
+            parameters += struct.pack('<H', key[1])
+
+        # TODO: address_auths
+        address_auths = data['address_auths']
+        parameters += struct.pack('B', len(address_auths))
+
+        return parameters
+
+    @staticmethod
+    def parse_votes(votes):
+        parameters = struct.pack('B', len(votes))
+        for vote in votes:
+            v = vote.split(':')
+            vote_type = int(v[0])
+            instance  = int(v[1])
+            parameters += struct.pack('<I', ((instance & 0xFFFFFF) << 8) | (vote_type & 0xFF))
+        return parameters
+
+    @staticmethod
+    def parse_account_update(data):
+        fee = data['fee']
+        parameters = struct.pack('<Q', fee['amount'])
+        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(fee['asset_id']))
+        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['account']))
+
+        if 'owner' in data:
+            parameters += struct.pack('B', 1)
+            parameters += Transaction.parse_owner_or_active(data['owner'])
+        else:
+            parameters += struct.pack('B', 0)
+
+        if 'active' in data:
+            parameters += struct.pack('B', 1)
+            parameters += Transaction.parse_owner_or_active(data['active'])
+        else:
+            parameters += struct.pack('B', 0)
+
+        if 'new_options' in data:
+            new_options = data['new_options']
+            parameters += struct.pack('B', 1)
+            parameters += Transaction.parse_public_key(new_options['memo_key'])
+            parameters += Transaction.pack_fc_uint(Transaction.id_to_number(new_options['voting_account']))
+            parameters += struct.pack('<H', new_options['num_witness'])
+            parameters += struct.pack('<H', new_options['num_committee'])
+            parameters += Transaction.parse_votes(new_options['votes'])
+
+            # TODO: extensions
+            parameters += struct.pack('B', 0)
+        else:
+            parameters += struct.pack('B', 0)
+
+        # TODO: extensions
+        parameters += struct.pack('B', 0)
+
+        return parameters
+
+    @staticmethod
     def pack_fc_uint(value):
         out = ''
         i = 0
@@ -184,6 +254,8 @@ class Transaction:
                 parameters = Transaction.parse_limit_order_create(op[1])
             elif op[0] == 2:
                 parameters = Transaction.parse_limit_order_cancel(op[1])
+            elif op[0] == 6:
+                parameters = Transaction.parse_account_update(op[1])
             else:
                 parameters = Transaction.parse_unknown(op[1])
             tx.operations.append(parameters)
