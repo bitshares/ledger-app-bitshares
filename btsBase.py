@@ -52,10 +52,14 @@ class Transaction:
         return parameters
 
     @staticmethod
-    def parse_transfer(data):
-        fee = data['fee']
+    def parse_fee(fee):
         parameters = struct.pack('<Q', fee['amount'])
         parameters += Transaction.pack_fc_uint(Transaction.id_to_number(fee['asset_id']))
+        return parameters
+
+    @staticmethod
+    def parse_transfer(data):
+        parameters = Transaction.parse_fee(data['fee'])
         parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['from']))
         parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['to']))
         amount = data['amount']
@@ -74,9 +78,7 @@ class Transaction:
 
     @staticmethod
     def parse_limit_order_create(data):
-        fee = data['fee']
-        parameters = struct.pack('<Q', fee['amount'])
-        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(fee['asset_id']))
+        parameters = Transaction.parse_fee(data['fee'])
         parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['seller']))
         amount = data['amount_to_sell']
         parameters += struct.pack('<Q', amount['amount'])
@@ -100,9 +102,7 @@ class Transaction:
 
     @staticmethod
     def parse_limit_order_cancel(data):
-        fee = data['fee']
-        parameters = struct.pack('<Q', fee['amount'])
-        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(fee['asset_id']))
+        parameters = Transaction.parse_fee(data['fee'])
         parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['fee_paying_account']))
         parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['order']))
 
@@ -145,9 +145,7 @@ class Transaction:
 
     @staticmethod
     def parse_account_update(data):
-        fee = data['fee']
-        parameters = struct.pack('<Q', fee['amount'])
-        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(fee['asset_id']))
+        parameters = Transaction.parse_fee(data['fee'])
         parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['account']))
 
         if 'owner' in data:
@@ -183,9 +181,7 @@ class Transaction:
 
     @staticmethod
     def parse_account_upgrade(data):
-        fee = data['fee']
-        parameters = struct.pack('<Q', fee['amount'])
-        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(fee['asset_id']))
+        parameters = Transaction.parse_fee(data['fee'])
 
         parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['account_to_upgrade']))
 
