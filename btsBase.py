@@ -182,6 +182,21 @@ class Transaction:
         return parameters
 
     @staticmethod
+    def parse_account_upgrade(data):
+        fee = data['fee']
+        parameters = struct.pack('<Q', fee['amount'])
+        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(fee['asset_id']))
+
+        parameters += Transaction.pack_fc_uint(Transaction.id_to_number(data['account_to_upgrade']))
+
+        if bool(data['upgrade_to_lifetime_member']):
+            parameters += struct.pack('B', 1)
+        else:
+            parameters += struct.pack('B', 0)
+
+        return parameters
+
+    @staticmethod
     def pack_fc_uint(value):
         out = ''
         i = 0
@@ -256,6 +271,8 @@ class Transaction:
                 parameters = Transaction.parse_limit_order_cancel(op[1])
             elif op[0] == 6:
                 parameters = Transaction.parse_account_update(op[1])
+            elif op[0] == 8:
+                parameters = Transaction.parse_account_upgrade(op[1])
             else:
                 parameters = Transaction.parse_unknown(op[1])
             tx.operations.append(parameters)

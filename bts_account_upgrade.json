@@ -1,0 +1,15 @@
+{
+  "ref_block_num": 35221,
+  "ref_block_prefix": 3092364852,
+  "expiration": "2018-12-04T03:54:15",
+  "operations": [[
+      8,{
+        "fee": {"amount": 0, "asset_id": "1.3.0"},
+        "account_to_upgrade": "1.2.96086",
+        "upgrade_to_lifetime_member": true,
+        "prefix": "BTS"
+      }
+    ]
+  ],
+  "extensions": []
+}
