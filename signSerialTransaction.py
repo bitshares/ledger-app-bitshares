@@ -61,7 +61,7 @@ parser.add_argument('--file', help="Serialized transaction in ascii hex format")
 args = parser.parse_args()
 
 if args.path is None:
-    args.path = "48'/1'/1'/0/0"
+    args.path = "48'/1'/1'/0'/0'"
 
 if args.file is None:
     args.file = 'transaction.hex'

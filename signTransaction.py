@@ -52,7 +52,7 @@ else:
     chain_id = binascii.unhexlify(args.chain_id)
 
 if args.path is None:
-    args.path = "48'/1'/1'/0/0"
+    args.path = "48'/1'/1'/0'/0'"
 
 if args.file is None:
     args.file = 'bts_transaction_transfer_usd_with_memo.json'

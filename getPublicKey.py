@@ -43,7 +43,7 @@ parser.add_argument('--path', help="BIP 32 path to retrieve")
 args = parser.parse_args()
 
 if args.path is None:
-    args.path = "48'/1'/1'/0/0"
+    args.path = "48'/1'/1'/0'/0'"
 
 donglePath = parse_bip32_path(args.path)
 apdu = "B5020001".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath

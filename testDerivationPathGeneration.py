@@ -38,9 +38,9 @@ def parse_bip32_path(path):
 
 
 dongle = getDongle(False)
-path = "48'/1'/1'/0/"
+path = "48'/1'/1'/0'/"
 for i in range(0, 20):
-    derPath = path + str(i)
+    derPath = path + str(i) + "'"
     print "------------- {} -------------".format(derPath)
 
     donglePath = parse_bip32_path(derPath)
