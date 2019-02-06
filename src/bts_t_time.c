@@ -16,7 +16,7 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include "bts_time_type.h"
+#include "bts_t_time.h"
 #include "os.h"
 #include <string.h>
 #include <stdio.h>

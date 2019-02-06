@@ -19,8 +19,8 @@
 #ifndef __BTS_OP_ACCOUNT_UPGRADE_H__
 #define __BTS_OP_ACCOUNT_UPGRADE_H__
 
-#include "bts_asset_type.h"
-#include "bts_type_bool.h"
+#include "bts_t_asset.h"
+#include "bts_t_bool.h"
 
 typedef struct bts_operation_account_upgrade_t {
     bts_asset_type_t feeAsset;

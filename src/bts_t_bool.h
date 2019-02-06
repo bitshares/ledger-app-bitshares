@@ -16,8 +16,8 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __BTS_TYPE_BOOL_H__
-#define __BTS_TYPE_BOOL_H__
+#ifndef __BTS_T_BOOL_H__
+#define __BTS_T_BOOL_H__
 
 #include <stdbool.h>
 #include "os.h"

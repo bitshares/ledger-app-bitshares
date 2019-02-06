@@ -17,7 +17,7 @@
 ********************************************************************************/
 
 #include <string.h>
-#include "bts_type_bool.h"
+#include "bts_t_bool.h"
 #include "os.h"
 
 uint32_t deserializeBtsBoolType(const uint8_t *buffer, uint32_t bufferLength, bts_bool_type_t * asset) {

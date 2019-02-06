@@ -19,7 +19,7 @@
 #ifndef __BTS_OP_TRANSFER_H__
 #define __BTS_OP_TRANSFER_H__
 
-#include "bts_asset_type.h"
+#include "bts_t_asset.h"
 
 typedef struct bts_operation_transfer_t {
     bts_asset_type_t feeAsset;

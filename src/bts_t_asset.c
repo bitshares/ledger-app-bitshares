@@ -16,7 +16,7 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include "bts_asset_type.h"
+#include "bts_t_asset.h"
 #include "bts_types.h"
 #include "eos_utils.h"
 #include "os.h"

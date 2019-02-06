@@ -16,8 +16,8 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __BTS_TIME_TYPE_H__
-#define __BTS_TIME_TYPE_H__
+#ifndef __BTS_T_TIME_H__
+#define __BTS_T_TIME_H__
 
 #include "os.h"
 

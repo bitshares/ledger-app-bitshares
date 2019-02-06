@@ -16,8 +16,8 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __BTS_ASSET_TYPE_H__
-#define __BTS_ASSET_TYPE_H__
+#ifndef __BTS_T_ASSET_H__
+#define __BTS_T_ASSET_H__
 
 #include <stdbool.h>
 #include "os.h"
