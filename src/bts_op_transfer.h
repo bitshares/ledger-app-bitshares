@@ -16,8 +16,8 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __BTS_OPERATION_TRANSFER_H__
-#define __BTS_OPERATION_TRANSFER_H__
+#ifndef __BTS_OP_TRANSFER_H__
+#define __BTS_OP_TRANSFER_H__
 
 #include "bts_asset_type.h"
 

@@ -16,8 +16,8 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __BTS_OPERATION_LIMIT_ORDER_CREATE_H__
-#define __BTS_OPERATION_LIMIT_ORDER_CREATE_H__
+#ifndef __BTS_OP_LIMIT_ORDER_CREATE_H__
+#define __BTS_OP_LIMIT_ORDER_CREATE_H__
 
 #include "bts_asset_type.h"
 #include "bts_time_type.h"

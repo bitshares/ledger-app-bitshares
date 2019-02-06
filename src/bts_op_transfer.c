@@ -16,7 +16,7 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include "bts_operation_transfer.h"
+#include "bts_op_transfer.h"
 #include "bts_types.h"
 #include "os.h"
 
