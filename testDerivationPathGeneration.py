@@ -36,13 +36,9 @@ def parse_bip32_path(path):
             result = result + struct.pack(">I", 0x80000000 | int(element[0]))
     return result
 
+role_names = ["owner", "active", "", "memo"]
 
-dongle = getDongle(False)
-path = "48'/1'/1'/0'/"
-for i in range(0, 20):
-    derPath = path + str(i) + "'"
-    print "------------- {} -------------".format(derPath)
-
+def calc_key():
     donglePath = parse_bip32_path(derPath)
     apdu = "B5020001".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath
 
@@ -54,15 +50,20 @@ for i in range(0, 20):
     head = 0x03 if (public_key[64] & 0x01) == 1 else 0x02
     public_key_compressed = bytearray([head]) + public_key[1:33]
 
-    print "           Public key: " + str(public_key).encode('hex')
-    print "Public key compressed: " + str(public_key_compressed).encode('hex')
-
     ripemd = hashlib.new('ripemd160')
     ripemd.update(public_key_compressed)
     check = ripemd.digest()[:4]
 
     buff = public_key_compressed + check
     wif_public_key = "BTS" + b58encode(str(buff))
-    print "Calculated from public key: Address " + wif_public_key
-    print "      Received from ledger: Address " + str(address)
+    print "{}:\t{} {}".format(role_names[role], wif_public_key, derPath)
     assert wif_public_key == str(address)
+
+dongle = getDongle(False)
+path = "48'/1'/"
+for account in range(0, 2):
+    for key in range(0, 3):
+        print "---------------------------- account: {}' key: {}' ----------------------------".format(account, key)
+        for role in (0, 1, 3):
+            derPath = path + str(role) + "'/" + str(account) + "'/" + str(key) + "'"
+            calc_key()
