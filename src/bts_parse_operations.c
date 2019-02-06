@@ -27,6 +27,7 @@
 #include "bts_parse_operations.h"
 #include "bts_op_transfer.h"
 #include "bts_op_limit_order_create.h"
+#include "bts_op_account_upgrade.h"
 #include "bts_types.h"
 #include "eos_utils.h"
 #include "os.h"
@@ -57,6 +58,11 @@ void updateOperationContent(txProcessingContent_t *content) {
         content->argumentCount = 2;
         content->operationParser = parseUnsupportedOperation;
         opName = "Cancel Limit Order";
+        break;
+    case OP_ACCOUNT_UPGRADE:
+        content->argumentCount = 3;
+        content->operationParser = parseAccountUpgradeOperation;
+        opName = "Upgrade Acct";    /* Abbrev to prevent scrolling */
         break;
     default:
         content->argumentCount = 2;
@@ -119,6 +125,25 @@ void parseLimitOrderCreateOperation(const uint8_t *buffer, uint32_t bufferLength
         printfContentLabel("Fill or Kill");
         printfContentParam("[bool]");
     } else if (argNum == 5) {
+        printfContentLabel("Fee");
+        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+    }
+}
+
+void parseAccountUpgradeOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
+    uint32_t read = 0;
+    bts_operation_account_upgrade_t op;
+
+    // Read fields:
+    read += deserializeBtsOperationAccountUpgrade(buffer, bufferLength, &op);
+
+    if (argNum == 0) {
+        printfContentLabel("Account to Upgrade");
+        ui64toa(op.accountId, txContent.txParamDisplayBuffer);
+    } else if (argNum == 1) {
+        printfContentLabel("Upgrade Path");
+        printfContentParam(op.upgradeLtm?"Lifetime Membership":"None / No Upgrade");
+    } else if (argNum == 2) {
         printfContentLabel("Fee");
         prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
     }

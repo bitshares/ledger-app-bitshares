@@ -379,6 +379,7 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
                     case OP_TRANSFER:
                     case OP_LIMIT_ORDER_CREATE:
                     case OP_LIMIT_ORDER_CANCEL:
+                    case OP_ACCOUNT_UPGRADE:
                         context->state = TLV_OP_SIMPLE;
                         break;
                     default:
