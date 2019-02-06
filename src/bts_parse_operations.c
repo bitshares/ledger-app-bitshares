@@ -114,7 +114,7 @@ void parseLimitOrderCreateOperation(const uint8_t *buffer, uint32_t bufferLength
         prettyPrintBtsAssetType(op.buyAsset, txContent.txParamDisplayBuffer);
     } else if (argNum == 3) {
         printfContentLabel("Expires");
-        printfContentParam("[date]");
+        prettyPrintBtsTimeType(op.expires, txContent.txParamDisplayBuffer);
     } else if (argNum == 4) {
         printfContentLabel("Fill or Kill");
         printfContentParam("[bool]");

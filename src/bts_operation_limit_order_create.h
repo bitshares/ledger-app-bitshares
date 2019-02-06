@@ -20,13 +20,14 @@
 #define __BTS_OPERATION_LIMIT_ORDER_CREATE_H__
 
 #include "bts_asset_type.h"
+#include "bts_time_type.h"
 
 typedef struct bts_operation_limit_order_create_t {
     bts_asset_type_t feeAsset;
     uint64_t         sellerId;
     bts_asset_type_t sellAsset;
     bts_asset_type_t buyAsset;
-    char             expires;  // TODO: correct type
+    bts_time_type_t  expires;
     char             fillOrKill;
 } bts_operation_limit_order_create_t;
 
