@@ -55,7 +55,11 @@ uint32_t deserializeBtsOperationLimitOrderCreate(const uint8_t *buffer, uint32_t
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    op->fillOrKill = 0;  // TODO: actually decode this.
+    gobbled = deserializeBtsBoolType(buffer, bufferLength, &op->fillOrKill);
+    if (gobbled > bufferLength) {
+        THROW(EXCEPTION);
+    }
+    read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
     PRINTF("DESERIAL: OP_LIMIT_CREATE: Read %d bytes; Buffer remaining: %d bytes\n", read, bufferLength);
 

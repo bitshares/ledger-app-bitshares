@@ -21,6 +21,7 @@
 
 #include "bts_t_asset.h"
 #include "bts_t_time.h"
+#include "bts_t_bool.h"
 
 typedef struct bts_operation_limit_order_create_t {
     bts_asset_type_t feeAsset;
@@ -28,7 +29,7 @@ typedef struct bts_operation_limit_order_create_t {
     bts_asset_type_t sellAsset;
     bts_asset_type_t buyAsset;
     bts_time_type_t  expires;
-    char             fillOrKill;
+    bts_bool_type_t  fillOrKill;
 } bts_operation_limit_order_create_t;
 
 uint32_t deserializeBtsOperationLimitOrderCreate(const uint8_t *buffer, uint32_t bufferLength, bts_operation_limit_order_create_t * op);

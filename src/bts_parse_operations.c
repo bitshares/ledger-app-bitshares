@@ -123,7 +123,7 @@ void parseLimitOrderCreateOperation(const uint8_t *buffer, uint32_t bufferLength
         prettyPrintBtsTimeType(op.expires, txContent.txParamDisplayBuffer);
     } else if (argNum == 4) {
         printfContentLabel("Fill or Kill");
-        printfContentParam("[bool]");
+        prettyPrintBtsBoolType(op.fillOrKill, txContent.txParamDisplayBuffer);
     } else if (argNum == 5) {
         printfContentLabel("Fee");
         prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
