@@ -116,26 +116,26 @@ class Transaction:
         parameters = struct.pack('<I', data['weight_threshold'])
 
         account_auths = data['account_auths']
-        parameters += struct.pack('B', len(account_auths))
+        parameters += Transaction.pack_fc_uint(len(account_auths))
         for account in account_auths:
             parameters += Transaction.pack_fc_uint(Transaction.id_to_number(account[0]))
             parameters += struct.pack('<H', account[1])
 
         key_auths = data['key_auths']
-        parameters += struct.pack('B', len(key_auths))
+        parameters += Transaction.pack_fc_uint(len(key_auths))
         for key in key_auths:
             parameters += Transaction.parse_public_key(key[0])
             parameters += struct.pack('<H', key[1])
 
         # TODO: address_auths
         address_auths = data['address_auths']
-        parameters += struct.pack('B', len(address_auths))
+        parameters += Transaction.pack_fc_uint(len(address_auths))
 
         return parameters
 
     @staticmethod
     def parse_votes(votes):
-        parameters = struct.pack('B', len(votes))
+        parameters = Transaction.pack_fc_uint(len(votes))
         for vote in votes:
             v = vote.split(':')
             vote_type = int(v[0])
