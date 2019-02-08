@@ -39,30 +39,145 @@
 #define printfContentLabel(...) snprintf(txContent.txLabelDisplayBuffer, sizeof(txContent.txLabelDisplayBuffer), __VA_ARGS__)
 #define printfContentParam(...) snprintf(txContent.txParamDisplayBuffer, sizeof(txContent.txParamDisplayBuffer), __VA_ARGS__)
 
+/**
+ * Global Resource: User-friendly Operation names.  These can be indexed by the
+ * operationId enum in bts_stream.h.  E.g. op_name[OP_TRANSFER] should resolve to
+ * a pointer to "Transfer".
+ */
+const char * const op_names[] = {   // Deref with PIC or you gone get bit. E.g.:
+    "Transfer",                     // const char * string = PIC(op_names[idx]);
+    "Limit Order",                  // Otherwise string gonna point to the dark
+    "Cancel Order",                 // and inky abyss.
+    "call_order_update",
+    "fill_order", /* virtual */
+    "Register Account",
+    "Update Acct",
+    "Whitelist Account",
+    "Upgrade Acct",
+    "Transfer Account Ownership",
+    "Create Asset",
+    "asset_update",
+    "asset_update_bitasset",
+    "asset_update_feed_producers",
+    "asset_issue",
+    "asset_reserve",
+    "asset_fund_fee_pool",
+    "asset_settle",
+    "asset_global_settle",
+    "asset_publish_feed",
+    "witness_create",
+    "witness_update",
+    "proposal_create",
+    "proposal_update",
+    "proposal_delete",
+    "withdraw_permission_create",
+    "withdraw_permission_update",
+    "withdraw_permission_claim",
+    "withdraw_permission_delete",
+    "committee_member_create",
+    "committee_member_update",
+    "committee_member_update_global_parameters",
+    "vesting_balance_create",
+    "vesting_balance_withdraw",
+    "worker_create",
+    "custom",
+    "assert",
+    "balance_claim",
+    "override_transfer",
+    "transfer_to_blind",
+    "blind_transfer",
+    "transfer_from_blind",
+    "asset_settle_cancel", /* virtual */
+    "asset_claim_fees",
+    "fba_distribute", /* virtual */
+    "bid_collateral",
+    "execute_bid", /* virtual */
+    "asset_claim_pool",
+    "asset_update_issuer"
+};
+
 void updateOperationContent(txProcessingContent_t *content) {
 
-    char * opName;
+    const operationId_t opId = content->operationIds[content->currentOperation];
 
-    switch (content->operationIds[content->currentOperation]) {
+    const char * opName = "";
+    if (opId < OP_NUM_KNOWN_OPS) {
+        opName = (const char *)PIC(op_names[opId]); // PIC or you gonna bleed...
+    }
+
+    switch (opId) {
     case OP_TRANSFER:
         content->argumentCount = 4;
         content->operationParser = parseTransferOperation;
-        opName = "Transfer";
         break;
     case OP_LIMIT_ORDER_CREATE:
         content->argumentCount = 6;
         content->operationParser = parseLimitOrderCreateOperation;
-        opName = "Create Limit Order";
         break;
     case OP_LIMIT_ORDER_CANCEL:
         content->argumentCount = 2;
         content->operationParser = parseUnsupportedOperation;
-        opName = "Cancel Limit Order";
+        break;
+    case OP_CALL_ORDER_UPDATE:  /* Unsupport */
+    case OP_FILL_ORDER:         /* Unsupport */ /* virtual */
+    case OP_ACCOUNT_CREATE:     /* Unsupport */
+        content->argumentCount = 2;
+        content->operationParser = parseUnsupportedOperation;
+        break;
+    case OP_ACCOUNT_UPDATE:
+        content->argumentCount = 2;
+        content->operationParser = parseUnsupportedOperation;
+        break;
+    case OP_ACCOUNT_WHITELIST:  /* Unsupport */
+        content->argumentCount = 2;
+        content->operationParser = parseUnsupportedOperation;
         break;
     case OP_ACCOUNT_UPGRADE:
         content->argumentCount = 3;
         content->operationParser = parseAccountUpgradeOperation;
-        opName = "Upgrade Acct";    /* Abbrev to prevent scrolling */
+        break;
+    case OP_ACCOUNT_TRANSFER:   /* Unsupport */
+    case OP_ASSET_CREATE:       // ...
+    case OP_ASSET_UPDATE:
+    case OP_ASSET_UPDATE_BITASSET:
+    case OP_ASSET_UPDATE_FEED_PRODUCERS:
+    case OP_ASSET_ISSUE:
+    case OP_ASSET_RESERVE:
+    case OP_ASSET_FUND_FEE_POOL:
+    case OP_ASSET_SETTLE:
+    case OP_ASSET_GLOBAL_SETTLE:
+    case OP_ASSET_PUBLISH_FEED:
+    case OP_WITNESS_CREATE:
+    case OP_WITNESS_UPDATE:
+    case OP_PROPOSAL_CREATE:
+    case OP_PROPOSAL_UPDATE:
+    case OP_PROPOSAL_DELETE:
+    case OP_WITHDRAW_PERMISSION_CREATE:
+    case OP_WITHDRAW_PERMISSION_UPDATE:
+    case OP_WITHDRAW_PERMISSION_CLAIM:
+    case OP_WITHDRAW_PERMISSION_DELETE:
+    case OP_COMMITTEE_MEMBER_CREATE:
+    case OP_COMMITTEE_MEMBER_UPDATE:
+    case OP_COMMITTEE_MEMBER_UPDATE_GLOBAL_PARAMETERS:
+    case OP_VESTING_BALANCE_CREATE:
+    case OP_VESTING_BALANCE_WITHDRAW:
+    case OP_WORKER_CREATE:
+    case OP_CUSTOM:
+    case OP_ASSERT:
+    case OP_BALANCE_CLAIM:
+    case OP_OVERRIDE_TRANSFER:
+    case OP_TRANSFER_TO_BLIND:
+    case OP_BLIND_TRANSFER:
+    case OP_TRANSFER_FROM_BLIND:
+    case OP_ASSET_SETTLE_CANCEL: /* virtual */
+    case OP_ASSET_CLAIM_FEES:
+    case OP_FBA_DISTRIBUTE:      /* virtual */
+    case OP_BID_COLLATERAL:
+    case OP_EXECUTE_BID:         /* virtual */
+    case OP_ASSET_CLAIM_POOL:
+    case OP_ASSET_UPDATE_ISSUER:
+        content->argumentCount = 2;
+        content->operationParser = parseUnsupportedOperation;
         break;
     default:
         content->argumentCount = 2;
@@ -152,21 +267,21 @@ void parseAccountUpgradeOperation(const uint8_t *buffer, uint32_t bufferLength, 
 void parseUnsupportedOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
 
     if (argNum == 0) {
-        printfContentLabel("Unsupported Operation");
-        printfContentParam("Cannot display details.");
+        printfContentLabel("Unsupported");
+        printfContentParam("Operation");
     } else if (argNum == 1) {
-        printfContentLabel("Warning!");
-        printfContentParam("Use Discretion; Confirm at Own Risk.");
+        printfContentLabel("Confirm at");
+        printfContentParam("Own Risk.");
     }
 }
 
 void parseUnknownOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
 
     if (argNum == 0) {
-        printfContentLabel("Unrecognized Operation");
-        printfContentParam("Cannot display details.");
+        printfContentLabel("Unrecognized");
+        printfContentParam("Operation");
     } else if (argNum == 1) {
-        printfContentLabel("Warning!");
-        printfContentParam("Use Discretion; Confirm at Own Risk.");
+        printfContentLabel("Confirm at");
+        printfContentParam("Own Risk.");
     }
 }
