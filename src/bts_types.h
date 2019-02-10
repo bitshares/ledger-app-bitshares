@@ -36,9 +36,8 @@ typedef uint8_t public_key_t[33];
  * Unpacks a variable-length encoded unsigned integer from a byte buffer into a
  * uint32.  Decoded value is written at `value`.  Returns number of bytes read from
  * input buffer.  Throws EXCEPTION_OVERFLOW if decoding exceeds 32 bits.
- * TODO: `length` parameter is unused. Refactor.
  */
-uint32_t unpack_varint32(const uint8_t *in, uint32_t length, uint32_t *value);
+uint32_t unpack_varint32(const uint8_t *in, uint32_t *value);
 
 /**
  * Unpacks a variable-length unsigned integer up to 48-bits into a uint64. Similar

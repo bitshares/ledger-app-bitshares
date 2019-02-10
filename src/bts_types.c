@@ -30,7 +30,7 @@
 #include <stdbool.h>
 #include "string.h"
 
-uint32_t unpack_varint32(const uint8_t *in, uint32_t length, uint32_t *value) {
+uint32_t unpack_varint32(const uint8_t *in, uint32_t *value) {
     uint32_t i = 0;
     uint64_t v = 0; char b = 0; uint8_t by = 0;
     do {

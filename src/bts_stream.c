@@ -178,7 +178,7 @@ static void processZeroSizeField(txProcessingContext_t *context) {
 
     if (context->currentFieldPos == context->currentFieldLength) {
         uint32_t sizeValue = 0;
-        unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
+        unpack_varint32(context->sizeBuffer, &sizeValue);
         if (sizeValue != 0) {
             PRINTF("processCtxFreeAction Action Number must be 0\n");
             THROW(EXCEPTION);
@@ -204,7 +204,7 @@ static void processOperationListSizeField(txProcessingContext_t *context) {
 
     if (context->currentFieldPos == context->currentFieldLength) {
         uint32_t sizeValue = 0;
-        unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &sizeValue);
+        unpack_varint32(context->sizeBuffer, &sizeValue);
         context->operationsRemaining = sizeValue;
         context->content->operationCount = 0;   // (Initial; Increments as OpIds read.)
 
@@ -233,7 +233,7 @@ static void processOperationIdField(txProcessingContext_t *context) {
 
     if (context->currentFieldPos == context->currentFieldLength) {
         uint32_t opIdValue = 0;
-        unpack_varint32(context->sizeBuffer, context->currentFieldPos + 1, &opIdValue);
+        unpack_varint32(context->sizeBuffer, &opIdValue);
         context->currentOperationId = opIdValue;
 
         // Push-back into Content structure
