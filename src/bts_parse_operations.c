@@ -27,6 +27,7 @@
 #include "bts_parse_operations.h"
 #include "bts_op_transfer.h"
 #include "bts_op_limit_order_create.h"
+#include "bts_op_limit_order_cancel.h"
 #include "bts_op_account_upgrade.h"
 #include "bts_types.h"
 #include "eos_utils.h"
@@ -115,8 +116,8 @@ void updateOperationContent(txProcessingContent_t *content) {
         content->operationParser = parseLimitOrderCreateOperation;
         break;
     case OP_LIMIT_ORDER_CANCEL:
-        content->argumentCount = 2;
-        content->operationParser = parseUnsupportedOperation;
+        content->argumentCount = 3;
+        content->operationParser = parseLimitOrderCancelOperation;
         break;
     case OP_CALL_ORDER_UPDATE:  /* Unsupport */
     case OP_FILL_ORDER:         /* Unsupport */ /* virtual */
@@ -240,6 +241,25 @@ void parseLimitOrderCreateOperation(const uint8_t *buffer, uint32_t bufferLength
         printfContentLabel("Fill or Kill");
         prettyPrintBtsBoolType(op.fillOrKill, txContent.txParamDisplayBuffer);
     } else if (argNum == 5) {
+        printfContentLabel("Fee");
+        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+    }
+}
+
+void parseLimitOrderCancelOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
+    uint32_t read = 0;
+    bts_operation_limit_order_cancel_t op;
+
+    // Read fields:
+    read += deserializeBtsOperationLimitOrderCancel(buffer, bufferLength, &op);
+
+    if (argNum == 0) {
+        printfContentLabel("Account");
+        ui64toa(op.accountId, txContent.txParamDisplayBuffer);
+    } else if (argNum == 1) {
+        printfContentLabel("Order Id");
+        ui64toa(op.orderId, txContent.txParamDisplayBuffer);
+    } else if (argNum == 2) {
         printfContentLabel("Fee");
         prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
     }
