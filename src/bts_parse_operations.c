@@ -28,6 +28,7 @@
 #include "bts_op_transfer.h"
 #include "bts_op_limit_order_create.h"
 #include "bts_op_limit_order_cancel.h"
+#include "bts_op_account_update.h"
 #include "bts_op_account_upgrade.h"
 #include "bts_types.h"
 #include "eos_utils.h"
@@ -126,8 +127,8 @@ void updateOperationContent(txProcessingContent_t *content) {
         content->operationParser = parseUnsupportedOperation;
         break;
     case OP_ACCOUNT_UPDATE:
-        content->argumentCount = 2;
-        content->operationParser = parseUnsupportedOperation;
+        content->argumentCount = 5;
+        content->operationParser = parseAccountUpdateOperation;
         break;
     case OP_ACCOUNT_WHITELIST:  /* Unsupport */
         content->argumentCount = 2;
@@ -260,6 +261,31 @@ void parseLimitOrderCancelOperation(const uint8_t *buffer, uint32_t bufferLength
         printfContentLabel("Order Id");
         ui64toa(op.orderId, txContent.txParamDisplayBuffer);
     } else if (argNum == 2) {
+        printfContentLabel("Fee");
+        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+    }
+}
+
+void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum) {
+    uint32_t read = 0;
+    bts_operation_account_update_t op;
+
+    // Read fields:
+    read += deserializeBtsOperationAccountUpdate(buffer, bufferLength, &op);
+
+    if (argNum == 0) {
+        printfContentLabel("Account to Update");
+        prettyPrintBtsAccountIdType(op.accountId, txContent.txParamDisplayBuffer);
+    } else if (argNum == 1) {
+        printfContentLabel("Owner Permission");
+        printfContentParam(op.ownerPermissionPresent?"New Data Follows":"No Change");
+    } else if (argNum == 2) {
+        printfContentLabel("Active Permission");
+        printfContentParam(op.activePermissionPresent?"New Data Follows":"No Change");
+    } else if (argNum == 3) {
+        printfContentLabel("Account Options");
+        printfContentParam(op.accountOptionsPresent?"New Data Follows":"No Change");
+    } else if (argNum == 4) {
         printfContentLabel("Fee");
         prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
     }

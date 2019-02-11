@@ -16,58 +16,60 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include <string.h>
-#include "bts_t_bool.h"
+#include "bts_t_varint.h"
+#include "bts_types.h"
+#include "eos_utils.h"
 #include "os.h"
+#include <string.h>
 
-uint32_t deserializeBtsBoolType(const uint8_t *buffer, uint32_t bufferLength, bts_bool_type_t * asset) {
+uint32_t deserializeBtsVarint48Type(const uint8_t *buffer, uint32_t bufferLength, bts_varint48_type_t * asset) {
 
     uint32_t read = 0;
     uint32_t gobbled = 0;
-    uint8_t temp;
 
-    gobbled = sizeof(uint8_t);          // BTS Bool is one byte, on the wire.
-    os_memmove(&temp, buffer, gobbled);
+    gobbled = unpack_varint48(buffer, asset);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    *asset = temp ? true : false;       // But stdlib bool could be a different width
+    return read;
 
-    PRINTF("DESERIAL: BOOL: %d; Read %d bytes; %d bytes remain\n",
-           (int)(*asset), read, bufferLength);
+}
+
+uint32_t prettyPrintBtsVarint48Type(const bts_varint48_type_t asset, char * buffer) {
+
+    uint32_t written = 0;
+
+    ui64toa(asset, buffer+written);
+    written = strlen(buffer);
+
+    return written;
+
+}
+
+uint32_t deserializeBtsVarint32Type(const uint8_t *buffer, uint32_t bufferLength, bts_varint32_type_t * asset) {
+
+    uint32_t read = 0;
+    uint32_t gobbled = 0;
+
+    gobbled = unpack_varint32(buffer, asset);
+    if (gobbled > bufferLength) {
+        THROW(EXCEPTION);
+    }
+    read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
     return read;
 
 }
 
-uint32_t prettyPrintBtsBoolType(const bts_bool_type_t asset, char * buffer) {
+uint32_t prettyPrintBtsVarint32Type(const bts_varint32_type_t asset, char * buffer) {
 
     uint32_t written = 0;
 
-    // To ASCII:
-    if (asset) {
-        strcpy(buffer+written, "True");
-    } else {
-        strcpy(buffer+written, "False");
-    }
+    ui64toa((uint64_t)asset, buffer+written);
     written = strlen(buffer);
 
     return written;
-}
 
-uint32_t prettyPrintBtsBoolTypeYesNo(const bts_bool_type_t asset, char * buffer) {
-
-    uint32_t written = 0;
-
-    // To ASCII:
-    if (asset) {
-        strcpy(buffer+written, "Yes");
-    } else {
-        strcpy(buffer+written, "No");
-    }
-    written = strlen(buffer);
-
-    return written;
 }

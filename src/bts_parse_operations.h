@@ -37,6 +37,7 @@ void updateOperationContent(txProcessingContent_t *content);
 void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum);
 void parseLimitOrderCreateOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum);
 void parseLimitOrderCancelOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum);
+void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum);
 void parseAccountUpgradeOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_t argNum);
 
 /**
