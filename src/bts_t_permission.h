@@ -21,6 +21,7 @@
 
 #include "bts_t_account.h"
 #include "bts_t_varint.h"
+#include "bts_t_nullset.h"
 #include <stdbool.h>
 #include "os.h"
 
@@ -44,9 +45,9 @@ typedef struct bts_permission_type_t {
     const void           *firstAccountAuth;
     bts_varint32_type_t   numKeyAuths;
     const void           *firstKeyAuth;
-    bts_varint32_type_t   numAddressAuths;  // <- Unsure if used as an addr auth array or extensions
-} bts_permission_type_t;                    // array. At any rate, we throw if not zero.
-                                            // TODO: Determine proper handling.
+    bts_null_set_type_t   numAddressAuths;  // (Deprecated auth type. Should be zero.)
+} bts_permission_type_t;
+
 /**
  * Pairs an account Id with a weight.
  */
@@ -74,5 +75,11 @@ uint32_t deserializeBtsPermissionType(const uint8_t *buffer, uint32_t bufferLeng
  * the only way to find a specific one is to scan through them sequentially.
  */
 uint32_t seekDeserializeBtsAccountAuthType(const uint8_t *buffer, uint32_t bufferLength, bts_account_auth_type_t * auth, uint32_t seek);
+
+/**
+ * Pretty-prints a list of Account Auths into a buffer. Will truncate at bufferLength.
+ * E.g: (1.2.39247 w:1), (1.2.129476 w:1)
+ */
+uint32_t prettyPrintBtsAccountAuthsList(bts_permission_type_t asset, char * buffer, uint32_t bufferLength);
 
 #endif

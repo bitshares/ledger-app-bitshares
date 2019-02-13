@@ -40,6 +40,7 @@
  */
 #define printfContentLabel(...) snprintf(txContent.txLabelDisplayBuffer, sizeof(txContent.txLabelDisplayBuffer), __VA_ARGS__)
 #define printfContentParam(...) snprintf(txContent.txParamDisplayBuffer, sizeof(txContent.txParamDisplayBuffer), __VA_ARGS__)
+#define WITH_SIZE(x) x, sizeof(x)
 
 /**
  * Global Resource: User-friendly Operation names.  These can be indexed by the
@@ -277,14 +278,36 @@ void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, u
         printfContentLabel("Account to Update");
         prettyPrintBtsAccountIdType(op.accountId, txContent.txParamDisplayBuffer);
     } else if (argNum == 1) {
-        printfContentLabel("Owner Permission");
-        printfContentParam(op.ownerPermissionPresent?"New Data Follows":"No Change");
+        if (txContent.subargRemainP1 == 0) {
+            txContent.subargRemainP1 = op.ownerPermissionPresent ? 3 : 0;
+            printfContentLabel("Owner Permission");
+            printfContentParam(op.ownerPermissionPresent?"New Data":"No Change");
+        } else if (txContent.subargRemainP1 == 2) {
+            printfContentLabel("Owner Threshold");
+            printfContentParam("%u", (unsigned int)op.ownerPermission.weightThreshold);
+        } else if (txContent.subargRemainP1 == 1) {
+            printfContentLabel("Owner AcctAuths");
+            prettyPrintBtsAccountAuthsList(op.ownerPermission, WITH_SIZE(txContent.txParamDisplayBuffer));
+        }
     } else if (argNum == 2) {
-        printfContentLabel("Active Permission");
-        printfContentParam(op.activePermissionPresent?"New Data Follows":"No Change");
+        if (txContent.subargRemainP1 == 0) {
+            txContent.subargRemainP1 = op.activePermissionPresent ? 3 : 0;
+            printfContentLabel("Active Permission");
+            printfContentParam(op.activePermissionPresent?"New Data":"No Change");
+        } else if (txContent.subargRemainP1 == 2) {
+            printfContentLabel("Active Threshold");
+            printfContentParam("%u", (unsigned int)op.activePermission.weightThreshold);
+        } else if (txContent.subargRemainP1 == 1) {
+            printfContentLabel("Active AcctAuths");
+            prettyPrintBtsAccountAuthsList(op.activePermission, WITH_SIZE(txContent.txParamDisplayBuffer));
+        }
     } else if (argNum == 3) {
-        printfContentLabel("Account Options");
-        printfContentParam(op.accountOptionsPresent?"New Data Follows":"No Change");
+        if (txContent.subargRemainP1 == 0) {
+            txContent.subargRemainP1 = op.accountOptionsPresent ? 0/**/ : 0;
+            printfContentLabel("Account Options");
+            printfContentParam(op.accountOptionsPresent?"New Data":"No Change");
+        } else if (txContent.subargRemainP1 == 1) {
+        }
     } else if (argNum == 4) {
         printfContentLabel("Fee");
         prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);

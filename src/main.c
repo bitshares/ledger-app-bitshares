@@ -984,6 +984,14 @@ unsigned char io_event(unsigned char channel)
                     PRINTF("TICKER.in:  Step: %u, Count %u; Ins: %d; CurrentOp: %u, OpCount: %u\n",
                            ux_step, ux_step_count, (int)instruction, txContent.currentOperation, txContent.operationCount);
                     ux_step = (ux_step + 1);// % ux_step_count;
+                    if (ux_step > 2 && instruction == INS_SIGN) {   // Special Case:
+                        if (txContent.subargRemainP1 > 1) {         //  Do not advance ux_step if subarguments
+                            ux_step--;                              //  remain to be displayed. See
+                        }                                           //  txProcessingContent_t for explanation
+                        if (txContent.subargRemainP1 > 0) {         //  of somewhat non-obvious signaling
+                            txContent.subargRemainP1--;             //  mechanism.
+                        }
+                    }
                     if (ux_step >= ux_step_count) {
                         txContent.currentOperation = (txContent.currentOperation + 1) % txContent.operationCount;
                         if (txContent.currentOperation != 0 && instruction == INS_SIGN) {

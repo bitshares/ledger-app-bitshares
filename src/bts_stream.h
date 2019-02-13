@@ -125,6 +125,12 @@ typedef struct txProcessingContent_t {
                                          * would be shown on a block explorer. */
     uint8_t argumentCount;              /* Argument count for *current* operation being
                                          * parsed */
+    uint8_t subargRemainP1;             /* Some arguments have subarguments. ux_step
+                                         * should only advance if this is zero. This holds
+                                         * remaining subarguments PLUS ONE. The plus one
+                                         * is important. It allows exit from countdown
+                                         * without looping because zero on first time
+                                         * through is the signal to init the counter. */
     uint32_t operationCount;            /* How many operation payloads have been written
                                          *  to operationDataBuffer */
     uint32_t currentOperation;          /* Index of currently displaying operation

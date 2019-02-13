@@ -106,3 +106,46 @@ uint32_t seekDeserializeBtsAccountAuthType(const uint8_t *buffer, uint32_t buffe
     return read;
 
 }
+
+uint32_t prettyPrintBtsAccountAuth(bts_account_auth_type_t auth, char * buffer, uint32_t bufferLength) {
+
+    uint32_t written = 0;
+    char     tmpStr[24];
+
+    snprintf(buffer+written, bufferLength-written, "(1.2.");
+    written = strlen(buffer);
+
+    ui64toa(auth.accountId, tmpStr);
+    snprintf(buffer+written, bufferLength-written, "%s", tmpStr);
+    written = strlen(buffer);
+    snprintf(buffer+written, bufferLength-written, " w:%u)", (uint32_t)auth.weight);
+    written = strlen(buffer);
+
+    return written;
+}
+
+uint32_t prettyPrintBtsAccountAuthsList(bts_permission_type_t perm, char * buffer, uint32_t bufferLength) {
+
+    uint32_t written = 0;
+
+    if (perm.numAccountAuths == 0) {
+        snprintf(buffer, bufferLength, "(None)");
+        written = strlen(buffer);
+    } else {
+        for (uint32_t i = 0; i < perm.numAccountAuths; i++) {
+            bts_account_auth_type_t tmpAccountAuth;
+            seekDeserializeBtsAccountAuthType(perm.firstAccountAuth,-1,&tmpAccountAuth,i+1);
+            prettyPrintBtsAccountAuth(tmpAccountAuth, buffer+written, bufferLength-written);
+            written = strlen(buffer);
+            if (i+1 != perm.numAccountAuths) {
+                snprintf(buffer+written, bufferLength-written, ", ");
+                written = strlen(buffer);
+            } else {
+                snprintf(buffer+written, bufferLength-written, " ");
+                written = strlen(buffer); // terminal spc sidesteps graphical glitch #uglyhack
+            }
+        }
+    }
+
+    return written;
+}
