@@ -38,27 +38,6 @@ def parse_bip32_path(path):
 
 role_names = ["owner", "active", "", "memo"]
 
-def calc_key():
-    donglePath = parse_bip32_path(derPath)
-    apdu = "B5020001".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath
-
-    result = dongle.exchange(bytes(apdu))
-    offset = 1 + result[0]
-    address = result[offset + 1: offset + 1 + result[offset]]
-
-    public_key = result[1: 1 + result[0]]
-    head = 0x03 if (public_key[64] & 0x01) == 1 else 0x02
-    public_key_compressed = bytearray([head]) + public_key[1:33]
-
-    ripemd = hashlib.new('ripemd160')
-    ripemd.update(public_key_compressed)
-    check = ripemd.digest()[:4]
-
-    buff = public_key_compressed + check
-    wif_public_key = "BTS" + b58encode(str(buff))
-    print "{}:\t{} {}".format(role_names[role], wif_public_key, derPath)
-    assert wif_public_key == str(address)
-
 dongle = getDongle(False)
 path = "48'/1'/"
 for account in range(0, 2):
@@ -66,4 +45,22 @@ for account in range(0, 2):
         print "---------------------------- account: {}' key: {}' ----------------------------".format(account, key)
         for role in (0, 1, 3):
             derPath = path + str(role) + "'/" + str(account) + "'/" + str(key) + "'"
-            calc_key()
+            donglePath = parse_bip32_path(derPath)
+            apdu = "B5020001".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath
+
+            result = dongle.exchange(bytes(apdu))
+            offset = 1 + result[0]
+            address = result[offset + 1: offset + 1 + result[offset]]
+
+            public_key = result[1: 1 + result[0]]
+            head = 0x03 if (public_key[64] & 0x01) == 1 else 0x02
+            public_key_compressed = bytearray([head]) + public_key[1:33]
+
+            ripemd = hashlib.new('ripemd160')
+            ripemd.update(public_key_compressed)
+            check = ripemd.digest()[:4]
+
+            buff = public_key_compressed + check
+            wif_public_key = "BTS" + b58encode(str(buff))
+            print "{}:\t{} {}".format(role_names[role], wif_public_key, derPath)
+            assert wif_public_key == str(address)
