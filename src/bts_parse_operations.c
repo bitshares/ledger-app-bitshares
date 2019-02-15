@@ -278,28 +278,50 @@ void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, u
         printfContentLabel("Account to Update");
         prettyPrintBtsAccountIdType(op.accountId, txContent.txParamDisplayBuffer);
     } else if (argNum == 1) {
+        bool permPresent = op.ownerPermissionPresent;
+        bts_permission_type_t * perm = &op.ownerPermission;
         if (txContent.subargRemainP1 == 0) {
-            txContent.subargRemainP1 = op.ownerPermissionPresent ? 3 : 0;
+            txContent.subargRemainP1 = permPresent ? 6 : 0;
             printfContentLabel("Owner Permission");
-            printfContentParam(op.ownerPermissionPresent?"New Data":"No Change");
-        } else if (txContent.subargRemainP1 == 2) {
+            printfContentParam(permPresent?"New Data":"No Change");
+        } else if (txContent.subargRemainP1 == 5) {
             printfContentLabel("Owner Threshold");
-            printfContentParam("%u", (unsigned int)op.ownerPermission.weightThreshold);
+            printfContentParam("%u", (unsigned int)perm->weightThreshold);
+        } else if (txContent.subargRemainP1 == 4) {
+            printfContentLabel("Account Auths");
+            printfContentParam("Count: %u", perm->numAccountAuths);
+        } else if (txContent.subargRemainP1 == 3) {
+            printfContentLabel("Account Auths");
+            prettyPrintBtsAccountAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
+        } else if (txContent.subargRemainP1 == 2) {
+            printfContentLabel("Key Auths");
+            printfContentParam("Count: %u", perm->numKeyAuths);
         } else if (txContent.subargRemainP1 == 1) {
-            printfContentLabel("Owner AcctAuths");
-            prettyPrintBtsAccountAuthsList(op.ownerPermission, WITH_SIZE(txContent.txParamDisplayBuffer));
+            printfContentLabel("Key Auths");
+            prettyPrintBtsKeyAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
         }
     } else if (argNum == 2) {
+        bool permPresent = op.activePermissionPresent;
+        bts_permission_type_t * perm = &op.activePermission;
         if (txContent.subargRemainP1 == 0) {
-            txContent.subargRemainP1 = op.activePermissionPresent ? 3 : 0;
+            txContent.subargRemainP1 = permPresent ? 6 : 0;
             printfContentLabel("Active Permission");
-            printfContentParam(op.activePermissionPresent?"New Data":"No Change");
-        } else if (txContent.subargRemainP1 == 2) {
+            printfContentParam(permPresent?"New Data":"No Change");
+        } else if (txContent.subargRemainP1 == 5) {
             printfContentLabel("Active Threshold");
-            printfContentParam("%u", (unsigned int)op.activePermission.weightThreshold);
+            printfContentParam("%u", (unsigned int)perm->weightThreshold);
+        } else if (txContent.subargRemainP1 == 4) {
+            printfContentLabel("Account Auths");
+            printfContentParam("Count: %u", perm->numAccountAuths);
+        } else if (txContent.subargRemainP1 == 3) {
+            printfContentLabel("Account Auths");
+            prettyPrintBtsAccountAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
+        } else if (txContent.subargRemainP1 == 2) {
+            printfContentLabel("Key Auths");
+            printfContentParam("Count: %u", perm->numKeyAuths);
         } else if (txContent.subargRemainP1 == 1) {
-            printfContentLabel("Active AcctAuths");
-            prettyPrintBtsAccountAuthsList(op.activePermission, WITH_SIZE(txContent.txParamDisplayBuffer));
+            printfContentLabel("Key Auths");
+            prettyPrintBtsKeyAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
         }
     } else if (argNum == 3) {
         if (txContent.subargRemainP1 == 0) {

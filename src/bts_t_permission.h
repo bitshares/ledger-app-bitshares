@@ -22,6 +22,7 @@
 #include "bts_t_account.h"
 #include "bts_t_varint.h"
 #include "bts_t_nullset.h"
+#include "bts_t_pubkey.h"
 #include <stdbool.h>
 #include "os.h"
 
@@ -42,9 +43,9 @@ typedef struct bts_key_auth_type_t bts_key_auth_type_t;
 typedef struct bts_permission_type_t {
     uint32_t              weightThreshold;
     bts_varint32_type_t   numAccountAuths;
-    const void           *firstAccountAuth;
+    const void *          firstAccountAuth;
     bts_varint32_type_t   numKeyAuths;
-    const void           *firstKeyAuth;
+    const void *          firstKeyAuth;
     bts_null_set_type_t   numAddressAuths;  // (Deprecated auth type. Should be zero.)
 } bts_permission_type_t;
 
@@ -60,7 +61,7 @@ struct bts_account_auth_type_t {
  * Pairs a pub key with a weight.
  */
 struct bts_key_auth_type_t {
-    uint8_t pubkey[33]; //TEMP
+    bts_public_key_type_t pubkey;
     uint16_t weight;
 };
 #define SIZEOF_BTS_KEY_AUTH_TYPE 35 // Serialized size of
@@ -75,11 +76,13 @@ uint32_t deserializeBtsPermissionType(const uint8_t *buffer, uint32_t bufferLeng
  * the only way to find a specific one is to scan through them sequentially.
  */
 uint32_t seekDeserializeBtsAccountAuthType(const uint8_t *buffer, uint32_t bufferLength, bts_account_auth_type_t * auth, uint32_t seek);
+uint32_t deserializeBtsKeyAuthType(const uint8_t *buffer, uint32_t bufferLength, bts_key_auth_type_t * auth);
 
 /**
  * Pretty-prints a list of Account Auths into a buffer. Will truncate at bufferLength.
  * E.g: (1.2.39247 w:1), (1.2.129476 w:1)
  */
 uint32_t prettyPrintBtsAccountAuthsList(bts_permission_type_t asset, char * buffer, uint32_t bufferLength);
+uint32_t prettyPrintBtsKeyAuthsList(bts_permission_type_t asset, char * buffer, uint32_t bufferLength);
 
 #endif

@@ -107,18 +107,42 @@ uint32_t seekDeserializeBtsAccountAuthType(const uint8_t *buffer, uint32_t buffe
 
 }
 
+uint32_t deserializeBtsKeyAuthType(const uint8_t *buffer, uint32_t bufferLength, bts_key_auth_type_t * auth) {
+
+    uint32_t read = 0;
+    uint32_t gobbled = 0;
+
+    gobbled = deserializeBtsPublicKeyType(buffer, bufferLength, &auth->pubkey);
+    if (gobbled > bufferLength) {
+        THROW(EXCEPTION);
+    }
+    read += gobbled; buffer += gobbled; bufferLength -= gobbled;
+
+    gobbled = sizeof(uint16_t);
+    os_memmove(&auth->weight, buffer, gobbled);
+    if (gobbled > bufferLength) {
+        THROW(EXCEPTION);
+    }
+    read += gobbled; buffer += gobbled; bufferLength -= gobbled;
+
+    PRINTF("DESERIAL: KEY_AUTH: Read %d bytes; %d bytes remain\n", read, bufferLength);
+
+    return read;
+
+}
+
 uint32_t prettyPrintBtsAccountAuth(bts_account_auth_type_t auth, char * buffer, uint32_t bufferLength) {
 
     uint32_t written = 0;
     char     tmpStr[24];
 
-    snprintf(buffer+written, bufferLength-written, "(1.2.");
+    snprintf(buffer+written, bufferLength-written, "[1.2.");
     written = strlen(buffer);
 
     ui64toa(auth.accountId, tmpStr);
     snprintf(buffer+written, bufferLength-written, "%s", tmpStr);
     written = strlen(buffer);
-    snprintf(buffer+written, bufferLength-written, " w:%u)", (uint32_t)auth.weight);
+    snprintf(buffer+written, bufferLength-written, ", w: %u]", (uint32_t)auth.weight);
     written = strlen(buffer);
 
     return written;
@@ -138,7 +162,50 @@ uint32_t prettyPrintBtsAccountAuthsList(bts_permission_type_t perm, char * buffe
             prettyPrintBtsAccountAuth(tmpAccountAuth, buffer+written, bufferLength-written);
             written = strlen(buffer);
             if (i+1 != perm.numAccountAuths) {
-                snprintf(buffer+written, bufferLength-written, ", ");
+                snprintf(buffer+written, bufferLength-written, ",  ");
+                written = strlen(buffer);
+            } else {
+                snprintf(buffer+written, bufferLength-written, " ");
+                written = strlen(buffer); // terminal spc sidesteps graphical glitch #uglyhack
+            }
+        }
+    }
+
+    return written;
+}
+
+uint32_t prettyPrintBtsKeyAuth(bts_key_auth_type_t auth, char * buffer, uint32_t bufferLength) {
+
+    uint32_t written = 0;
+    char     tmpStr[56];  // Enough for longest b58check + prefix up to 5 chars
+
+    snprintf(buffer+written, bufferLength-written, "[");
+    written = strlen(buffer);
+
+    prettyPrintBtsPublicKeyType(auth.pubkey, tmpStr);
+    snprintf(buffer+written, bufferLength-written, "%s", tmpStr);
+    written = strlen(buffer);
+    snprintf(buffer+written, bufferLength-written, ", w: %u]", (uint32_t)auth.weight);
+    written = strlen(buffer);
+
+    return written;
+}
+
+uint32_t prettyPrintBtsKeyAuthsList(bts_permission_type_t perm, char * buffer, uint32_t bufferLength) {
+
+    uint32_t written = 0;
+
+    if (perm.numKeyAuths == 0) {
+        snprintf(buffer, bufferLength, "(None)");
+        written = strlen(buffer);
+    } else {
+        for (uint32_t i = 0; i < perm.numKeyAuths; i++) {
+            bts_key_auth_type_t tmpAuth;
+            deserializeBtsKeyAuthType(perm.firstKeyAuth + i * SIZEOF_BTS_KEY_AUTH_TYPE, -1, &tmpAuth);
+            prettyPrintBtsKeyAuth(tmpAuth, buffer+written, bufferLength-written);
+            written = strlen(buffer);
+            if (i+1 != perm.numKeyAuths) {
+                snprintf(buffer+written, bufferLength-written, ",  ");
                 written = strlen(buffer);
             } else {
                 snprintf(buffer+written, bufferLength-written, " ");
