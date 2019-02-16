@@ -324,11 +324,29 @@ void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, u
             prettyPrintBtsKeyAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
         }
     } else if (argNum == 3) {
+        bts_account_options_type_t * opts = &op.accountOptions;
         if (txContent.subargRemainP1 == 0) {
-            txContent.subargRemainP1 = op.accountOptionsPresent ? 0/**/ : 0;
+            txContent.subargRemainP1 = op.accountOptionsPresent ? 7 : 0;
             printfContentLabel("Account Options");
             printfContentParam(op.accountOptionsPresent?"New Data":"No Change");
+        } else if (txContent.subargRemainP1 == 6) {
+            printfContentLabel("Memo Public Key");
+            prettyPrintBtsPublicKeyType(opts->memoPubkey, txContent.txParamDisplayBuffer);
+        } else if (txContent.subargRemainP1 == 5) {
+            printfContentLabel("Voting Account");
+            prettyPrintBtsAccountIdType(opts->votingAccount, txContent.txParamDisplayBuffer);
+        } else if (txContent.subargRemainP1 == 4) {
+            printfContentLabel("Num Witnesses");
+            printfContentParam("%u", (unsigned int)opts->numWitnesses);
+        } else if (txContent.subargRemainP1 == 3) {
+            printfContentLabel("Num Committee");
+            printfContentParam("%u", (unsigned int)opts->numCommittee);
+        } else if (txContent.subargRemainP1 == 2) {
+            printfContentLabel("Votes");
+            printfContentParam("Count: %u", opts->numVotes);
         } else if (txContent.subargRemainP1 == 1) {
+            printfContentLabel("Votes");
+            prettyPrintBtsVotesList(*opts, WITH_SIZE(txContent.txParamDisplayBuffer));
         }
     } else if (argNum == 4) {
         printfContentLabel("Fee");

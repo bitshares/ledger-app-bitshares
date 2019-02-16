@@ -23,6 +23,7 @@
 #include "bts_t_account.h"
 #include "bts_t_bool.h"
 #include "bts_t_permission.h"
+#include "bts_t_account_options.h"
 #include "bts_t_varint.h"
 
 typedef struct bts_operation_account_update_t {
@@ -33,7 +34,7 @@ typedef struct bts_operation_account_update_t {
     bts_bool_type_t       activePermissionPresent;
     bts_permission_type_t activePermission;
     bts_bool_type_t       accountOptionsPresent;
-//    bts_account_options_type_t accountOptions;
+    bts_account_options_type_t accountOptions;
     bts_varint32_type_t   extensionsListLength;
 } bts_operation_account_update_t;
 

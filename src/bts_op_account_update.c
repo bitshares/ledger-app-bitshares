@@ -72,25 +72,19 @@ uint32_t deserializeBtsOperationAccountUpdate(const uint8_t *buffer, uint32_t bu
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
     if (op->accountOptionsPresent) {
-        gobbled = 0;//deserializeBtsPermissionType(buffer, bufferLength, &op->activePermission);
+        gobbled = deserializeBtsAccountOptionsType(buffer, bufferLength, &op->accountOptions);
         if (gobbled > bufferLength) {
             THROW(EXCEPTION);
         }
         read += gobbled; buffer += gobbled; bufferLength -= gobbled;
     }
 
-/*  gobbled = deserializeBtsTimeType(buffer, bufferLength, &op->expires);
+    gobbled = deserializeBtsVarint32Type(buffer, bufferLength, &op->extensionsListLength);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = deserializeBtsBoolType(buffer, bufferLength, &op->fillOrKill);
-    if (gobbled > bufferLength) {
-        THROW(EXCEPTION);
-    }
-    read += gobbled; buffer += gobbled; bufferLength -= gobbled;
-*/
     PRINTF("DESERIAL: OP_ACCOUNT_UPDATE: Read %d bytes; Buffer remaining: %d bytes\n", read, bufferLength);
 
     return read; // NOTE: bytes read is less than full buffer length
