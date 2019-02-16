@@ -210,10 +210,10 @@ void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_
         prettyPrintBtsAssetType(op.transferAsset, txContent.txParamDisplayBuffer);
     } else if (argNum == 1) {
         printfContentLabel("From");
-        ui64toa(op.fromId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.fromId, txContent.txParamDisplayBuffer);
     } else if (argNum == 2) {
         printfContentLabel("To");
-        ui64toa(op.toId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.toId, txContent.txParamDisplayBuffer);
     } else if (argNum == 3) {
         printfContentLabel("Fee");
         prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);

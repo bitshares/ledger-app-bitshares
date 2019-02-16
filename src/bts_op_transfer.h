@@ -20,13 +20,14 @@
 #define __BTS_OP_TRANSFER_H__
 
 #include "bts_t_asset.h"
+#include "bts_t_account.h"
 #include "bts_t_bool.h"
 #include "bts_t_memo.h"
 
 typedef struct bts_operation_transfer_t {
     bts_asset_type_t feeAsset;
-    uint64_t         fromId;
-    uint64_t         toId;
+    bts_account_id_type_t fromId;
+    bts_account_id_type_t toId;
     bts_asset_type_t transferAsset;
     bts_bool_type_t  memoPresent;
     bts_memo_type_t  memo;

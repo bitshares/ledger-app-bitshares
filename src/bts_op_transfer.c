@@ -31,13 +31,13 @@ uint32_t deserializeBtsOperationTransfer(const uint8_t *buffer, uint32_t bufferL
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = unpack_varint48(buffer, &op->fromId);
+    gobbled = deserializeBtsAccountIdType(buffer, bufferLength, &op->fromId);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = unpack_varint48(buffer, &op->toId);
+    gobbled = deserializeBtsAccountIdType(buffer, bufferLength, &op->toId);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
