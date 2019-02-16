@@ -16,56 +16,49 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include "bts_op_transfer.h"
-#include "bts_types.h"
+#include "bts_t_memo.h"
 #include "os.h"
 
-uint32_t deserializeBtsOperationTransfer(const uint8_t *buffer, uint32_t bufferLength, bts_operation_transfer_t * op) {
+uint32_t deserializeBtsMemoType(const uint8_t *buffer, uint32_t bufferLength, bts_memo_type_t * memo) {
 
     uint32_t read = 0;
     uint32_t gobbled = 0;
 
-    gobbled = deserializeBtsAssetType(buffer, bufferLength, &op->feeAsset);
+    gobbled = deserializeBtsPublicKeyType(buffer, bufferLength, &memo->fromPubkey);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = unpack_varint48(buffer, &op->fromId);
+    gobbled = deserializeBtsPublicKeyType(buffer, bufferLength, &memo->toPubkey);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = unpack_varint48(buffer, &op->toId);
+    gobbled = sizeof(uint64_t);
+    os_memmove(&memo->nonce, buffer, gobbled);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = deserializeBtsAssetType(buffer, bufferLength, &op->transferAsset);
+    gobbled = deserializeBtsVarint32Type(buffer, bufferLength, &memo->cipherTextLength);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = deserializeBtsBoolType(buffer, bufferLength, &op->memoPresent);
+    memo->cipherText = buffer;
+    gobbled = memo->cipherTextLength;
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    if (op->memoPresent) {
-        gobbled = deserializeBtsMemoType(buffer, bufferLength, &op->memo);
-        if (gobbled > bufferLength) {
-            THROW(EXCEPTION);
-        }
-        read += gobbled; buffer += gobbled; bufferLength -= gobbled;
-    }
+    PRINTF("DESERIAL: MEMO: %u cipher text bytes; Read %d bytes; %d bytes remain\n",
+           memo->cipherTextLength, read, bufferLength);
 
-    PRINTF("DESERIAL: OP_TRANSFER: Read %d bytes; Buffer remaining: %d bytes\n", read, bufferLength);
-
-    return read; // NOTE: bytes read is less than full buffer length
-                 // since we didn't bother extracting extensions.
+    return read;
 
 }

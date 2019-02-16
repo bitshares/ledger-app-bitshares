@@ -16,22 +16,22 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __BTS_OP_TRANSFER_H__
-#define __BTS_OP_TRANSFER_H__
+#ifndef __BTS_T_MEMO_H__
+#define __BTS_T_MEMO_H__
 
-#include "bts_t_asset.h"
-#include "bts_t_bool.h"
-#include "bts_t_memo.h"
+#include "bts_t_pubkey.h"
+#include "bts_t_varint.h"
+#include <stdbool.h>
+#include "os.h"
 
-typedef struct bts_operation_transfer_t {
-    bts_asset_type_t feeAsset;
-    uint64_t         fromId;
-    uint64_t         toId;
-    bts_asset_type_t transferAsset;
-    bts_bool_type_t  memoPresent;
-    bts_memo_type_t  memo;
-} bts_operation_transfer_t;
+typedef struct bts_memo_type_t {
+    bts_public_key_type_t fromPubkey;
+    bts_public_key_type_t toPubkey;
+    uint64_t              nonce;
+    bts_varint32_type_t   cipherTextLength;
+    const uint8_t *       cipherText; // message start in OpData buffer
+} bts_memo_type_t;
 
-uint32_t deserializeBtsOperationTransfer(const uint8_t *buffer, uint32_t bufferLength, bts_operation_transfer_t * op);
+uint32_t deserializeBtsMemoType(const uint8_t *buffer, uint32_t bufferLength, bts_memo_type_t * memo);
 
 #endif
