@@ -16,26 +16,21 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __BTS_OP_TRANSFER_H__
-#define __BTS_OP_TRANSFER_H__
+#ifndef __BTS_T_EXTENSIONS_H__
+#define __BTS_T_EXTENSIONS_H__
 
-#include "bts_t_asset.h"
-#include "bts_t_account.h"
-#include "bts_t_bool.h"
-#include "bts_t_memo.h"
-#include "bts_t_extensions.h"
+#include "bts_t_varint.h"
+#include <stdbool.h>
+#include "os.h"
 
-typedef struct bts_operation_transfer_t {
-    bts_asset_type_t feeAsset;
-    bts_account_id_type_t fromId;
-    bts_account_id_type_t toId;
-    bts_asset_type_t transferAsset;
-    bts_bool_type_t  memoPresent;
-    bts_memo_type_t  memo;
-    bts_extension_array_type_t extensions;
-    bool containsUninterpretable;
-} bts_operation_transfer_t;
+typedef struct bts_extension_array_t {
+    bts_varint32_type_t   count;
+    const uint8_t *       pFirst; // Points first extension in OpData buffer
+    uint32_t              dataLength; // Total extension payload length (not
+} bts_extension_array_type_t;         // always knowable. Deserialize sets to
+                                      // zero. Caller may set otherwise if
+                                      // desired.)
 
-uint32_t deserializeBtsOperationTransfer(const uint8_t *buffer, uint32_t bufferLength, bts_operation_transfer_t * op);
+uint32_t deserializeBtsExtensionArrayType(const uint8_t *buffer, uint32_t bufferLength, bts_extension_array_type_t * exts);
 
 #endif

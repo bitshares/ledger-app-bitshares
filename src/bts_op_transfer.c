@@ -63,6 +63,18 @@ uint32_t deserializeBtsOperationTransfer(const uint8_t *buffer, uint32_t bufferL
         read += gobbled; buffer += gobbled; bufferLength -= gobbled;
     }
 
+    gobbled = deserializeBtsExtensionArrayType(buffer, bufferLength, &op->extensions);
+    if (gobbled > bufferLength) {
+        THROW(EXCEPTION);
+    }
+    read += gobbled; buffer += gobbled; bufferLength -= gobbled;
+
+    if (op->extensions.count > 0) {
+      op->containsUninterpretable = true;
+    } else {
+      op->containsUninterpretable = false;
+    }
+
     PRINTF("DESERIAL: OP_TRANSFER: Read %d bytes; Buffer remaining: %d bytes\n", read, bufferLength);
 
     return read; // NOTE: bytes read is less than full buffer length
