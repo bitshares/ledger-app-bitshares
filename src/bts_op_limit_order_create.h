@@ -20,16 +20,20 @@
 #define __BTS_OP_LIMIT_ORDER_CREATE_H__
 
 #include "bts_t_asset.h"
+#include "bts_t_account.h"
 #include "bts_t_time.h"
 #include "bts_t_bool.h"
+#include "bts_t_extensions.h"
 
 typedef struct bts_operation_limit_order_create_t {
     bts_asset_type_t feeAsset;
-    uint64_t         sellerId;
+    bts_account_id_type_t sellerId;
     bts_asset_type_t sellAsset;
     bts_asset_type_t buyAsset;
     bts_time_type_t  expires;
     bts_bool_type_t  fillOrKill;
+    bts_extension_array_type_t extensions;
+    bool containsUninterpretable;
 } bts_operation_limit_order_create_t;
 
 uint32_t deserializeBtsOperationLimitOrderCreate(const uint8_t *buffer, uint32_t bufferLength, bts_operation_limit_order_create_t * op);

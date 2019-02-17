@@ -31,7 +31,7 @@ uint32_t deserializeBtsOperationLimitOrderCreate(const uint8_t *buffer, uint32_t
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = unpack_varint48(buffer, &op->sellerId);
+    gobbled = deserializeBtsAccountIdType(buffer, bufferLength, &op->sellerId);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }
@@ -61,9 +61,20 @@ uint32_t deserializeBtsOperationLimitOrderCreate(const uint8_t *buffer, uint32_t
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
+    gobbled = deserializeBtsExtensionArrayType(buffer, bufferLength, &op->extensions);
+    if (gobbled > bufferLength) {
+        THROW(EXCEPTION);
+    }
+    read += gobbled; buffer += gobbled; bufferLength -= gobbled;
+
+    if (op->extensions.count > 0) {
+      op->containsUninterpretable = true;
+    } else {
+      op->containsUninterpretable = false;
+    }
+
     PRINTF("DESERIAL: OP_LIMIT_CREATE: Read %d bytes; Buffer remaining: %d bytes\n", read, bufferLength);
 
-    return read; // NOTE: bytes read is less than full buffer length
-                 // since we didn't bother extracting some things.
+    return read;
 
 }

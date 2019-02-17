@@ -77,7 +77,6 @@ uint32_t deserializeBtsOperationTransfer(const uint8_t *buffer, uint32_t bufferL
 
     PRINTF("DESERIAL: OP_TRANSFER: Read %d bytes; Buffer remaining: %d bytes\n", read, bufferLength);
 
-    return read; // NOTE: bytes read is less than full buffer length
-                 // since we didn't bother extracting extensions.
+    return read;
 
 }
