@@ -14,7 +14,18 @@ To use the generic wallet refer to `signTransaction.py`, `getPublicKey.py`.
 
 ### Supported Operations:
 
-* Transfer
+The following operations are supported in-device, and will show details of the operation on-screen: (Example commands show loading of sample transactions from .json files.) Support for additional operations beyond those listed here will be an on-going effort.
+
+* Transfer:
+  * `python signTransaction.py --file=bts_transaction_transfer.json`
+* Limit Order Create:
+  * `python signTransaction.py --file=bts_limit_order_create.json`
+* Limit Order Cancel:
+  * `python signTransaction.py --file=bts_limit_order_cancel.json`
+* Account Update:
+  * `python signTransaction.py --file=bts_account_update.json`
+* Account Upgrade:
+  * `python signTransaction.py --file=bts_account_upgrade.json`
 
 # How to Install developer version
 ## Configuring Ledger Environment
