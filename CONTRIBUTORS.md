@@ -4,6 +4,7 @@ Contributors to Ledger-App-BitShares include, but are not necessarily limited to
 
 * [Christopher J. Sanborn](https://github.com/christophersanborn)
 * [Jose Marcial Vieira Bisneto](https://github.com/marcialvieira)
+* [Fabian Schuh](https://github.com/xeroc)
 
 Although substantially modified, Ledger-App-BitShares began as a fork of [Ledger-App-EOS](https://github.com/LedgerHQ/ledger-app-eos) by [Taras Shchybovyk](https://github.com/tarassh).
 
