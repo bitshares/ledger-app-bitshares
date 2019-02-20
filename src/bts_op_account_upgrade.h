@@ -20,12 +20,17 @@
 #define __BTS_OP_ACCOUNT_UPGRADE_H__
 
 #include "bts_t_asset.h"
+#include "bts_t_account.h"
 #include "bts_t_bool.h"
+#include "bts_t_extensions.h"
+#include <stdbool.h>
 
 typedef struct bts_operation_account_upgrade_t {
     bts_asset_type_t feeAsset;
-    uint64_t         accountId;
-    bts_bool_type_t  upgradeLtm;
+    bts_account_id_type_t accountId;
+    bts_bool_type_t upgradeLtm;
+    bts_extension_array_type_t extensions;
+    bool containsUninterpretable;
 } bts_operation_account_upgrade_t;
 
 uint32_t deserializeBtsOperationAccountUpgrade(const uint8_t *buffer, uint32_t bufferLength, bts_operation_account_upgrade_t * op);

@@ -363,7 +363,7 @@ void parseAccountUpgradeOperation(const uint8_t *buffer, uint32_t bufferLength, 
 
     if (argNum == 0) {
         printfContentLabel("Account to Upgrade");
-        ui64toa(op.accountId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.accountId, txContent.txParamDisplayBuffer);
     } else if (argNum == 1) {
         printfContentLabel("Upgrade Path");
         printfContentParam(op.upgradeLtm?"Lifetime Membership":"None / No Upgrade");
