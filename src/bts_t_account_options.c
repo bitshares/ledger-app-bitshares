@@ -66,7 +66,7 @@ uint32_t deserializeBtsAccountOptionsType(const uint8_t *buffer, uint32_t buffer
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
-    gobbled = deserializeBtsNullSetType(buffer, bufferLength, &opts->extensions);
+    gobbled = deserializeBtsExtensionArrayType(buffer, bufferLength, &opts->extensions);
     if (gobbled > bufferLength) {
         THROW(EXCEPTION);
     }

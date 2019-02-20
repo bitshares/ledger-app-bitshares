@@ -22,7 +22,7 @@
 #include "bts_t_pubkey.h"
 #include "bts_t_account.h"
 #include "bts_t_varint.h"
-#include "bts_t_nullset.h"
+#include "bts_t_extensions.h"
 #include <stdbool.h>
 #include "os.h"
 
@@ -33,9 +33,7 @@ typedef struct bts_account_options_type_t {
     uint16_t              numCommittee;
     bts_varint32_type_t   numVotes;
     const void *          votes; // Point to first vote in OpData buffer
-    bts_null_set_type_t   extensions; // Not supported yet but I think special
-                                      // authorities goes in here, so should
-                                      // probably add support. TODO:
+    bts_extension_array_type_t extensions;
 } bts_account_options_type_t;
 
 typedef uint32_t bts_vote_type_t;

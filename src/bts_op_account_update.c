@@ -71,23 +71,40 @@ uint32_t deserializeBtsOperationAccountUpdate(const uint8_t *buffer, uint32_t bu
     }
     read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
+    // We will have "uninterpretable" data if *either* the included AccountOptions
+    // object *or* the operation as a whole has extensions.
+    op->containsUninterpretable = false;
     if (op->accountOptionsPresent) {
         gobbled = deserializeBtsAccountOptionsType(buffer, bufferLength, &op->accountOptions);
         if (gobbled > bufferLength) {
             THROW(EXCEPTION);
         }
         read += gobbled; buffer += gobbled; bufferLength -= gobbled;
+        if (op->accountOptions.extensions.count > 0) {
+            op->containsUninterpretable = true;
+        }
     }
 
-    gobbled = deserializeBtsVarint32Type(buffer, bufferLength, &op->extensionsListLength);
-    if (gobbled > bufferLength) {
-        THROW(EXCEPTION);
+    if (!op->containsUninterpretable) {
+        // Only decode Op-level extensions if there are NOT AccountOptions-level extensions.
+        // (Because otherwise we are not aligned on the Op-level extensions.)
+        gobbled = deserializeBtsExtensionArrayType(buffer, bufferLength, &op->extensions);
+        if (gobbled > bufferLength) {
+            THROW(EXCEPTION);
+        }
+        read += gobbled; buffer += gobbled; bufferLength -= gobbled;
+    }   // Else op->extensions is uninitialized, but it doesn't matter because we've already
+        // flagged presence of uninterpretable data.  Obvs, this will need to become more
+        // sophistcated if we later implement support for AccountOptions-level extensions.
+
+    if (op->containsUninterpretable || op->extensions.count > 0) {
+        op->containsUninterpretable = true;  // (Not worried about false pos on op->exts.count,
+    } else {                                 // since this could only happen if containsUnint
+        op->containsUninterpretable = false; // is already true.)
     }
-    read += gobbled; buffer += gobbled; bufferLength -= gobbled;
 
     PRINTF("DESERIAL: OP_ACCOUNT_UPDATE: Read %d bytes; Buffer remaining: %d bytes\n", read, bufferLength);
 
-    return read; // NOTE: bytes read is less than full buffer length
-                 // since we didn't bother extracting some things.
+    return read;
 
 }

@@ -24,7 +24,7 @@
 #include "bts_t_bool.h"
 #include "bts_t_permission.h"
 #include "bts_t_account_options.h"
-#include "bts_t_varint.h"
+#include "bts_t_extensions.h"
 
 typedef struct bts_operation_account_update_t {
     bts_asset_type_t      feeAsset;
@@ -35,7 +35,8 @@ typedef struct bts_operation_account_update_t {
     bts_permission_type_t activePermission;
     bts_bool_type_t       accountOptionsPresent;
     bts_account_options_type_t accountOptions;
-    bts_varint32_type_t   extensionsListLength;
+    bts_extension_array_type_t extensions;
+    bool containsUninterpretable;
 } bts_operation_account_update_t;
 
 uint32_t deserializeBtsOperationAccountUpdate(const uint8_t *buffer, uint32_t bufferLength, bts_operation_account_update_t * op);
