@@ -229,7 +229,7 @@ void parseLimitOrderCreateOperation(const uint8_t *buffer, uint32_t bufferLength
 
     if (argNum == 0) {
         printfContentLabel("Seller");
-        ui64toa(op.sellerId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.sellerId, txContent.txParamDisplayBuffer);
     } else if (argNum == 1) {
         printfContentLabel("Amount to Sell");
         prettyPrintBtsAssetType(op.sellAsset, txContent.txParamDisplayBuffer);
@@ -257,7 +257,7 @@ void parseLimitOrderCancelOperation(const uint8_t *buffer, uint32_t bufferLength
 
     if (argNum == 0) {
         printfContentLabel("Account");
-        ui64toa(op.accountId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.accountId, txContent.txParamDisplayBuffer);
     } else if (argNum == 1) {
         printfContentLabel("Order Id");
         ui64toa(op.orderId, txContent.txParamDisplayBuffer);

@@ -20,12 +20,17 @@
 #define __BTS_OP_LIMIT_ORDER_CANCEL_H__
 
 #include "bts_t_asset.h"
+#include "bts_t_account.h"
+#include "bts_t_varint.h"
+#include "bts_t_extensions.h"
+#include <stdbool.h>
 
 typedef struct bts_operation_limit_order_cancel_t {
     bts_asset_type_t feeAsset;
-    uint64_t         accountId;
-    uint64_t         orderId;
-    uint32_t         extensionsListLength;
+    bts_account_id_type_t accountId;
+    bts_varint48_type_t orderId;
+    bts_extension_array_type_t extensions;
+    bool containsUninterpretable;
 } bts_operation_limit_order_cancel_t;
 
 uint32_t deserializeBtsOperationLimitOrderCancel(const uint8_t *buffer, uint32_t bufferLength, bts_operation_limit_order_cancel_t * op);
