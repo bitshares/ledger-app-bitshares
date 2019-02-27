@@ -5,10 +5,10 @@
     "operations": [[
         2,{
           "fee": {
-            "amount": 0,
+            "amount": 2500,
             "asset_id": "1.3.0"
           },
-          "fee_paying_account": "1.2.104",
+          "fee_paying_account": "1.2.1152620",
           "order": "1.7.51840",
           "extensions": []
         }

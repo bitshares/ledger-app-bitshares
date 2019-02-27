@@ -4,11 +4,11 @@
   "expiration": "2018-12-04T03:54:15",
   "operations": [[
       6,{
-        "fee": {"amount": 1467634, "asset_id": "1.3.0"},
-        "account": "1.2.15",
+        "fee": {"amount": 2530, "asset_id": "1.3.0"},
+        "account": "1.2.1152620",
         "owner": {
           "weight_threshold": 1,
-          "account_auths": [["1.2.96086", 1]],
+          "account_auths": [["1.2.1152699", 1]],
           "key_auths": [
             ["BTS6pbVDAjRFiw6fkiKYCrkz7PFeL7XNAfefrsREwg8MKpJ9VYV9x", 1]
           ],
@@ -16,7 +16,7 @@
         },
         "active": {
           "weight_threshold": 1,
-          "account_auths": [["1.2.96086", 1]],
+          "account_auths": [],
           "key_auths": [
             ["BTS8CemMDjdUWSV5wKotEimhK6c4dY7p2PdzC2qM1HpAP8aLtZfE7", 1]
           ],
@@ -27,7 +27,7 @@
           "voting_account": "1.2.5",
           "num_witness": 0,
           "num_committee": 0,
-          "votes": ["2:167"],
+          "votes": ["2:167", "2:301"],
           "extensions": []
         },
         "extensions": {},
