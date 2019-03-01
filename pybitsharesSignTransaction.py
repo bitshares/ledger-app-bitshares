@@ -21,10 +21,8 @@ def parse_bip32_path(path):
             result = result + struct.pack(">I", 0x80000000 | int(element[0]))
     return result
 
-def encode(tx):
+def encode(chain_id, tx):
     encoder = Encoder()
-
-    chain_id = binascii.unhexlify(tx.getKnownChains()['BTS']['chain_id'])
 
     encoder.start()
 
@@ -45,6 +43,7 @@ def encode(tx):
     return encoder.output()
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--chain_id', help="Blockchain chain ID")
 parser.add_argument('--path', help="BIP 32 path to retrieve")
 parser.add_argument('--file', help="Transaction in JSON format")
 args = parser.parse_args()
@@ -66,7 +65,11 @@ with open(args.file) as f:
             expiration=obj['expiration'],
             operations=obj['operations'],
         )
-    tx_raw = encode(tx)
+    if args.chain_id is None:
+        chain_id = binascii.unhexlify(tx.getKnownChains()['BTS']['chain_id'])
+    else:
+        chain_id = binascii.unhexlify(args.chain_id)
+    tx_raw = encode(chain_id, tx)
     signData = tx_raw
     print (binascii.hexlify(tx_raw).decode())
 
