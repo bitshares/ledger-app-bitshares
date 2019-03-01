@@ -25,28 +25,22 @@ def encode(tx):
     encoder = Encoder()
 
     chain_id = binascii.unhexlify(tx.getKnownChains()['BTS']['chain_id'])
-    json = tx.toJson()
-    txWire = bytes(tx)
 
     encoder.start()
 
     encoder.write(struct.pack(str(len(chain_id)) + 's', chain_id), Numbers.OctetString)
-    encoder.write(txWire[:2], Numbers.OctetString)      # ref_block_num
-    encoder.write(txWire[2:6], Numbers.OctetString)     # ref_block_prefix
-    encoder.write(txWire[6:10], Numbers.OctetString)    # expiration
-    encoder.write(txWire[10:11], Numbers.OctetString)   # n_op
-    for operation in tx.toJson()['operations']:
-        optx = Signed_Transaction(
-                ref_block_num=json['ref_block_num'],
-                ref_block_prefix=json['ref_block_prefix'],
-                expiration=json['expiration'],
-                operations=[operation],
-            )
-        opWire = bytes(optx['operations'])
-        encoder.write(opWire[1:2], Numbers.OctetString) # opid
-        encoder.write(opWire[2:], Numbers.OctetString)  # operation
-    pos = 11 + len(bytes(tx['operations']))
-    encoder.write(txWire[pos:], Numbers.OctetString)    # extension
+    encoder.write(bytes(tx['ref_block_num']), Numbers.OctetString)
+    encoder.write(bytes(tx['ref_block_prefix']), Numbers.OctetString)
+    encoder.write(bytes(tx['expiration']), Numbers.OctetString)
+    encoder.write(bytes(tx['operations'].length), Numbers.OctetString)
+    for opIdx in range(0, len(tx.toJson()['operations'])):
+        encoder.write(bytes([tx['operations'].data[opIdx].opId]), Numbers.OctetString)
+        encoder.write(bytes(tx['operations'].data[opIdx].op), Numbers.OctetString)
+
+    if 'extension' in tx:
+        encoder.write(bytes(tx['extension']), Numbers.OctetString)
+    else:
+        encoder.write(bytes([0]), Numbers.OctetString)
 
     return encoder.output()
 
