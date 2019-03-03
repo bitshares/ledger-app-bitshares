@@ -51,7 +51,7 @@ const char * const op_names[] = {   // Deref with PIC or you gone get bit. E.g.:
     "Transfer",                     // const char * string = PIC(op_names[idx]);
     "Limit Order",                  // Otherwise string gonna point to the dark
     "Cancel Order",                 // and inky abyss.
-    "call_order_update",
+    "Adjust Collateral",
     "fill_order", /* virtual */
     "Register Account",
     "Update Acct",
