@@ -53,18 +53,25 @@ uint32_t prettyPrintBtsAssetType(const bts_asset_type_t asset, char * buffer) {
     bts_asset_description_t desc;
     getBtsAssetDescription(asset, &desc);
 
-    int64_t p = desc.precision;
-    int64_t p10 = 1;
+    uint8_t  p = desc.precision;
+    uint64_t p10 = 1;
     while (p > 0) {
         p10 *= 10; --p;
-    }
+    }   // (p is now zero)
 
-    // Separate whole from fractional:
+    // Separate whole from fractional: (Note fractional will be zero if p10 == 1)
     uint64_t fractional = asset.amount % p10;
     uint64_t integral = (asset.amount - fractional)/p10;
 
+    // Get leading zeros for fractional as p:
+    while (fractional>0 && p10 > 1 && (p10/(fractional+1)) >= 10) {
+        p10 /= 10;
+        p++; // reusing p
+    }
+
+    // Clear trailing zeros for fractional part:
     while (fractional>0 && fractional%10==0) {
-        fractional /= 10; // (Gobble trailing zeros)
+        fractional /= 10; // (Gobble a trailing zero)
     }
 
     // To ASCII:
@@ -73,6 +80,10 @@ uint32_t prettyPrintBtsAssetType(const bts_asset_type_t asset, char * buffer) {
     if (fractional > 0) {
         buffer[written] = '.';                  // Decimal separator
         written++;
+        for ( ; p > 0 ; p--) {
+            buffer[written] = '0';              // Fractional leading zeros
+            written++;
+        }
         ui64toa(fractional, buffer+written);    // Fractional part
         written = strlen(buffer);
     }
