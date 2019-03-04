@@ -29,7 +29,16 @@ The following operations are supported in-device, and will show details of the o
 * Account Upgrade:
   * `python signTransaction.py --file=bts_account_upgrade.json`
 
+# Installing a GUI wallet / front end
+
+GUI wallet front-end support for Ledger Nano S is being developed independently by multiple wallet developers.  This repository contains the back-end app for your Nano that the wallets will connect to via USB.  As such, this repository is intended primarily for developers and wallet integrators.  If you are a regular user, then it is anticipated that by the time the GUI apps are ready, this back-end app will be available for download directly to your device via the Ledger Live app store.  You will not need to get the app from here.
+
+A list of supporting GUI apps will be added here when available.
+
 # How to Install developer version
+
+If you are installing the app from this repository, you will need a development environment to support compiling the app and loading onto your Ledger Nano S device.
+
 ## Configuring Ledger Environment
 
 * Install Vagrant and Virtualbox on your machine
