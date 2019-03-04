@@ -35,14 +35,13 @@ GUI wallet front-end support for Ledger Nano S is being developed independently 
 
 A list of supporting GUI apps will be added here when available.
 
-# How to Install developer version
+# How to install the developer version
 
 If you are installing the app from this repository, you will need a development environment to support compiling the app and loading onto your Ledger Nano S device.
 
-## Configuring Ledger Environment
+## Configuring Ledger build environment with Ledger-Vagrant
 
-* Install Vagrant and Virtualbox on your machine
-* Run the following
+A ready-to-use build environment hosted in a virtual machine is available via [fix/ledger-vagrant](https://github.com/fix/ledger-vagrant).  To use it, you will need [Vagrant](https://www.vagrantup.com) and [VirtualBox](https://www.virtualbox.org) on your build machine.  Then run the following:
 
 ```
 git clone https://github.com/fix/ledger-vagrant
@@ -50,7 +49,42 @@ cd ledger-vagrant
 vagrant up
 ```
 
-This will take a few minutes to install
+This will take a few minutes to install.  For more info on setting up the build environment, refer to [fix/ledger-vagrant](https://github.com/fix/ledger-vagrant).  Once the virtual machine is up and running, you can connect to it with:
+
+```
+vagrant ssh
+```
+
+## Install python-bitshares
+
+[Python-bitshares](https://github.com/bitshares/python-bitshares) is a python library that allows working with BitShares transactions, and is required by the example python scripts provided with this project.  It is not strictly needed to compile and install the device app, but if you wish to use the sample scripts to test the app, you will need python-bitshares.
+
+If not already connected, connect to your virtual mahine with:
+
+```
+vagrant ssh
+```
+
+Then install required dependencies and the library with:
+
+```
+sudo apt-get install libffi-dev libssl-dev python-dev python3-dev python3-pip
+pip3 install --upgrade setuptools
+pip3 install bitshares
+```
+
+Note that python-bitshares is a Python 3 project, and that it's important to use `pip3` and not `pip` to do the installs.
+
+## Install additional dependencies
+
+A few things that we need are missing from the ledger-vagrant pre-configured build environment.  If you intend to use the included python scripts, then also install the following:
+
+```
+pip3 install base58 asn1 enum34
+pip3 install ledgerblue
+```
+
+Note that installing `ledgerblue` may seem redundant since ledger-vagrant installs it, but note that we are installing the Python 3 version of it here, and our scripts won't work without it.  (Ledger-vagrant only installs the Python 2.7 version.)
 
 ## Compile your ledger app
 
