@@ -16,30 +16,25 @@ To use the generic wallet via the scripts, refer to `signTransaction.py`, `getPu
 
 ### Supported Operations:
 
-The following operations are supported in-device, and will show details of the operation on-screen: (Example commands show loading of sample transactions from .json files.) Support for additional operations beyond those listed here will be an on-going effort.
+The following operations are supported in-device, and will show details of the operation on-screen.  Support for additional operations beyond those listed here will be an on-going effort.
 
-* Transfer:
-  * `python signTransaction.py --file=bts_transaction_transfer.json`
-* Limit Order Create:
-  * `python signTransaction.py --file=bts_limit_order_create.json`
-* Limit Order Cancel:
-  * `python signTransaction.py --file=bts_limit_order_cancel.json`
-* Account Update:
-  * `python signTransaction.py --file=bts_account_update.json`
-* Account Upgrade:
-  * `python signTransaction.py --file=bts_account_upgrade.json`
+* Transfer
+* Limit Order Create
+* Limit Order Cancel
+* Account Update
+* Account Upgrade
 
-# Installing a GUI wallet / front end
+## Installing a GUI wallet / front end
 
 GUI wallet front-end support for Ledger Nano S is being developed independently by multiple wallet developers.  This repository contains the back-end app for your Nano that the wallets will connect to via USB.  As such, this repository is intended primarily for developers and wallet integrators.  If you are a regular user, then it is anticipated that by the time the GUI apps are ready, this back-end app will be available for download directly to your device via the Ledger Live app store.  You will not need to get the app from here.
 
 A list of supporting GUI apps will be added here when available.
 
-# How to install the developer version
+## How to install the developer version
 
 If you are installing the app from this repository, you will need a development environment to support compiling the app and loading onto your Ledger Nano S device.
 
-## Configuring Ledger build environment with Ledger-Vagrant
+### Configuring Ledger build environment with Ledger-Vagrant
 
 A ready-to-use build environment hosted in a virtual machine is available via [fix/ledger-vagrant](https://github.com/fix/ledger-vagrant).  To use it, you will need [Vagrant](https://www.vagrantup.com) and [VirtualBox](https://www.virtualbox.org) on your build machine.  Then run the following:
 
@@ -55,7 +50,7 @@ This will take a few minutes to install.  For more info on setting up the build 
 vagrant ssh
 ```
 
-## Install python-bitshares
+### Install python-bitshares
 
 [Python-bitshares](https://github.com/bitshares/python-bitshares) is a python library that allows working with BitShares transactions, and is required by the example python scripts provided with this project.  It is not strictly needed to compile and install the device app, but if you wish to use the sample scripts to test the app, you will need python-bitshares.
 
@@ -75,7 +70,7 @@ pip3 install bitshares
 
 Note that python-bitshares is a Python 3 project, and that it's important to use `pip3` and not `pip` to do the installs.
 
-## Install additional dependencies
+### Install additional dependencies
 
 A few things that we need are missing from the ledger-vagrant pre-configured build environment.  If you intend to use the included python scripts, then also install the following:
 
@@ -86,16 +81,19 @@ pip3 install ledgerblue
 
 Note that installing `ledgerblue` may seem redundant since ledger-vagrant installs it, but note that we are installing the Python 3 version of it here, and our scripts won't work without it.  (Ledger-vagrant only installs the Python 2.7 version.)
 
-## Compile your ledger app
+### Compile and load Ledger app
 
-* install your app under apps/ for instance:
+With the build environment configured, we can now clone, compile, and load ledger-app-bitshares.  Note that when you installed ledger-vagrant, it created an `apps/` directory that is accessible in both the host filesystem and the virtual machine. 
+
+* Clone the app repository, under the apps/ folder:
+
 ```
 cd apps/
 git clone https://github.com/christophersanborn/ledger-app-bitshares
 
 ```
-* connect to the machine with `ssh vagrant`
-* build the app
+
+* Now connect to the virtual machine with `vagrant ssh` and compile the app: 
 
 ```
 cd apps/ledger-app-bitshares
@@ -103,8 +101,44 @@ make clean
 make
 ```
 
-* connect your ledger Nano S to your computer
-* install the app on your ledger: `make load`
-* remove the app from the ledger: `make delete`
+* Next connect your Ledger Nano S to your computer:
+  * Install the app on your Ledger with: `make load`
+  * Remove the app from the Ledger with: `make delete`
 
-Install instruction with slight modifications has been taken from [here](https://github.com/fix/ledger-vagrant)
+### Testing the app
+
+Once loaded on your device, the app shows up in the Nano's dashboard as "BitShares" with the familiar icon.  Select it and start the app by pressing both buttons on the Nano simultaneously.
+
+#### BitShares wallet addresses:
+
+You can retrieve a BitShares public key managed by the Nano with `getPublicKey.py`.  Examples:
+
+```
+python3 getPublicKey.py
+python3 getPublicKey.py --path "48'/1'/0'/0'/0'"
+```
+
+In the first instance the default derivation path is used.  In the second instance, a specific path is requested.  Note that the app is constrained to use paths beginning with 48'/1'/.  The public key is also shown on screen on the device.
+
+You can see a range of addresses and an illustration of the SLIP-0048 scheme with `testDerivationPathGeneration.py`:
+
+```
+python3 testDerivationPathGeneration.py
+```
+
+#### Signing transactions:
+
+Some example transactions are included as .json files in the `example-tx` directory.  We can ask the BitShares app on the Nano to sign one of these transactions with the `signTransaction.py` python script.  Examples:
+
+```
+python3 signTransaction.py --file=example-tx/tx_transfer.json
+python3 signTransaction.py --file=example-tx/tx_limit_order_create.json
+```
+
+Details of the transaction will be shown on the Ledger's screen, and the user will be able to accept or reject the transaction.
+
+#### Developer notes:
+
+* The python scripts will show a hex representation of the bytes exchanged with the device in the terminal output.  This will be useful in confirming your understanding of the communication protocol with the device, and help with GUI wallet integration efforts.
+
+* Developers may find useful the "debugging firmware", which enables streaming of `stdout` over the USB connection, allowing debugging output via a PRINTF macro.  Instructions for installing and using this firmware are [here](https://ledger.readthedocs.io/en/latest/userspace/debugging.html)
