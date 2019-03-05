@@ -1,20 +1,25 @@
 # Bitshares Wallet App for Ledger Nano S
 
-This is the app that runs on the Ledger Nano S device and signs transactions recieved via USB from a host wallet interface.  It also manages your keys, safeguarding the private keys and deriving the public and private keys from the wallet seed, following [BIP-0032](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) and [SLIP-0048](https://github.com/satoshilabs/slips/blob/master/slip-0048.md).
+This is the app that runs on the Ledger Nano S device and signs transactions recieved via USB from a host wallet interface.
 
-A set of python scripts are provided to allow command-line interaction with the device, to request the signing of transactions read in from a file in JSON format.  The main purpose of the app, however, is to be a back-end to a more sophisticated wallet interface, and these scripts are primarily intended to provide a reference for developers developing GUI wallets.
+It also manages and safeguards your keys, deriving the public and private keys from the wallet seed according to BitShares specific conventions.
 
-The app follows the specification available in the [doc/](/doc/) folder, which documents the communication protocol with the device.
+- [Features](#features)
+- [Installing a GUI wallet / front end](#installing-a-gui-wallet--front-end)
+- [Building and installing the app](#building-and-installing-the-app)
+  - [Configuring Ledger build environment with Ledger-Vagrant](#configuring-ledger-build-environment-with-ledger-vagrant)
+  - [Compile and load the Ledger app](#compile-and-load-the-ledger-app)
+  - [Testing the app](#testing-the-app)
+- [Developer Resources](#developer-resources)
 
-To use the generic wallet via the scripts, refer to `signTransaction.py`, `getPublicKey.py`.  Some examples are given below.
-
-### Features:
+### Features
 
 * Processes serialized transactions to decode and display parameters of recognized BitShares operations, so that the user may be assured that the transaction is as intended before signing.
 * Can process transactions that contain multiple operations (currently capped at four).
 * For unrecognized operations, displays a warning that the details cannot be extracted, but still allows the user to sign the transaction if they wish.
+* Follows the [SLIP-0048](https://github.com/satoshilabs/slips/blob/master/slip-0048.md) specification for deriving public keys for Graphene blockchains.
 
-### Supported Operations:
+#### Supported Operations:
 
 The following operations are supported in-device, and will show details of the operation on-screen.  Support for additional operations beyond those listed here will be an on-going effort.
 
@@ -24,13 +29,21 @@ The following operations are supported in-device, and will show details of the o
 * Account Update
 * Account Upgrade
 
+#### Included tools and docs:
+
+A set of python scripts are provided to allow command-line interaction with the device, to request the signing of transactions read in from a file in JSON format.  The main purpose of the app, however, is to be a back-end to a more sophisticated wallet interface, and these scripts are primarily intended to provide a reference for developers developing GUI wallets.
+
+The app follows the specification available in the [doc/](/doc/) folder, which documents the communication protocol with the device.
+
+To use the generic wallet via the scripts, refer to `signTransaction.py`, `getPublicKey.py`.  Some examples are given in sections below.
+
 ## Installing a GUI wallet / front end
 
 GUI wallet front-end support for Ledger Nano S is being developed independently by multiple wallet developers.  This repository contains the back-end app for your Nano that the wallets will connect to via USB.  As such, this repository is intended primarily for developers and wallet integrators.  If you are a regular user, then it is anticipated that by the time the GUI apps are ready, this back-end app will be available for download directly to your device via the Ledger Live app store.  You will not need to get the app from here.
 
 A list of supporting GUI apps will be added here when available.
 
-## How to install the developer version
+## Building and installing the app
 
 If you are installing the app from this repository, you will need a development environment to support compiling the app and loading onto your Ledger Nano S device.
 
@@ -50,7 +63,7 @@ This will take a few minutes to install.  For more info on setting up the build 
 vagrant ssh
 ```
 
-### Install python-bitshares
+#### Install python-bitshares
 
 [Python-bitshares](https://github.com/bitshares/python-bitshares) is a python library that allows working with BitShares transactions, and is required by the example python scripts provided with this project.  It is not strictly needed to compile and install the device app, but if you wish to use the sample scripts to test the app, you will need python-bitshares.
 
@@ -70,7 +83,7 @@ pip3 install bitshares
 
 Note that python-bitshares is a Python 3 project, and that it's important to use `pip3` and not `pip` to do the installs.
 
-### Install additional dependencies
+#### Install additional dependencies
 
 A few things that we need are missing from the ledger-vagrant pre-configured build environment.  If you intend to use the included python scripts, then also install the following:
 
@@ -81,7 +94,7 @@ pip3 install ledgerblue
 
 Note that installing `ledgerblue` may seem redundant since ledger-vagrant installs it, but note that we are installing the Python 3 version of it here, and our scripts won't work without it.  (Ledger-vagrant only installs the Python 2.7 version.)
 
-### Compile and load Ledger app
+### Compile and load the Ledger app
 
 With the build environment configured, we can now clone, compile, and load ledger-app-bitshares.  Note that when you installed ledger-vagrant, it created an `apps/` directory that is accessible in both the host filesystem and the virtual machine. 
 
