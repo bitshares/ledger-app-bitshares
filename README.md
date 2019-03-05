@@ -158,7 +158,7 @@ Details of the transaction will be shown on the Ledger's screen, and the user wi
 
 ## Developer Resources
 
-Developers planning to add Ledger Nano support to their GUI wallet projects will need to communicate with the Nano.  Ledger provides several libraries for this purpose.  Depending on the type of project, developers may find the following resources useful:
+Developers planning to add Ledger Nano support to their GUI wallet projects will need to handle device communication with the Nano in their apps.  Ledger provides several libraries for this purpose.  Depending on the type of project, developers may find the following resources useful:
 
 For Python projects:
 
