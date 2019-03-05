@@ -168,3 +168,6 @@ For Javascript projects:
 
 * [Ledger's JavaScript libraries](https://github.com/LedgerHQ/ledgerjs)<br>Communication protocol for Ledger's hardware wallet devices (Ledger Nano / Ledger Nano S / Ledger Nano X / Ledger Blue) in many platforms: Web, Node, Electron, React Native,... and using many different communication channels: U2F, HID, WebUSB, Bluetooth,...
 
+For C/C++ projects:
+
+* [btchip-c-api](https://github.com/LedgerHQ/btchip-c-api)<br>The documentation and examples are a bit dated, but this link appears to include the needed API and library functions for connecting to and exchanging data with the Nano S.
