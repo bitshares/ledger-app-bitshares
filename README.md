@@ -142,3 +142,16 @@ Details of the transaction will be shown on the Ledger's screen, and the user wi
 * The python scripts will show a hex representation of the bytes exchanged with the device in the terminal output.  This will be useful in confirming your understanding of the communication protocol with the device, and help with GUI wallet integration efforts.
 
 * Developers may find useful the "debugging firmware", which enables streaming of `stdout` over the USB connection, allowing debugging output via a PRINTF macro.  Instructions for installing and using this firmware are [here](https://ledger.readthedocs.io/en/latest/userspace/debugging.html)
+
+## Developer Resources
+
+Developers planning to add Ledger Nano support to their GUI wallet projects will need to communicate with the Nano.  Ledger provides several libraries for this purpose.  Depending on the type of project, developers may find the following resources useful:
+
+For Python projects:
+
+* [Python tools for Ledger Blue and Nano S](https://github.com/LedgerHQ/blue-loader-python) <br>Python tools to communicate with Ledger Blue and Nano S and manage applications life cycle.
+
+For Javascript projects:
+
+* [Ledger's JavaScript libraries](https://github.com/LedgerHQ/ledgerjs)<br>Communication protocol for Ledger's hardware wallet devices (Ledger Nano / Ledger Nano S / Ledger Nano X / Ledger Blue) in many platforms: Web, Node, Electron, React Native,... and using many different communication channels: U2F, HID, WebUSB, Bluetooth,...
+
