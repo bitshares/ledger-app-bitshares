@@ -150,6 +150,12 @@ python3 signTransaction.py --file=example-tx/tx_limit_order_create.json
 
 Details of the transaction will be shown on the Ledger's screen, and the user will be able to accept or reject the transaction.
 
+One particularly interesting example transaction is `tx_trade_and_transfer.json`. This one contains two operations: the first trades 30 BTS for (at least) 1 bitEUR, then sends the 1 bitEUR to a different account.  This transaction was broadcast and is recorded in the blockchain at block height 35501245, and has transaction Id 1bab1b079e3dfb52ef34984891ceeddbfa000fd8.  (If you sign this transaction on your own device, you can confirm that the TxId's match.)
+
+```
+python3 signTransaction.py --file=example-tx/tx_trade_and_transfer.json
+```
+
 #### Developer notes:
 
 * The python scripts will show a hex representation of the bytes exchanged with the device in the terminal output.  This will be useful in confirming your understanding of the communication protocol with the device, and help with GUI wallet integration efforts.
