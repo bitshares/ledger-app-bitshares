@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 /*******************************************************************************
 *   Taras Shchybovyk
@@ -17,17 +17,18 @@
 *  limitations under the License.
 ********************************************************************************/
 """
+
+import struct
 from ledgerblue.comm import getDongle
 import argparse
-import struct
-from base58 import b58encode
 import hashlib
-
+from base58 import b58encode
+import binascii
 
 def parse_bip32_path(path):
     if len(path) == 0:
-        return ""
-    result = ""
+        return bytes([])
+    result = bytes([])
     elements = path.split('/')
     for pathElement in elements:
         element = pathElement.split('\'')
@@ -37,7 +38,6 @@ def parse_bip32_path(path):
             result = result + struct.pack(">I", 0x80000000 | int(element[0]))
     return result
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', help="BIP 32 path to retrieve")
 args = parser.parse_args()
@@ -46,10 +46,10 @@ if args.path is None:
     args.path = "48'/1'/1'/0'/0'"
 
 donglePath = parse_bip32_path(args.path)
-apdu = "B5020001".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath
+apdu = binascii.unhexlify("B5020001" + "{:02x}".format(len(donglePath) + 1) + "{:02x}".format(int(len(donglePath) / 4))) + donglePath
 
 dongle = getDongle(True)
-result = dongle.exchange(bytes(apdu))
+result = dongle.exchange(apdu)
 offset = 1 + result[0]
 address = result[offset + 1: offset + 1 + result[offset]]
 
@@ -57,16 +57,16 @@ public_key = result[1: 1 + result[0]]
 head = 0x03 if (public_key[64] & 0x01) == 1 else 0x02
 public_key_compressed = bytearray([head]) + public_key[1:33]
 
-print "           Public key " + str(public_key).encode('hex')
-print "Public key compressed " + str(public_key_compressed).encode('hex')
+print ("           Public key " + binascii.hexlify(public_key).decode())
+print ("Public key compressed " + binascii.hexlify(public_key_compressed).decode())
 
 ripemd = hashlib.new('ripemd160')
 ripemd.update(public_key_compressed)
 check = ripemd.digest()[:4]
 
 buff = public_key_compressed + check
-print "Calculated from public key: Address BTS" + b58encode(str(buff))
-print "      Received from ledger: Address " + str(address)
+print ("Calculated from public key: Address BTS" + b58encode(bytes(buff)).decode())
+print ("      Received from ledger: Address " + address.decode())
 
-apdu = "B5020101".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath
-result = dongle.exchange(bytes(apdu))
+apdu = binascii.unhexlify("B5020101" + "{:02x}".format(len(donglePath) + 1) + "{:02x}".format(int(len(donglePath) / 4))) + donglePath
+result = dongle.exchange(apdu)
