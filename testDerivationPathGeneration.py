@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 /*******************************************************************************
 *   Taras Shchybovyk
@@ -21,12 +21,13 @@ from ledgerblue.comm import getDongle
 import struct
 from base58 import b58encode
 import hashlib
+import binascii
 
 
 def parse_bip32_path(path):
     if len(path) == 0:
-        return ""
-    result = ""
+        return bytes([])
+    result = bytes([])
     elements = path.split('/')
     for pathElement in elements:
         element = pathElement.split('\'')
@@ -42,15 +43,15 @@ dongle = getDongle(False)
 path = "48'/1'/"
 for account in range(0, 2):
     for key in range(0, 3):
-        print "---------------------------- account: {}' key: {}' ----------------------------".format(account, key)
+        print ("---------------------------- account: {}' key: {}' ----------------------------".format(account, key))
         for role in (0, 1, 3):
             derPath = path + str(role) + "'/" + str(account) + "'/" + str(key) + "'"
             donglePath = parse_bip32_path(derPath)
-            apdu = "B5020001".decode('hex') + chr(len(donglePath) + 1) + chr(len(donglePath) / 4) + donglePath
+            apdu = binascii.unhexlify("B5020001" + "{:02x}".format(len(donglePath) + 1) + "{:02x}".format(int(len(donglePath) / 4))) + donglePath
 
-            result = dongle.exchange(bytes(apdu))
+            result = dongle.exchange(apdu)
             offset = 1 + result[0]
-            address = result[offset + 1: offset + 1 + result[offset]]
+            address = bytes(result[offset + 1: offset + 1 + result[offset]])
 
             public_key = result[1: 1 + result[0]]
             head = 0x03 if (public_key[64] & 0x01) == 1 else 0x02
@@ -61,6 +62,6 @@ for account in range(0, 2):
             check = ripemd.digest()[:4]
 
             buff = public_key_compressed + check
-            wif_public_key = "BTS" + b58encode(str(buff))
-            print "{}:\t{} {}".format(role_names[role], wif_public_key, derPath)
-            assert wif_public_key == str(address)
+            wif_public_key = "BTS" + b58encode(bytes(buff)).decode()
+            print ("{}:\t{} {}".format(role_names[role], wif_public_key, derPath))
+            assert wif_public_key == address.decode()
