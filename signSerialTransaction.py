@@ -1,17 +1,7 @@
 #!/usr/bin/env python3
 """
 /*******************************************************************************
-*
-*  This file is a derivative work, and contains modifications from original
-*  form.  The modifications are copyright of their respective contributors,
-*  and are licensed under the same terms as the original work.
-*
-*  Portions Copyright (c) 2018 Christopher J. Sanborn
-*
-*  Original copyright and license notice follows:
-*
-*   Taras Shchybovyk
-*   (c) 2018 Taras Shchybovyk
+*  Copyright of the Contributing Authors; see CONTRIBUTORS.md.
 *
 *  Licensed under the Apache License, Version 2.0 (the "License");
 *  you may not use this file except in compliance with the License.
@@ -63,7 +53,7 @@ if args.path is None:
     args.path = "48'/1'/1'/0'/0'"
 
 if args.file is None:
-    args.file = 'transaction.hex'
+    args.file = 'example-tx/tx_transfer.derhex'
 
 if not os.path.isfile(args.file):
     parser.print_help()
