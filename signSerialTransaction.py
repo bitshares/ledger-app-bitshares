@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 /*******************************************************************************
 *
@@ -43,8 +43,8 @@ import os
 
 def parse_bip32_path(path):
     if len(path) == 0:
-        return ""
-    result = ""
+        return bytes([])
+    result = bytes([])
     elements = path.split('/')
     for pathElement in elements:
         element = pathElement.split('\'')
@@ -53,7 +53,6 @@ def parse_bip32_path(path):
         else:
             result = result + struct.pack(">I", 0x80000000 | int(element[0]))
     return result
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--path', help="BIP 32 path to retrieve")
@@ -71,13 +70,13 @@ if not os.path.isfile(args.file):
     sys.exit()
 
 donglePath = parse_bip32_path(args.path)
-pathSize = len(donglePath) / 4
+pathSize = int(len(donglePath) / 4)
 
 with open(args.file, 'r') as f:
-    tx_ser_hex = f.read().translate(None,string.whitespace)
+    tx_ser_hex = "".join(f.read().split())
     tx_raw = binascii.unhexlify(tx_ser_hex)
     signData = tx_raw
-    print binascii.hexlify(tx_raw)
+    print (binascii.hexlify(tx_raw).decode())
     
     dongle = getDongle(True)
     offset = 0
@@ -91,12 +90,12 @@ with open(args.file, 'r') as f:
 
         if first:
             totalSize = len(donglePath) + 1 + len(chunk)
-            apdu = "B5040000".decode('hex') + chr(totalSize) + chr(pathSize) + donglePath + chunk
+            apdu = binascii.unhexlify("B5040000" + "{:02x}".format(totalSize) + "{:02x}".format(pathSize)) + donglePath + chunk
             first = False
         else:
             totalSize = len(chunk)
-            apdu = "B5048000".decode('hex') + chr(totalSize) + chunk
+            apdu = binascii.unhexlify("B5048000" + "{:02x}".format(totalSize)) + chunk
 
         offset += len(chunk)
-        result = dongle.exchange(bytes(apdu))
-        print binascii.hexlify(result)
+        result = dongle.exchange(apdu)
+        print (binascii.hexlify(result).decode())
