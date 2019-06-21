@@ -85,6 +85,24 @@ Note that python-bitshares is a Python 3 project, and that it's important to use
 
 #### Install additional dependencies
 
+---TEMPORARY FIXES---
+
+Some dependencies are broken in their latest versions, as of 2019-06-20.
+
+Fix udev-rules:  We need to pull an earlier version of the udev-rules script.  Run the following inside the VM:
+
+```
+wget -q -O - https://raw.githubusercontent.com/LedgerHQ/udev-rules/20cc1651eb551c4855aaa56628c77eaeb3031c22/add_udev_rules.sh | sudo bash
+```
+
+Pin an older version of 'pillow' (a dependency of `ledgerblue`; version 6.0.0 fails to install, so pin 5.4.1):
+
+```
+sudo pip3 install pillow==5.4.1
+```
+
+---END TEMPORARY FIXES---
+
 A few things that we need are missing from the ledger-vagrant pre-configured build environment.  If you intend to use the included python scripts, then also install the following:
 
 ```
