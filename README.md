@@ -77,8 +77,8 @@ Then install required dependencies and the library with:
 
 ```
 sudo apt-get install libffi-dev libssl-dev python-dev python3-dev python3-pip
-pip3 install --upgrade setuptools
-pip3 install bitshares
+sudo pip3 install --upgrade setuptools
+sudo pip3 install bitshares
 ```
 
 Note that python-bitshares is a Python 3 project, and that it's important to use `pip3` and not `pip` to do the installs.
@@ -88,8 +88,8 @@ Note that python-bitshares is a Python 3 project, and that it's important to use
 A few things that we need are missing from the ledger-vagrant pre-configured build environment.  If you intend to use the included python scripts, then also install the following:
 
 ```
-pip3 install base58 asn1 enum34
-pip3 install ledgerblue
+sudo pip3 install base58 asn1 enum34
+sudo pip3 install ledgerblue
 ```
 
 Note that installing `ledgerblue` may seem redundant since ledger-vagrant installs it, but note that we are installing the Python 3 version of it here, and our scripts won't work without it.  (Ledger-vagrant only installs the Python 2.7 version.)
