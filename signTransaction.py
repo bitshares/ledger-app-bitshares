@@ -24,6 +24,7 @@ from asn1 import Encoder, Numbers
 from bitsharesbase.signedtransactions import Signed_Transaction
 from ledgerblue.comm import getDongle
 import argparse
+from bitshares import BitShares
 
 def parse_bip32_path(path):
     if len(path) == 0:
@@ -63,6 +64,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--chain_id', help="Blockchain chain ID")
 parser.add_argument('--path', help="BIP 32 path to retrieve")
 parser.add_argument('--file', help="Transaction in JSON format")
+parser.add_argument('--broadcast', help="Broadcast the transaction", action='store_true')
+parser.add_argument('--node', help="Node to be used to broadcast")
 args = parser.parse_args()
 
 if args.path is None:
@@ -70,6 +73,9 @@ if args.path is None:
 
 if args.file is None:
     args.file = 'example-tx/tx_transfer.json'
+
+if args.node is None:
+    args.node = 'wss://bitshares.openledger.info/ws'
 
 donglePath = parse_bip32_path(args.path)
 pathSize = int(len(donglePath) / 4)
@@ -82,13 +88,11 @@ with open(args.file) as f:
             expiration=obj['expiration'],
             operations=obj['operations'],
         )
+    blockchain = BitShares(args.node)
     if args.chain_id is None:
-        chain_id = binascii.unhexlify(tx.getKnownChains()['BTS']['chain_id'])
-    else:
-        chain_id = binascii.unhexlify(args.chain_id)
-    tx_raw = encode(chain_id, tx)
-    signData = tx_raw
-    print (binascii.hexlify(tx_raw).decode())
+        args.chain_id = blockchain.rpc.chain_params['chain_id']
+    signData = encode(binascii.unhexlify(args.chain_id), tx)
+    print (binascii.hexlify(signData).decode())
 
     dongle = getDongle(True)
     offset = 0
@@ -111,3 +115,8 @@ with open(args.file) as f:
         offset += len(chunk)
         result = dongle.exchange(apdu)
         print (binascii.hexlify(result).decode())
+        if args.broadcast:
+            tx_sig = blockchain.new_tx(json.loads(str(tx)))
+            tx_sig["signatures"].extend([binascii.hexlify(result).decode()])
+            print (tx_sig)
+            print (blockchain.broadcast(tx=tx_sig))
