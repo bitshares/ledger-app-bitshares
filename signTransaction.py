@@ -66,6 +66,7 @@ parser.add_argument('--path', help="BIP 32 path to retrieve")
 parser.add_argument('--file', help="Transaction in JSON format")
 parser.add_argument('--broadcast', help="Broadcast the transaction", action='store_true')
 parser.add_argument('--node', help="Node to be used to broadcast")
+parser.add_argument('--tapos', help="Enable TaPOS", action='store_true')
 args = parser.parse_args()
 
 if args.path is None:
@@ -82,13 +83,18 @@ pathSize = int(len(donglePath) / 4)
 
 with open(args.file) as f:
     obj = json.load(f)
+    blockchain = BitShares(args.node)
+    if args.tapos:
+        txbuffer = blockchain.tx()
+        obj['ref_block_num'] = txbuffer['ref_block_num']
+        obj['ref_block_prefix'] = txbuffer['ref_block_prefix']
+        obj['expiration'] = txbuffer['expiration']
     tx = Signed_Transaction(
             ref_block_num=obj['ref_block_num'],
             ref_block_prefix=obj['ref_block_prefix'],
             expiration=obj['expiration'],
             operations=obj['operations'],
         )
-    blockchain = BitShares(args.node)
     if args.chain_id is None:
         args.chain_id = blockchain.rpc.chain_params['chain_id']
     signData = encode(binascii.unhexlify(args.chain_id), tx)
