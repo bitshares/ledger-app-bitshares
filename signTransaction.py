@@ -68,7 +68,7 @@ parser.add_argument('--file', help="Transaction in JSON format")
 parser.add_argument('--broadcast', help="Broadcast the transaction", action='store_true')
 parser.add_argument('--node', help="Node to be used to broadcast")
 parser.add_argument('--tapos', help="Enable TaPOS", action='store_true')
-parser.add_argument('--expiration', help="Sets the transaction expiration to [minutes] in the future")
+parser.add_argument('--expire', help="Sets the transaction expiration to [minutes] in the future")
 args = parser.parse_args()
 
 if args.path is None:
@@ -90,8 +90,8 @@ with open(args.file) as f:
         txbuffer = blockchain.tx()
         obj['ref_block_num'] = txbuffer['ref_block_num']
         obj['ref_block_prefix'] = txbuffer['ref_block_prefix']
-        if args.expiration:
-            expiration = datetime.now() + timedelta(minutes=int(args.expiration))
+        if args.expire:
+            expiration = datetime.now() + timedelta(minutes=int(args.expire))
             txbuffer['expiration'] = expiration.strftime("%Y-%m-%dT%H:%M:%S%Z")
         obj['expiration'] = txbuffer['expiration']
     tx = Signed_Transaction(
