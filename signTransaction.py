@@ -90,8 +90,8 @@ with open(args.file) as f:
         txbuffer = blockchain.tx()
         obj['ref_block_num'] = txbuffer['ref_block_num']
         obj['ref_block_prefix'] = txbuffer['ref_block_prefix']
-        if args.expire:
-            expiration = datetime.now() + timedelta(minutes=int(args.expire))
+        if args.expire and int(args.expire) >= 1:
+            expiration = datetime.strptime(txbuffer['expiration'], "%Y-%m-%dT%H:%M:%S") + timedelta(minutes=int(args.expire)-1, seconds=30)
             txbuffer['expiration'] = expiration.strftime("%Y-%m-%dT%H:%M:%S%Z")
         obj['expiration'] = txbuffer['expiration']
     tx = Signed_Transaction(
