@@ -15,6 +15,9 @@ from bitshares.asset import Asset
 from bitshares.memo import Memo
 from asn1 import Encoder, Numbers
 from ledgerblue.comm import getDongle
+from graphenecommon.exceptions import AccountDoesNotExistsException
+from grapheneapi.exceptions import RPCError
+from datetime import datetime, timedelta
 
 blockchain = BitShares("wss://bitshares.openledger.info/ws")
 bip32_path = "48'/1'/1'/0'/0'"
@@ -24,7 +27,11 @@ def append_transfer_tx(append_to, dest_account_name):
     #
     account = Account(op_xfr_from, blockchain_instance=blockchain)
     amount = Amount(2.0, "BTS", blockchain_instance=blockchain)
-    to = Account(dest_account_name, blockchain_instance=blockchain)
+    try:
+        to = Account(dest_account_name, blockchain_instance=blockchain)
+    except:
+        print ("Problem locating destination account")
+        raise
     memoObj = Memo(from_account=account, to_account=to, blockchain_instance=blockchain)
     memo_text = "" #"Signed by BitShares App on Ledger Nano S!"
 
@@ -45,8 +52,15 @@ def sendTip(to_name):
     #
     print("\nButton Pressed")
     print("Attempting to send 2.0 BTS to %s" % (to_name))
-    tx_head = blockchain.new_tx()  # Pull recent TaPoS
-    tx = append_transfer_tx(tx_head, to_name)
+    tx_head = blockchain.new_tx()    # Pull recent TaPoS
+    dummy = tx_head['ref_block_num'] # Somehow this triggers tx_head to populate 'expiration'... (??)
+    expiration = datetime.strptime(tx_head['expiration'], "%Y-%m-%dT%H:%M:%S") + timedelta(minutes=10)
+    tx_head['expiration'] = expiration.strftime("%Y-%m-%dT%H:%M:%S%Z") # Longer expiration to accomodate device interaction
+    try:
+        tx = append_transfer_tx(tx_head, to_name)
+    except:
+        print("Could not construct transaction!")
+        return
     print("We have constructed the following transaction:")
     print(tx)
     tx_st = Signed_Transaction(
@@ -58,10 +72,14 @@ def sendTip(to_name):
     signData = encode(binascii.unhexlify(blockchain.rpc.chain_params['chain_id']), tx_st)
     print("Serialized:")
     print (binascii.hexlify(signData).decode())
-    print("Sending transaction to Ledger Nano S for signature...")
     donglePath = parse_bip32_path(bip32_path)
     pathSize = int(len(donglePath) / 4)
-    dongle = getDongle(True)
+    try:
+        dongle = getDongle(True)
+    except:
+        print("Ledger Nano not found! Is it plugged in and unlocked?")
+        return
+    print("Sending transaction to Ledger Nano S for signature... Please confirm on device:")
     offset = 0
     first = True
     signSize = len(signData)
@@ -80,14 +98,25 @@ def sendTip(to_name):
             apdu = binascii.unhexlify("B5048000" + "{:02x}".format(totalSize)) + chunk
 
         offset += len(chunk)
-        result = dongle.exchange(apdu)
+        try:
+            result = dongle.exchange(apdu)
+        except:
+            dongle.close()
+            print("User declined transaction.")
+            return
         print (binascii.hexlify(result).decode())
-        print ("Broadcasting transaction...")
-        tx_sig = blockchain.new_tx(json.loads(str(tx_st)))
-        tx_sig["signatures"].extend([binascii.hexlify(result).decode()])
+    dongle.close()
+    print ("Broadcasting transaction...")
+    tx_sig = blockchain.new_tx(json.loads(str(tx_st)))
+    tx_sig["signatures"].extend([binascii.hexlify(result).decode()])
+    try:
         print (blockchain.broadcast(tx=tx_sig))
         print ("Success!")
-
+    except RPCError as e:
+        print ("Could not broadcast transaction!")
+        print (e)
+    except:
+        raise
 
 # from signTransaction.py
 def encode(chain_id, tx):
@@ -159,14 +188,21 @@ if __name__ == "__main__":
     to_account_name = Entry(frame01)
     to_account_name.pack(side="left", padx=10)
 
-    button_send = Button(gui, text="Send Tip!", command=lambda: sendTip(to_account_name.get()))
+    # The Button
+    def button_handler_Send(button, box):
+        button.configure(state="disabled")
+        try:
+            sendTip(to_account_name.get())
+        finally:
+            button.update() # Eat any clicks that occured while disabled
+            button.configure(state="normal") # Return to enabled state
+    button_send = Button(gui, text="Send Tip!", command=lambda: button_handler_Send(button_send, to_account_name))
     button_send.pack(pady=40)
 
     label03 = Label(gui,
                     text="Click ''Send!'' to receive 2.0 BTS tip signed by Ledger Nano S hardware wallet...",
                     font=("Helvetica", 12, "italic"),
                     background=bkgnd,
-                    #relief="groove"
                    )
     label03.pack()
 
