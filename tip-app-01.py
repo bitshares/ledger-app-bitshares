@@ -30,7 +30,7 @@ def append_transfer_tx(append_to, dest_account_name):
     try:
         to = Account(dest_account_name, blockchain_instance=blockchain)
     except:
-        print ("Problem locating destination account")
+        Logger.Write("Problem locating destination account")
         raise
     memoObj = Memo(from_account=account, to_account=to, blockchain_instance=blockchain)
     memo_text = "" #"Signed by BitShares App on Ledger Nano S!"
@@ -50,8 +50,7 @@ def append_transfer_tx(append_to, dest_account_name):
 
 def sendTip(to_name):
     #
-    print("\nButton Pressed")
-    print("Attempting to send 2.0 BTS to %s" % (to_name))
+    Logger.Write("Preparing to send 2.0 BTS to %s..." % (to_name))
     tx_head = blockchain.new_tx()    # Pull recent TaPoS
     dummy = tx_head['ref_block_num'] # Somehow this triggers tx_head to populate 'expiration'... (??)
     expiration = datetime.strptime(tx_head['expiration'], "%Y-%m-%dT%H:%M:%S") + timedelta(minutes=10)
@@ -59,7 +58,7 @@ def sendTip(to_name):
     try:
         tx = append_transfer_tx(tx_head, to_name)
     except:
-        print("Could not construct transaction!")
+        Logger.Write("Could not construct transaction!")
         return
     print("We have constructed the following transaction:")
     print(tx)
@@ -77,9 +76,9 @@ def sendTip(to_name):
     try:
         dongle = getDongle(True)
     except:
-        print("Ledger Nano not found! Is it plugged in and unlocked?")
+        Logger.Write("Ledger Nano not found! Is it plugged in and unlocked?")
         return
-    print("Sending transaction to Ledger Nano S for signature... Please confirm on device:")
+    Logger.Write("Prepared! Please confirm transaction on Ledger Nano S...")
     offset = 0
     first = True
     signSize = len(signData)
@@ -102,19 +101,19 @@ def sendTip(to_name):
             result = dongle.exchange(apdu)
         except:
             dongle.close()
-            print("User declined transaction.")
+            Logger.Write("User declined transaction.")
             return
         print (binascii.hexlify(result).decode())
     dongle.close()
-    print ("Broadcasting transaction...")
+    Logger.Write("Broadcasting transaction...")
     tx_sig = blockchain.new_tx(json.loads(str(tx_st)))
     tx_sig["signatures"].extend([binascii.hexlify(result).decode()])
     try:
         print (blockchain.broadcast(tx=tx_sig))
-        print ("Success!")
+        Logger.Write("Success!  Transaction has been sent.")
     except RPCError as e:
-        print ("Could not broadcast transaction!")
-        print (e)
+        Logger.Write("Could not broadcast transaction!")
+        Logger.Write(str(e))
     except:
         raise
 
@@ -153,6 +152,25 @@ def parse_bip32_path(path):
             result = result + struct.pack(">I", 0x80000000 | int(element[0]))
     return result
 
+class Logger:
+    message_window = None
+    message_body = ""
+    mirror_to_stdout = True
+
+    @classmethod
+    def Write(self, msgtext):
+        if self.mirror_to_stdout:
+            print(msgtext)
+        self.message_body += msgtext + "\n"
+        self.message_window.configure(text=self.message_body)
+        self.message_window.update()
+
+    @classmethod
+    def Clear(self):
+        self.message_body = ""
+        self.message_window.configure(text=self.message_body)
+        self.message_window.update()
+
 
 # Main()
 if __name__ == "__main__":
@@ -163,7 +181,7 @@ if __name__ == "__main__":
     gui = Tk()
     gui.configure(background=bkgnd)
     gui.title("BitShares Ledger Nano Tip Bot")
-    gui.geometry("600x320")
+    gui.geometry("640x440")
 
     # Labels and Such
     label01 = Label(gui, text="BitShares Tips via Ledger Nano S",
@@ -191,6 +209,7 @@ if __name__ == "__main__":
     # The Button
     def button_handler_Send(button, box):
         button.configure(state="disabled")
+        Logger.Clear()
         try:
             sendTip(to_account_name.get())
         finally:
@@ -206,6 +225,14 @@ if __name__ == "__main__":
                    )
     label03.pack()
 
+
+    # Logging window
+    log_frame = LabelFrame(gui, text="Log Window", background=bkgnd,
+                           relief="groove")
+    messages = Message(log_frame, text="", width=580, background="light gray")
+    messages.pack(expand=True, fill="both")
+    log_frame.pack(expand=True, fill="both", padx=8, pady=5)
+    Logger.message_window = messages
 
     # start the GUI
     gui.mainloop()
