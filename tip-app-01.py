@@ -158,8 +158,8 @@ class Logger:
     mirror_to_stdout = True
 
     @classmethod
-    def Write(self, msgtext):
-        if self.mirror_to_stdout:
+    def Write(self, msgtext, *, echo=None):
+        if echo == True or (self.mirror_to_stdout==True and echo!=False):
             print(msgtext)
         self.message_body += msgtext + "\n"
         self.message_window.configure(text=self.message_body)
@@ -171,6 +171,13 @@ class Logger:
         self.message_window.configure(text=self.message_body)
         self.message_window.update()
 
+def log_print_startup_message():
+    Logger.Write("**** COMMODORE 64 BASIC V2  64K RAM SYSTEM  38911 BASIC BYTES FREE ****", echo=False)
+    spending_account = Account(op_xfr_from, blockchain_instance=blockchain)
+    Logger.Write("Spending tips from acount: \"%s\" (%s)" % (spending_account.name, spending_account.identifier))
+    Logger.Write("Available balance: %0.5f BTS" % spending_account.balance("BTS"))
+    Logger.Write("READY.", echo=False)
+
 
 # Main()
 if __name__ == "__main__":
@@ -181,10 +188,10 @@ if __name__ == "__main__":
     gui = Tk()
     gui.configure(background=bkgnd)
     gui.title("BitShares Ledger Nano Tip Bot")
-    gui.geometry("640x440")
+    gui.geometry("640x500")
 
     # Labels and Such
-    label01 = Label(gui, text="BitShares Tips via Ledger Nano S",
+    label01 = Label(gui, text="BitShares: Now Secured by Ledger Nano!",
                     font=("Times", 24, "bold"),
                     background=bkgnd,
                     #relief="groove"
@@ -218,21 +225,29 @@ if __name__ == "__main__":
     button_send = Button(gui, text="Send Tip!", command=lambda: button_handler_Send(button_send, to_account_name))
     button_send.pack(pady=40)
 
+
+    # Bottom text label
     label03 = Label(gui,
                     text="Click ''Send!'' to receive 2.0 BTS tip signed by Ledger Nano S hardware wallet...",
                     font=("Helvetica", 12, "italic"),
                     background=bkgnd,
                    )
     label03.pack()
+    spacer = Frame(gui, background=bkgnd)
+    spacer.pack(pady=5)
 
 
     # Logging window
-    log_frame = LabelFrame(gui, text="Log Window", background=bkgnd,
+    log_frame = LabelFrame(gui, text="Activity", background=bkgnd,
                            relief="groove")
-    messages = Message(log_frame, text="", width=580, background="light gray")
+    messages = Message(log_frame,
+                       text="",
+                       width=580, background="light gray",
+                       anchor="n", pady=8, font="fixed")
     messages.pack(expand=True, fill="both")
     log_frame.pack(expand=True, fill="both", padx=8, pady=5)
     Logger.message_window = messages
+    log_print_startup_message()
 
     # start the GUI
     gui.mainloop()
