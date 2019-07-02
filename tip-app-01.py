@@ -1,10 +1,35 @@
-# First attempt at tip app.
+# First attempt at tip app / demonstration.
+#
+# Run with:
+#
+#   python3 tip-app-01.py --sender=[sender_account_name]
+#
+#   Options:
+#
+#     --sender=[name]      (Default: "ledger-demo")
+#     --node=[api_node]    (Default: "wss://bitshares.openledger.info/ws")
+#     --path=[bip32_path]  (Default: "48'/1'/1'/0'/0'")
+#
+# Dependencies:
+#
+#   The python dependencies are identical to those of signTransaction.py and
+#   getPublicKey.py except for the addition of the `tkinter` lib for the GUI.
+#
+#   The latter may need to be installed with:
+#
+#   $ sudo apt-get install python3-tk
+#
+#   Or something appropriate for your system.
+#
 #
 
-# Tkinter, apparently a standard lib:
+##
+## Imports:
+##
 import json
 import binascii
 import struct
+import argparse
 from tkinter import *
 from bitshares import BitShares
 from bitsharesbase import operations
@@ -15,22 +40,59 @@ from bitshares.asset import Asset
 from bitshares.memo import Memo
 from asn1 import Encoder, Numbers
 from ledgerblue.comm import getDongle
+from ledgerblue.commException import CommException
 from graphenecommon.exceptions import AccountDoesNotExistsException
 from grapheneapi.exceptions import RPCError
+from grapheneapi.exceptions import NumRetriesReached
 from datetime import datetime, timedelta
 
-blockchain = BitShares("wss://bitshares.openledger.info/ws")
-bip32_path = "48'/1'/1'/0'/0'"
-op_xfr_from = "ledger-demo" #"hw-lns-test-02"
+##
+## Args and defaults:
+##
+parser = argparse.ArgumentParser()
+parser.add_argument('--node', help="BitShares API node to be use.")
+parser.add_argument('--sender', help="BitShares account name from which to send tips.")
+parser.add_argument('--path', help="BIP 32 path to use for signing.")
+args = parser.parse_args()
 
+if args.node is None:
+    args.node = "wss://bitshares.openledger.info/ws"
+
+if args.path is None:
+    args.path = "48'/1'/1'/0'/0'"
+
+if args.sender is None:
+    args.sender = "ledger-demo"
+
+bip32_path = args.path
+tip_sender = args.sender
+try:
+    blockchain = BitShares(args.node, num_retries=0)
+except:
+    print("ERROR: Could not connect to API node at %s" % args.node)
+    exit()
+
+
+##
+## Functions for building the demo transactions:
+##
+
+##
+# Creates Transfer operation and appends to a transaction object:
 def append_transfer_tx(append_to, dest_account_name):
     #
-    account = Account(op_xfr_from, blockchain_instance=blockchain)
+    #  `append_to` is a TransactionBuilder object. (E.g. from BitShares.new_tx())
+    #  `dest_account_name` is a string account name.
+    #
+    account = Account(tip_sender, blockchain_instance=blockchain)
     amount = Amount(2.0, "BTS", blockchain_instance=blockchain)
     try:
         to = Account(dest_account_name, blockchain_instance=blockchain)
+    except NumRetriesReached:
+        Logger.Write("ERROR: Can't reach API node: 'NumRetries' reached.  Check network connection.")
+        raise
     except:
-        Logger.Write("Problem locating destination account")
+        Logger.Write("Problem locating destination account. Might not exist.")
         raise
     memoObj = Memo(from_account=account, to_account=to, blockchain_instance=blockchain)
     memo_text = "" #"Signed by BitShares App on Ledger Nano S!"
@@ -48,17 +110,25 @@ def append_transfer_tx(append_to, dest_account_name):
     append_to.appendOps(op)
     return append_to
 
+##
+# Creates Tx, gets signature from Nano, and broadcasts:
 def sendTip(to_name):
     #
-    Logger.Write("Preparing to send 2.0 BTS to %s..." % (to_name))
+    #  `to_name` is account name (string) of recipient.
+    #
+    Logger.Write("Preparing to send 2.0 BTS to \"%s\"..." % (to_name))
     tx_head = blockchain.new_tx()    # Pull recent TaPoS
-    dummy = tx_head['ref_block_num'] # Somehow this triggers tx_head to populate 'expiration'... (??)
+    try:
+        dummy = tx_head['ref_block_num'] # Somehow this triggers tx_head to populate 'expiration'... (??)
+    except NumRetriesReached:
+        Logger.Write("ERROR: Can't reach API node: 'NumRetries' reached.  Check network connection.")
+        return
     expiration = datetime.strptime(tx_head['expiration'], "%Y-%m-%dT%H:%M:%S") + timedelta(minutes=10)
     tx_head['expiration'] = expiration.strftime("%Y-%m-%dT%H:%M:%S%Z") # Longer expiration to accomodate device interaction
     try:
         tx = append_transfer_tx(tx_head, to_name)
     except:
-        Logger.Write("Could not construct transaction!")
+        Logger.Write("Could not construct transaction.  Please try again.")
         return
     print("We have constructed the following transaction:")
     print(tx)
@@ -78,7 +148,7 @@ def sendTip(to_name):
     except:
         Logger.Write("Ledger Nano not found! Is it plugged in and unlocked?")
         return
-    Logger.Write("Prepared! Please confirm transaction on Ledger Nano S...")
+    Logger.Write("Created transaction.  Please review and confirm on Ledger Nano S...")
     offset = 0
     first = True
     signSize = len(signData)
@@ -99,9 +169,16 @@ def sendTip(to_name):
         offset += len(chunk)
         try:
             result = dongle.exchange(apdu)
+        except CommException as e:
+            dongle.close()
+            if e.sw == 0x6e00:
+                Logger.Write("BitShares App not running on Nano.  Please check.")
+            else:
+                Logger.Write("Tx Not Broadcast.  User declined - transaction not signed.")
+            return
         except:
             dongle.close()
-            Logger.Write("User declined transaction.")
+            Logger.Write("An unknown error occured.  Was device unplugged?")
             return
         print (binascii.hexlify(result).decode())
     dongle.close()
@@ -114,10 +191,16 @@ def sendTip(to_name):
     except RPCError as e:
         Logger.Write("Could not broadcast transaction!")
         Logger.Write(str(e))
+    except NumRetriesReached:
+        Logger.Write("ERROR: Could not broadcast transaction: 'NumRetries' reached.  Check network connection.")
     except:
         raise
 
-# from signTransaction.py
+
+##
+## Stuff borrowed from signTransaction.py
+##
+
 def encode(chain_id, tx):
     encoder = Encoder()
 
@@ -152,6 +235,10 @@ def parse_bip32_path(path):
             result = result + struct.pack(">I", 0x80000000 | int(element[0]))
     return result
 
+
+##
+## Logger class for writing to the Activity pane:
+##
 class Logger:
     message_window = None
     message_body = ""
@@ -171,15 +258,26 @@ class Logger:
         self.message_window.configure(text=self.message_body)
         self.message_window.update()
 
+##
+## UX Stuff:
+##
 def log_print_startup_message():
-    Logger.Write("**** COMMODORE 64 BASIC V2  64K RAM SYSTEM  38911 BASIC BYTES FREE ****", echo=False)
-    spending_account = Account(op_xfr_from, blockchain_instance=blockchain)
-    Logger.Write("Spending tips from acount: \"%s\" (%s)" % (spending_account.name, spending_account.identifier))
+    #Logger.Write("**** COMMODORE 64 BASIC V2  64K RAM SYSTEM  38911 BASIC BYTES FREE ****", echo=False)
+    try:
+        spending_account = Account(tip_sender, blockchain_instance=blockchain)
+    except AccountDoesNotExistsException:
+        print("ERROR: Sending account does not exist on BitShares network.")
+        exit()
+    Logger.Write("Sending tips from BitShares acount: \"%s\" (%s)" % (spending_account.name, spending_account.identifier))
     Logger.Write("Available balance: %0.5f BTS" % spending_account.balance("BTS"))
     Logger.Write("READY.", echo=False)
 
 
-# Main()
+##
+## Main()
+##
+## Setup and start the GUI:
+##
 if __name__ == "__main__":
 
     bkgnd = "light blue"
@@ -188,7 +286,8 @@ if __name__ == "__main__":
     gui = Tk()
     gui.configure(background=bkgnd)
     gui.title("BitShares Ledger Nano Tip Bot")
-    gui.geometry("640x500")
+    gui.geometry("640x480")
+    gui.minsize(640,480)
 
     # Labels and Such
     label01 = Label(gui, text="BitShares: Now Secured by Ledger Nano!",
@@ -218,10 +317,14 @@ if __name__ == "__main__":
         button.configure(state="disabled")
         Logger.Clear()
         try:
-            sendTip(to_account_name.get())
+            if len(to_account_name.get()) > 0:
+                sendTip(to_account_name.get())
+            else:
+                Logger.Write("Please provide an account name to send tip to!")
         finally:
             button.update() # Eat any clicks that occured while disabled
             button.configure(state="normal") # Return to enabled state
+            Logger.Write("READY.")
     button_send = Button(gui, text="Send Tip!", command=lambda: button_handler_Send(button_send, to_account_name))
     button_send.pack(pady=40)
 
@@ -251,3 +354,7 @@ if __name__ == "__main__":
 
     # start the GUI
     gui.mainloop()
+
+##
+## END
+##
