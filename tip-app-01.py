@@ -9,6 +9,8 @@
 #     --sender=[name]      (Default: "ledger-demo")
 #     --node=[api_node]    (Default: "wss://bitshares.openledger.info/ws")
 #     --path=[bip32_path]  (Default: "48'/1'/1'/0'/0'")
+#     --symbol=[asset_sym] (Default: "BTS".  OK to include "bit" in bitASSETS if desired for display)
+#     --amount=[float]     (Default: 2.0) Amount of tip.
 #
 # Dependencies:
 #
@@ -42,6 +44,7 @@ from asn1 import Encoder, Numbers
 from ledgerblue.comm import getDongle
 from ledgerblue.commException import CommException
 from graphenecommon.exceptions import AccountDoesNotExistsException
+from graphenecommon.exceptions import AssetDoesNotExistsException
 from grapheneapi.exceptions import RPCError
 from grapheneapi.exceptions import NumRetriesReached
 from datetime import datetime, timedelta
@@ -53,6 +56,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--node', help="BitShares API node to be use.")
 parser.add_argument('--sender', help="BitShares account name from which to send tips.")
 parser.add_argument('--path', help="BIP 32 path to use for signing.")
+parser.add_argument('--symbol', help="Asset to use for tips. Default 'BTS'.")
+parser.add_argument('--amount', type=float, help="Amount of tip. Default 2.0.")
 args = parser.parse_args()
 
 if args.node is None:
@@ -64,14 +69,26 @@ if args.path is None:
 if args.sender is None:
     args.sender = "ledger-demo"
 
+if args.symbol is None:
+    args.symbol = "BTS"
+
+if args.amount is None:
+    args.amount = 2.0
+
 bip32_path = args.path
 tip_sender = args.sender
+tip_amount = args.amount
+tip_asset_display_symbol = args.symbol
+tip_asset_symbol = tip_asset_display_symbol.replace("bit","")
+
 try:
     blockchain = BitShares(args.node, num_retries=0)
 except:
     print("ERROR: Could not connect to API node at %s" % args.node)
     exit()
-
+if tip_amount > 10.0:
+    tip_amount = 10.0
+    print("Sanity Guard: Tip amount capped at %f. Modify source to override."%tip_amount)
 
 ##
 ## Functions for building the demo transactions:
@@ -85,7 +102,7 @@ def append_transfer_tx(append_to, dest_account_name):
     #  `dest_account_name` is a string account name.
     #
     account = Account(tip_sender, blockchain_instance=blockchain)
-    amount = Amount(2.0, "BTS", blockchain_instance=blockchain)
+    amount = Amount(tip_amount, tip_asset_symbol, blockchain_instance=blockchain)
     try:
         to = Account(dest_account_name, blockchain_instance=blockchain)
     except NumRetriesReached:
@@ -116,7 +133,7 @@ def sendTip(to_name):
     #
     #  `to_name` is account name (string) of recipient.
     #
-    Logger.Write("Preparing to send 2.0 BTS to \"%s\"..." % (to_name))
+    Logger.Write("Preparing to send %.1f %s to \"%s\"..." % (tip_amount, tip_asset_display_symbol, to_name))
     tx_head = blockchain.new_tx()    # Pull recent TaPoS
     try:
         dummy = tx_head['ref_block_num'] # Somehow this triggers tx_head to populate 'expiration'... (??)
@@ -265,11 +282,15 @@ def log_print_startup_message():
     #Logger.Write("**** COMMODORE 64 BASIC V2  64K RAM SYSTEM  38911 BASIC BYTES FREE ****", echo=False)
     try:
         spending_account = Account(tip_sender, blockchain_instance=blockchain)
+        avail_balance = spending_account.balance(tip_asset_symbol)
     except AccountDoesNotExistsException:
         print("ERROR: Sending account does not exist on BitShares network.")
         exit()
+    except AssetDoesNotExistsException:
+        print("ERROR: Chosen asset does not exist on BitShares network.")
+        exit()
     Logger.Write("Sending tips from BitShares acount: \"%s\" (%s)" % (spending_account.name, spending_account.identifier))
-    Logger.Write("Available balance: %0.5f BTS" % spending_account.balance("BTS"))
+    Logger.Write("Available balance: %0.5f %s" % (avail_balance, tip_asset_display_symbol))
     Logger.Write("READY.", echo=False)
 
 
@@ -331,7 +352,7 @@ if __name__ == "__main__":
 
     # Bottom text label
     label03 = Label(gui,
-                    text="Click ''Send!'' to receive 2.0 BTS tip signed by Ledger Nano S hardware wallet...",
+                    text="Click ''Send!'' to receive %.1f %s tip signed by Ledger Nano S hardware wallet..." % (tip_amount, tip_asset_display_symbol),
                     font=("Helvetica", 12, "italic"),
                     background=bkgnd,
                    )
