@@ -24,11 +24,13 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#include "os.h"
-#include "cx.h"
 #include <stdbool.h>
 
+#include "os.h"
+#include "cx.h"
 #include "os_io_seproxyhal.h"
+
+#include "app_nvm.h"
 #include "string.h"
 #include "eos_utils.h"
 #include "bts_stream.h"
@@ -101,10 +103,7 @@ txProcessingContent_t txContent;        // For decoded data to parse and display
 
 uint8_t instruction = 0x00;             // APDU INS byte.  Some ux steps need to know
                                         // which instruction we are handling.
-volatile uint8_t dataAllowed;
 volatile char fullAddress[60];
-volatile bool dataPresent;
-volatile bool skipWarning;
 
 bagl_element_t tmp_element;
 
@@ -112,15 +111,6 @@ ux_state_t ux;
 // display stepped screens
 unsigned int ux_step;
 unsigned int ux_step_count;
-
-typedef struct internalStorage_t
-{
-    uint8_t dataAllowed;
-    uint8_t initialized;
-} internalStorage_t;
-
-WIDE internalStorage_t N_storage_real;
-#define N_storage (*(WIDE internalStorage_t *)PIC(&N_storage_real))
 
 const bagl_element_t *ui_menu_item_out_over(const bagl_element_t *e)
 {
@@ -133,20 +123,15 @@ const ux_menu_entry_t menu_main[];
 const ux_menu_entry_t menu_settings[];
 const ux_menu_entry_t menu_settings_data[];
 
-
-// change the setting
-void menu_settings_data_change(unsigned int enabled)
-{
-    uint8_t dataAllowed = enabled;
-    nvm_write(&N_storage.dataAllowed, (void *)&dataAllowed, sizeof(uint8_t));
-    // go back to the menu entry
-    UX_MENU_DISPLAY(0, menu_settings, NULL);
+// Change the setting; Called when user selects either Yes or No
+void menu_settings_data_change(unsigned int enabled) {
+  set_nvmstorage_dataAllowed(enabled);      // Set new value
+  UX_MENU_DISPLAY(0, menu_settings, NULL);  // Return to Settings menu
 }
-
-// show the currently activated entry
+// Show menu, selecting currently activated entry from NVM.
 void menu_settings_data_init(unsigned int ignored) {
   UNUSED(ignored);
-  UX_MENU_DISPLAY(N_storage.dataAllowed?1:0, menu_settings_data, NULL);
+  UX_MENU_DISPLAY(get_nvmstorage_dataAllowed(), menu_settings_data, NULL);
 }
 
 const ux_menu_entry_t menu_settings_data[] = {
@@ -439,7 +424,6 @@ unsigned int ui_approval_nanos_button(unsigned int button_mask,
 
 void ui_idle(void)
 {
-    skipWarning = false;
     UX_MENU_DISPLAY(0, menu_main, NULL);
 }
 
@@ -683,7 +667,6 @@ void handleGetPublicKey(uint8_t p1, uint8_t p2, const uint8_t *dataBuffer,
     else
     {
         // prepare for a UI based reply
-        skipWarning = false;
         snprintf(fullAddress, sizeof(fullAddress), "%.*s", strlen(tmpCtx.publicKeyContext.address),
                  tmpCtx.publicKeyContext.address);
         ux_step = 0;
@@ -704,7 +687,7 @@ void handleGetAppConfiguration(uint8_t p1, uint8_t p2, const uint8_t *workBuffer
     UNUSED(workBuffer);
     UNUSED(dataLength);
     UNUSED(flags);
-    G_io_apdu_buffer[0] = (N_storage.dataAllowed ? 0x01 : 0x00);
+    G_io_apdu_buffer[0] = get_nvmstorage_dataAllowed();
     G_io_apdu_buffer[1] = LEDGER_MAJOR_VERSION;
     G_io_apdu_buffer[2] = LEDGER_MINOR_VERSION;
     G_io_apdu_buffer[3] = LEDGER_PATCH_VERSION;
@@ -737,9 +720,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
             workBuffer += 4;
             dataLength -= 4;
         }
-        dataPresent = false;
-        initTxProcessingContext(&txProcessingCtx, &sha256, &txIdSha256,
-                                &txContent, N_storage.dataAllowed);
+        initTxProcessingContext(&txProcessingCtx, &sha256, &txIdSha256, &txContent);
         initTxProcessingContent(&txContent);
     }
     else if (p1 != P1_MORE)
@@ -776,7 +757,6 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
     // store txid hash
     cx_hash(&txIdSha256.header, CX_LAST, txContent.txIdHash, 0, txContent.txIdHash);
 
-    skipWarning = !dataPresent;
     ux_step = 0;
     ux_step_count = 3 + txContent.argumentCount;
     UX_DISPLAY(ui_approval_nanos, ui_approval_prepro);
@@ -1057,14 +1037,7 @@ __attribute__((section(".boot"))) int main(void)
             {
                 io_seproxyhal_init();
 
-                if (N_storage.initialized != 0x01)
-                {
-                    internalStorage_t storage;
-                    storage.dataAllowed = 0x00;
-                    storage.initialized = 0x01;
-                    nvm_write(&N_storage, (void *)&storage,
-                              sizeof(internalStorage_t));
-                }
+                init_nvmstorage_ifneeded();
 
                 USB_power(0);
                 USB_power(1);

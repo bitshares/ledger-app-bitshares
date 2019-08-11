@@ -35,15 +35,13 @@
 void initTxProcessingContext(txProcessingContext_t *context,
                    cx_sha256_t *sha256,
                    cx_sha256_t *txIdSha256,
-                   txProcessingContent_t *processingContent,
-                   uint8_t dataAllowed) {
+                   txProcessingContent_t *processingContent) {
     os_memset(context, 0, sizeof(txProcessingContext_t));
     context->sha256 = sha256;
     context->txIdSha256 = txIdSha256;
     context->content = processingContent;
     context->content->argumentCount = 0;
     context->state = TLV_CHAIN_ID;
-    context->dataAllowed = dataAllowed;
     cx_sha256_init(context->sha256);
     cx_sha256_init(context->txIdSha256);
 }
