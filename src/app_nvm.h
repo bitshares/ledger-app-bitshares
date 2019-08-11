@@ -43,7 +43,7 @@ struct internalStorage_s {
  * Public interface:
 */
 
-void    init_nvmstorage_ifneeded();
+void    nv_app_state_init();
 
 uint8_t get_nvmstorage_dataAllowed();
 void    set_nvmstorage_dataAllowed(unsigned int enabled);

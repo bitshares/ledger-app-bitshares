@@ -987,7 +987,7 @@ __attribute__((section(".boot"))) int main(void)
             {
                 io_seproxyhal_init();
 
-                init_nvmstorage_ifneeded();
+                nv_app_state_init();
 
                 USB_power(0);
                 USB_power(1);

@@ -21,7 +21,7 @@
 WIDE internalStorage_t N_storage_real;
 #define N_storage (*(WIDE internalStorage_t *)PIC(&N_storage_real))
 
-void init_nvmstorage_ifneeded()
+void nv_app_state_init()
 {
   if (N_storage.initialized != 0x01) {
       internalStorage_t storage;
