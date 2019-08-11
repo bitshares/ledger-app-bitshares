@@ -31,6 +31,7 @@
 #include "os_io_seproxyhal.h"
 
 #include "app_nvm.h"
+#include "app_ui_menus.h"
 #include "string.h"
 #include "eos_utils.h"
 #include "bts_stream.h"
@@ -46,7 +47,6 @@ unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e);
 unsigned int io_seproxyhal_touch_tx_cancel(const bagl_element_t *e);
 unsigned int io_seproxyhal_touch_address_ok(const bagl_element_t *e);
 unsigned int io_seproxyhal_touch_address_cancel(const bagl_element_t *e);
-void ui_idle(void);
 
 uint32_t set_result_get_publicKey(void);
 
@@ -111,51 +111,6 @@ ux_state_t ux;
 // display stepped screens
 unsigned int ux_step;
 unsigned int ux_step_count;
-
-const bagl_element_t *ui_menu_item_out_over(const bagl_element_t *e)
-{
-    // the selection rectangle is after the none|touchable
-    e = (const bagl_element_t *)(((unsigned int)e) + sizeof(bagl_element_t));
-    return e;
-}
-
-const ux_menu_entry_t menu_main[];
-const ux_menu_entry_t menu_settings[];
-const ux_menu_entry_t menu_settings_data[];
-
-// Change the setting; Called when user selects either Yes or No
-void menu_settings_data_change(unsigned int enabled) {
-  set_nvmstorage_dataAllowed(enabled);      // Set new value
-  UX_MENU_DISPLAY(0, menu_settings, NULL);  // Return to Settings menu
-}
-// Show menu, selecting currently activated entry from NVM.
-void menu_settings_data_init(unsigned int ignored) {
-  UNUSED(ignored);
-  UX_MENU_DISPLAY(get_nvmstorage_dataAllowed(), menu_settings_data, NULL);
-}
-
-const ux_menu_entry_t menu_settings_data[] = {
-    {NULL, menu_settings_data_change, 0, NULL, "No", NULL, 0, 0},
-    {NULL, menu_settings_data_change, 1, NULL, "Yes", NULL, 0, 0},
-    UX_MENU_END};
-
-const ux_menu_entry_t menu_settings[] = {
-    {NULL, menu_settings_data_init, 0, NULL, "Arbitrary data", NULL, 0, 0},
-    {menu_main, NULL, 1, &C_icon_back, "Back", NULL, 61, 40},
-    UX_MENU_END};
-
-const ux_menu_entry_t menu_about[] = {
-    {NULL, NULL, 0, NULL, "Version", APPVERSION, 0, 0},
-    {menu_main, NULL, 2, &C_icon_back, "Back", NULL, 61, 40},
-    UX_MENU_END};
-
-const ux_menu_entry_t menu_main[] = {
-    {NULL, NULL, 0, &C_nanos_badge_bitshares, "Use wallet to",
-     "view accounts", 33, 12},
-    {menu_settings, NULL, 0, NULL, "Settings", NULL, 0, 0},
-    {menu_about, NULL, 0, NULL, "About", NULL, 0, 0},
-    {NULL, os_sched_exit, 0, &C_icon_dashboard, "Quit app", NULL, 50, 29},
-    UX_MENU_END};
 
 const bagl_element_t ui_address_nanos[] = {
     // type                               userid    x    y   w    h  str rad
@@ -421,11 +376,6 @@ const bagl_element_t *  ui_approval_prepro(const bagl_element_t *element)
 
 unsigned int ui_approval_nanos_button(unsigned int button_mask,
                                       unsigned int button_mask_counter);
-
-void ui_idle(void)
-{
-    UX_MENU_DISPLAY(0, menu_main, NULL);
-}
 
 unsigned int io_seproxyhal_touch_exit(const bagl_element_t *e)
 {
