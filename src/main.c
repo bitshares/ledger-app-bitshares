@@ -133,7 +133,6 @@ const ux_menu_entry_t menu_main[];
 const ux_menu_entry_t menu_settings[];
 const ux_menu_entry_t menu_settings_data[];
 
-#ifdef HAVE_U2F
 
 // change the setting
 void menu_settings_data_change(unsigned int enabled)
@@ -159,7 +158,6 @@ const ux_menu_entry_t menu_settings[] = {
     {NULL, menu_settings_data_init, 0, NULL, "Arbitrary data", NULL, 0, 0},
     {menu_main, NULL, 1, &C_icon_back, "Back", NULL, 61, 40},
     UX_MENU_END};
-#endif // HAVE_U2F
 
 const ux_menu_entry_t menu_about[] = {
     {NULL, NULL, 0, NULL, "Version", APPVERSION, 0, 0},
