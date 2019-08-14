@@ -16,20 +16,6 @@
 *  limitations under the License.
 ********************************************************************************/
 
-#ifndef __APP_UX_H__
-#define __APP_UX_H__
+#include "app_ui_displays.h"
 
-#include "os.h"
-#include "os_io_seproxyhal.h"
-
-extern ux_state_t ux;
-
-// For display stepped screens:
-extern unsigned int ux_step;
-extern unsigned int ux_step_count;
-
-unsigned int ui_address_nanos_button(unsigned int button_mask,
-                                     unsigned int button_mask_counter);
-
-
-#endif
+union ui_buffers_u ui_buffers;
