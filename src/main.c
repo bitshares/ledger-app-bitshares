@@ -31,6 +31,7 @@
 #include "os_io_seproxyhal.h"
 
 #include "app_nvm.h"
+#include "app_ux.h"
 #include "app_ui_menus.h"
 #include "string.h"
 #include "eos_utils.h"
@@ -106,11 +107,6 @@ uint8_t instruction = 0x00;             // APDU INS byte.  Some ux steps need to
 volatile char fullAddress[60];
 
 bagl_element_t tmp_element;
-
-ux_state_t ux;
-// display stepped screens
-unsigned int ux_step;
-unsigned int ux_step_count;
 
 const bagl_element_t ui_address_nanos[] = {
     // type                               userid    x    y   w    h  str rad
