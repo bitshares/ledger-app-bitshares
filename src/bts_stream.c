@@ -72,11 +72,11 @@ uint8_t readTxByte(txProcessingContext_t *context) {
  *  displayed as 40 hex characters.  We display first and last 6 hex chars with
  *  '...' in the middle.
  */
-void printTxId() {
-    os_memset(txStreamContext.content->txParamDisplayBuffer, 0, sizeof(txStreamContext.content->txParamDisplayBuffer));
-    array_hexstr(txStreamContext.content->txParamDisplayBuffer, txStreamContext.content->txIdHash, 3);
-    os_memset(txStreamContext.content->txParamDisplayBuffer+6, '.', 3);
-    array_hexstr(txStreamContext.content->txParamDisplayBuffer+9, txStreamContext.content->txIdHash+17, 3);
+void printTxId(char * dispbuffer, size_t length) {
+    os_memset(dispbuffer, 0, length);
+    array_hexstr(dispbuffer, txStreamContext.content->txIdHash, 3);
+    os_memset(dispbuffer+6, '.', 3);
+    array_hexstr(dispbuffer+9, txStreamContext.content->txIdHash+17, 3);
 }
 
 void printArgument(uint8_t argNum, txProcessingContent_t *content) {

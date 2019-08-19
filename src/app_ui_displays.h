@@ -32,7 +32,8 @@ struct ui_buffers_address_s {
 };
 
 struct ui_buffers_sign_tx_s {
-  // TBD
+  char paramLabel[48];  // Display line 1: Label for a tx parameter
+  char paramValue[128]; // Display line 2: Value of a tx parameter
 };
 
 union ui_buffers_u {
@@ -59,6 +60,8 @@ void ui_display_addressConfirmation_nanos();
 // UI support functions for INS_SIGN_TX workflow:
 //      (defined in app_ui_display_signtx.c)
 //
+
+void ui_display_signTxConfirmation_nanos();
 
 // TBD
 

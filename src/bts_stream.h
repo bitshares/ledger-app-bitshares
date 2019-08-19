@@ -215,6 +215,6 @@ parserStatus_e processTxStream(const uint8_t *buffer, uint32_t length);
                // buffer for later parsing and display.
 
 void printArgument(uint8_t argNum, txProcessingContent_t *content);
-void printTxId();
+void printTxId(char * dispbuffer, size_t length);
 
 #endif // __BTS_STREAM_H__

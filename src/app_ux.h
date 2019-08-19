@@ -31,5 +31,7 @@ extern unsigned int ux_step_count;
 unsigned int ui_address_nanos_button(unsigned int button_mask,
                                      unsigned int button_mask_counter);
 
+unsigned int ui_approval_nanos_button(unsigned int button_mask,
+                                      unsigned int button_mask_counter);
 
 #endif
