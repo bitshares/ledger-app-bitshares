@@ -32,18 +32,23 @@
 #include "cx.h"
 #include "eos_utils.h"
 
-void initTxProcessingContext(txProcessingContext_t *context,
-                   cx_sha256_t *sha256,
-                   cx_sha256_t *txIdSha256,
-                   txProcessingContent_t *processingContent) {
-    os_memset(context, 0, sizeof(txProcessingContext_t));
-    context->sha256 = sha256;
-    context->txIdSha256 = txIdSha256;
-    context->content = processingContent;
-    context->content->argumentCount = 0;
-    context->state = TLV_CHAIN_ID;
-    cx_sha256_init(context->sha256);
-    cx_sha256_init(context->txIdSha256);
+txProcessingContext_t txStreamContext;  // For decoding tx as it arrives on APDU
+
+void initTxProcessingContext(cx_sha256_t *sha256,
+                             cx_sha256_t *txIdSha256,
+                             txProcessingContent_t *processingContent) {
+    os_memset(&txStreamContext, 0, sizeof(txStreamContext));
+    txStreamContext.sha256 = sha256;
+    txStreamContext.txIdSha256 = txIdSha256;
+    txStreamContext.content = processingContent;
+    txStreamContext.content->argumentCount = 0;
+    txStreamContext.state = TLV_CHAIN_ID;
+    cx_sha256_init(txStreamContext.sha256);
+    cx_sha256_init(txStreamContext.txIdSha256);
+}
+
+bool checkInitTxProcessingContext() {
+    return (txStreamContext.state != TLV_NONE);
 }
 
 void initTxProcessingContent(txProcessingContent_t *content) { /* ConteNt */
@@ -67,11 +72,11 @@ uint8_t readTxByte(txProcessingContext_t *context) {
  *  displayed as 40 hex characters.  We display first and last 6 hex chars with
  *  '...' in the middle.
  */
-void printTxId(txProcessingContext_t *context) {
-    os_memset(context->content->txParamDisplayBuffer, 0, sizeof(context->content->txParamDisplayBuffer));
-    array_hexstr(context->content->txParamDisplayBuffer, context->content->txIdHash, 3);
-    os_memset(context->content->txParamDisplayBuffer+6, '.', 3);
-    array_hexstr(context->content->txParamDisplayBuffer+9, context->content->txIdHash+17, 3);
+void printTxId() {
+    os_memset(txStreamContext.content->txParamDisplayBuffer, 0, sizeof(txStreamContext.content->txParamDisplayBuffer));
+    array_hexstr(txStreamContext.content->txParamDisplayBuffer, txStreamContext.content->txIdHash, 3);
+    os_memset(txStreamContext.content->txParamDisplayBuffer+6, '.', 3);
+    array_hexstr(txStreamContext.content->txParamDisplayBuffer+9, txStreamContext.content->txIdHash+17, 3);
 }
 
 void printArgument(uint8_t argNum, txProcessingContent_t *content) {
@@ -463,19 +468,19 @@ static parserStatus_e processTxInternal(txProcessingContext_t *context) {
  * TX_EXTENSION_NUMBER theoretically is not fixed due to serialization. Ledger accepts only 0 as encoded value.
  * CTX_FREE_ACTION_DATA_NUMBER theoretically is not fixed due to serialization. Ledger accepts only 0 as encoded value.
 */
-parserStatus_e processTx(txProcessingContext_t *context, const uint8_t *buffer, uint32_t length) {
+parserStatus_e processTxStream(const uint8_t *buffer, uint32_t length) {
     parserStatus_e result;
 #ifdef DEBUG_APP
     // Do not catch exceptions.
-    context->workBuffer = buffer;
-    context->commandLength = length;
-    result = processTxInternal(context);
+    txStreamContext.workBuffer = buffer;
+    txStreamContext.commandLength = length;
+    result = processTxInternal(&txStreamContext);
 #else
     BEGIN_TRY {
         TRY {
-            context->workBuffer = buffer;
-            context->commandLength = length;
-            result = processTxInternal(context);
+            txStreamContext.workBuffer = buffer;
+            txStreamContext.commandLength = length;
+            result = processTxInternal(&txStreamContext);
         }
         CATCH_OTHER(e) {
             result = STREAM_FAULT;

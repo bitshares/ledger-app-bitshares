@@ -100,7 +100,6 @@ union {
     transactionContext_t transactionContext;
 } tmpCtx; // Input and Output of app lifecycle, broadly.
 
-txProcessingContext_t txProcessingCtx;  // For decoding tx as it arrives on APDU
 txProcessingContent_t txContent;        // For decoded data to parse and display
 
 uint8_t instruction = 0x00;             // APDU INS byte.  Some ux steps need to know
@@ -243,7 +242,7 @@ const bagl_element_t *  ui_approval_prepro(const bagl_element_t *element)
                 UX_CALLBACK_SET_INTERVAL(MAX(
                   3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 
-                printTxId(&txProcessingCtx);
+                printTxId();
                 break;
             case 3:
                 PRINTF("Operation\n");
@@ -564,7 +563,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
             workBuffer += 4;
             dataLength -= 4;
         }
-        initTxProcessingContext(&txProcessingCtx, &sha256, &txIdSha256, &txContent);
+        initTxProcessingContext(&sha256, &txIdSha256, &txContent);
         initTxProcessingContent(&txContent);
     }
     else if (p1 != P1_MORE)
@@ -575,12 +574,12 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
     {
         THROW(0x6B00);
     }
-    if (txProcessingCtx.state == TLV_NONE)
+    if (!checkInitTxProcessingContext())
     {
         PRINTF("Parser not initialized\n");
         THROW(0x6985);
     }
-    txResult = processTx(&txProcessingCtx, workBuffer, dataLength);
+    txResult = processTxStream(workBuffer, dataLength);
     switch (txResult)
     {
     case STREAM_FINISHED:
@@ -594,13 +593,20 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
         THROW(0x6A80);
     }
 
-    // store message hash
+    // If we get here, then we have finished ingesting all transaction bytes,
+    // and the operations contained within that transaction have been delineated
+    // and added to the operations buffer.  We can now compute message hash and
+    // txid hash, and proceed to the part where we parse and display operation
+    // details to the user.
+
+    // Store message hash:
     cx_hash(&sha256.header, CX_LAST, tmpCtx.transactionContext.hash, 0,
             tmpCtx.transactionContext.hash);
 
-    // store txid hash
+    // Store txid hash:
     cx_hash(&txIdSha256.header, CX_LAST, txContent.txIdHash, 0, txContent.txIdHash);
 
+    // Prepare and initiate UX_DISPLAY sequence:
     ux_step = 0;
     ux_step_count = 3 + txContent.argumentCount;
     UX_DISPLAY(ui_approval_nanos, ui_approval_prepro);

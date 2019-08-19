@@ -202,17 +202,19 @@ typedef enum parserStatus_e {
     STREAM_FAULT
 } parserStatus_e;
 
-void initTxProcessingContext(
-    txProcessingContext_t *context, 
-    cx_sha256_t *sha256,
-    cx_sha256_t *txIdSha256,
-    txProcessingContent_t *processingContent
-);
+void initTxProcessingContext(cx_sha256_t *sha256,
+                             cx_sha256_t *txIdSha256,
+                             txProcessingContent_t *processingContent);
+bool checkInitTxProcessingContext();
+
 void initTxProcessingContent(txProcessingContent_t *content);
 
-parserStatus_e processTx(txProcessingContext_t *context, const uint8_t *buffer, uint32_t length);
+parserStatus_e processTxStream(const uint8_t *buffer, uint32_t length);
+               // Ingests serialized transaction bytes from the APDU
+               // stream, extracting operation fields and storing in a
+               // buffer for later parsing and display.
 
 void printArgument(uint8_t argNum, txProcessingContent_t *content);
-void printTxId(txProcessingContext_t *processingContext);
+void printTxId();
 
 #endif // __BTS_STREAM_H__
