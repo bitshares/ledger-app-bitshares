@@ -98,8 +98,6 @@ union {
     transactionContext_t transactionContext;
 } tmpCtx; // Input and Output of app lifecycle, broadly.
 
-txProcessingContent_t txContent;        // For decoded data to parse and display
-
 uint8_t instruction = 0x00;             // APDU INS byte.  Some ux steps need to know
                                         // which instruction we are handling.
 
@@ -355,7 +353,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
             workBuffer += 4;
             dataLength -= 4;
         }
-        initTxProcessingContext(&sha256, &txIdSha256, &txContent);
+        initTxProcessingContext(&sha256, &txIdSha256);
         initTxProcessingContent(&txContent);
     }
     else if (p1 != P1_MORE)

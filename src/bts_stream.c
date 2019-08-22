@@ -33,15 +33,12 @@
 #include "eos_utils.h"
 
 txProcessingContext_t txStreamContext;  // For decoding tx as it arrives on APDU
+txProcessingContent_t txContent;        // For decoded data to parse and display
 
-void initTxProcessingContext(cx_sha256_t *sha256,
-                             cx_sha256_t *txIdSha256,
-                             txProcessingContent_t *processingContent) {
+void initTxProcessingContext(cx_sha256_t *sha256, cx_sha256_t *txIdSha256) {
     os_memset(&txStreamContext, 0, sizeof(txStreamContext));
     txStreamContext.sha256 = sha256;
     txStreamContext.txIdSha256 = txIdSha256;
-    txStreamContext.content = processingContent;
-    txStreamContext.content->argumentCount = 0;
     txStreamContext.state = TLV_CHAIN_ID;
     cx_sha256_init(txStreamContext.sha256);
     cx_sha256_init(txStreamContext.txIdSha256);
@@ -74,9 +71,9 @@ uint8_t readTxByte(txProcessingContext_t *context) {
  */
 void printTxId(char * dispbuffer, size_t length) {
     os_memset(dispbuffer, 0, length);
-    array_hexstr(dispbuffer, txStreamContext.content->txIdHash, 3);
+    array_hexstr(dispbuffer, txContent.txIdHash, 3);
     os_memset(dispbuffer+6, '.', 3);
-    array_hexstr(dispbuffer+9, txStreamContext.content->txIdHash+17, 3);
+    array_hexstr(dispbuffer+9, txContent.txIdHash+17, 3);
 }
 
 void printArgument(uint8_t argNum, txProcessingContent_t *content) {
@@ -209,7 +206,7 @@ static void processOperationListSizeField(txProcessingContext_t *context) {
         uint32_t sizeValue = 0;
         unpack_varint32(context->sizeBuffer, &sizeValue);
         context->operationsRemaining = sizeValue;
-        context->content->operationCount = 0;   // (Initial; Increments as OpIds read.)
+        txContent.operationCount = 0;   // (Initial; Increments as OpIds read.)
 
         // Reset size buffer
         os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
@@ -240,8 +237,8 @@ static void processOperationIdField(txProcessingContext_t *context) {
         context->currentOperationId = opIdValue;
 
         // Push-back into Content structure
-        uint32_t opIdx = context->content->operationCount++;
-        context->content->operationIds[opIdx] = opIdValue;
+        uint32_t opIdx = txContent.operationCount++;
+        txContent.operationIds[opIdx] = opIdValue;
 
         // Reset size buffer
         os_memset(context->sizeBuffer, 0, sizeof(context->sizeBuffer));
@@ -257,11 +254,11 @@ static void processOperationIdField(txProcessingContext_t *context) {
 */
 static void processOperationDataField(txProcessingContext_t *context) {
 
-    const uint32_t currentOpIdx = context->content->operationCount-1;
-    const uint32_t opDataOffset = (currentOpIdx == 0) ? 0 : context->content->operationOffsets[currentOpIdx-1];
-    uint8_t* const currentOpBuffer = context->content->operationDataBuffer + opDataOffset;
-    const uint32_t opBufferRemaining = (opDataOffset >= sizeof(context->content->operationDataBuffer))
-        ? 0: sizeof(context->content->operationDataBuffer) - opDataOffset;
+    const uint32_t currentOpIdx = txContent.operationCount-1;
+    const uint32_t opDataOffset = (currentOpIdx == 0) ? 0 : txContent.operationOffsets[currentOpIdx-1];
+    uint8_t* const currentOpBuffer = txContent.operationDataBuffer + opDataOffset;
+    const uint32_t opBufferRemaining = (opDataOffset >= sizeof(txContent.operationDataBuffer))
+        ? 0: sizeof(txContent.operationDataBuffer) - opDataOffset;
 
     if (context->currentFieldLength > opBufferRemaining) {
         PRINTF("processOperationData buffer overflow\n");
@@ -273,9 +270,9 @@ static void processOperationDataField(txProcessingContext_t *context) {
     }
 
     if (context->currentFieldPos == context->currentFieldLength) {
-        context->content->operationOffsets[currentOpIdx] = opDataOffset + context->currentFieldLength;
+        txContent.operationOffsets[currentOpIdx] = opDataOffset + context->currentFieldLength;
 
-        PRINTF("Added %d bytes to Op buffer; Offsets: %.*H\n", context->currentFieldLength, 12, context->content->operationOffsets);
+        PRINTF("Added %d bytes to Op buffer; Offsets: %.*H\n", context->currentFieldLength, 12, txContent.operationOffsets);
 
         context->state++;
         context->processingField = false;

@@ -188,7 +188,6 @@ typedef struct txProcessingContext_t {
     const uint8_t *workBuffer;// Points into the APDU buffer. Increment as we process.
     uint32_t commandLength;   // Bytes remaining in APDU buffer rel to workBuffer.
     uint8_t sizeBuffer[12];   // Used for caching VarInts for decoding
-    txProcessingContent_t *content; // TODO: Since this points to a global it seems we could just use the global and save the pointer.
 } txProcessingContext_t;
 
 typedef enum parserStatus_e {
@@ -197,9 +196,7 @@ typedef enum parserStatus_e {
     STREAM_FAULT
 } parserStatus_e;
 
-void initTxProcessingContext(cx_sha256_t *sha256,
-                             cx_sha256_t *txIdSha256,
-                             txProcessingContent_t *processingContent);
+void initTxProcessingContext(cx_sha256_t *sha256, cx_sha256_t *txIdSha256);
 bool checkInitTxProcessingContext();
 
 void initTxProcessingContent(txProcessingContent_t *content);
