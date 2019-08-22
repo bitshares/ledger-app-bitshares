@@ -31,6 +31,7 @@
 #include "bts_op_account_update.h"
 #include "bts_op_account_upgrade.h"
 #include "bts_types.h"
+#include "app_ui_displays.h"
 #include "eos_utils.h"
 #include "os.h"
 #include <string.h>
@@ -38,8 +39,8 @@
 /**
  * Shortcuts for printing into the txContent Display buffers:
  */
-#define printfContentLabel(...) snprintf(txContent.txLabelDisplayBuffer, sizeof(txContent.txLabelDisplayBuffer), __VA_ARGS__)
-#define printfContentParam(...) snprintf(txContent.txParamDisplayBuffer, sizeof(txContent.txParamDisplayBuffer), __VA_ARGS__)
+#define printfContentLabel(...) snprintf(ui_buffers.sign_tx.paramLabel, sizeof(ui_buffers.sign_tx.paramLabel), __VA_ARGS__)
+#define printfContentParam(...) snprintf(ui_buffers.sign_tx.paramValue, sizeof(ui_buffers.sign_tx.paramValue), __VA_ARGS__)
 #define WITH_SIZE(x) x, sizeof(x)
 
 /**
@@ -189,11 +190,11 @@ void updateOperationContent(txProcessingContent_t *content) {
         break;
     }
 
-    os_memset(content->txParamDisplayBuffer, 0, sizeof(content->txParamDisplayBuffer));
-    os_memmove(content->txParamDisplayBuffer, opName,
-               MIN(sizeof(content->txParamDisplayBuffer)-1,strlen(opName)));
-    os_memset(content->txLabelDisplayBuffer, 0, sizeof(content->txLabelDisplayBuffer));
-    snprintf(content->txLabelDisplayBuffer, sizeof(content->txLabelDisplayBuffer),
+    os_memset(ui_buffers.sign_tx.paramValue, 0, sizeof(ui_buffers.sign_tx.paramValue));
+    os_memmove(ui_buffers.sign_tx.paramValue, opName,
+               MIN(sizeof(ui_buffers.sign_tx.paramValue)-1,strlen(opName)));
+    os_memset(ui_buffers.sign_tx.paramLabel, 0, sizeof(ui_buffers.sign_tx.paramLabel));
+    snprintf(ui_buffers.sign_tx.paramLabel, sizeof(ui_buffers.sign_tx.paramLabel),
              "Operation %u of %u", content->currentOperation+1, content->operationCount);
 
 }
@@ -207,16 +208,16 @@ void parseTransferOperation(const uint8_t *buffer, uint32_t bufferLength, uint8_
 
     if (argNum == 0) {
         printfContentLabel("Amount");
-        prettyPrintBtsAssetType(op.transferAsset, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAssetType(op.transferAsset, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 1) {
         printfContentLabel("From");
-        prettyPrintBtsAccountIdType(op.fromId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.fromId, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 2) {
         printfContentLabel("To");
-        prettyPrintBtsAccountIdType(op.toId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.toId, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 3) {
         printfContentLabel("Fee");
-        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAssetType(op.feeAsset, ui_buffers.sign_tx.paramValue);
     }
 }
 
@@ -229,22 +230,22 @@ void parseLimitOrderCreateOperation(const uint8_t *buffer, uint32_t bufferLength
 
     if (argNum == 0) {
         printfContentLabel("Seller");
-        prettyPrintBtsAccountIdType(op.sellerId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.sellerId, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 1) {
         printfContentLabel("Amount to Sell");
-        prettyPrintBtsAssetType(op.sellAsset, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAssetType(op.sellAsset, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 2) {
         printfContentLabel("Amount to Buy");
-        prettyPrintBtsAssetType(op.buyAsset, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAssetType(op.buyAsset, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 3) {
         printfContentLabel("Expires");
-        prettyPrintBtsTimeType(op.expires, txContent.txParamDisplayBuffer);
+        prettyPrintBtsTimeType(op.expires, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 4) {
         printfContentLabel("Fill or Kill");
-        prettyPrintBtsBoolType(op.fillOrKill, txContent.txParamDisplayBuffer);
+        prettyPrintBtsBoolType(op.fillOrKill, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 5) {
         printfContentLabel("Fee");
-        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAssetType(op.feeAsset, ui_buffers.sign_tx.paramValue);
     }
 }
 
@@ -257,13 +258,13 @@ void parseLimitOrderCancelOperation(const uint8_t *buffer, uint32_t bufferLength
 
     if (argNum == 0) {
         printfContentLabel("Account");
-        prettyPrintBtsAccountIdType(op.accountId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.accountId, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 1) {
         printfContentLabel("Order Id");
-        ui64toa(op.orderId, txContent.txParamDisplayBuffer);
+        ui64toa(op.orderId, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 2) {
         printfContentLabel("Fee");
-        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAssetType(op.feeAsset, ui_buffers.sign_tx.paramValue);
     }
 }
 
@@ -276,7 +277,7 @@ void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, u
 
     if (argNum == 0) {
         printfContentLabel("Account to Update");
-        prettyPrintBtsAccountIdType(op.accountId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.accountId, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 1) {
         bool permPresent = op.ownerPermissionPresent;
         bts_permission_type_t * perm = &op.ownerPermission;
@@ -292,13 +293,13 @@ void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, u
             printfContentParam("Count: %u", perm->numAccountAuths);
         } else if (txContent.subargRemainP1 == 3) {
             printfContentLabel("Account Auths");
-            prettyPrintBtsAccountAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
+            prettyPrintBtsAccountAuthsList(*perm, WITH_SIZE(ui_buffers.sign_tx.paramValue));
         } else if (txContent.subargRemainP1 == 2) {
             printfContentLabel("Key Auths");
             printfContentParam("Count: %u", perm->numKeyAuths);
         } else if (txContent.subargRemainP1 == 1) {
             printfContentLabel("Key Auths");
-            prettyPrintBtsKeyAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
+            prettyPrintBtsKeyAuthsList(*perm, WITH_SIZE(ui_buffers.sign_tx.paramValue));
         }
     } else if (argNum == 2) {
         bool permPresent = op.activePermissionPresent;
@@ -315,13 +316,13 @@ void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, u
             printfContentParam("Count: %u", perm->numAccountAuths);
         } else if (txContent.subargRemainP1 == 3) {
             printfContentLabel("Account Auths");
-            prettyPrintBtsAccountAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
+            prettyPrintBtsAccountAuthsList(*perm, WITH_SIZE(ui_buffers.sign_tx.paramValue));
         } else if (txContent.subargRemainP1 == 2) {
             printfContentLabel("Key Auths");
             printfContentParam("Count: %u", perm->numKeyAuths);
         } else if (txContent.subargRemainP1 == 1) {
             printfContentLabel("Key Auths");
-            prettyPrintBtsKeyAuthsList(*perm, WITH_SIZE(txContent.txParamDisplayBuffer));
+            prettyPrintBtsKeyAuthsList(*perm, WITH_SIZE(ui_buffers.sign_tx.paramValue));
         }
     } else if (argNum == 3) {
         bts_account_options_type_t * opts = &op.accountOptions;
@@ -331,10 +332,10 @@ void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, u
             printfContentParam(op.accountOptionsPresent?"New Data":"No Change");
         } else if (txContent.subargRemainP1 == 6) {
             printfContentLabel("Memo Public Key");
-            prettyPrintBtsPublicKeyType(opts->memoPubkey, txContent.txParamDisplayBuffer);
+            prettyPrintBtsPublicKeyType(opts->memoPubkey, ui_buffers.sign_tx.paramValue);
         } else if (txContent.subargRemainP1 == 5) {
             printfContentLabel("Voting Account");
-            prettyPrintBtsAccountIdType(opts->votingAccount, txContent.txParamDisplayBuffer);
+            prettyPrintBtsAccountIdType(opts->votingAccount, ui_buffers.sign_tx.paramValue);
         } else if (txContent.subargRemainP1 == 4) {
             printfContentLabel("Num Witnesses");
             printfContentParam("%u", (unsigned int)opts->numWitnesses);
@@ -346,11 +347,11 @@ void parseAccountUpdateOperation(const uint8_t *buffer, uint32_t bufferLength, u
             printfContentParam("Count: %u", opts->numVotes);
         } else if (txContent.subargRemainP1 == 1) {
             printfContentLabel("Votes");
-            prettyPrintBtsVotesList(*opts, WITH_SIZE(txContent.txParamDisplayBuffer));
+            prettyPrintBtsVotesList(*opts, WITH_SIZE(ui_buffers.sign_tx.paramValue));
         }
     } else if (argNum == 4) {
         printfContentLabel("Fee");
-        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAssetType(op.feeAsset, ui_buffers.sign_tx.paramValue);
     }
 }
 
@@ -363,13 +364,13 @@ void parseAccountUpgradeOperation(const uint8_t *buffer, uint32_t bufferLength, 
 
     if (argNum == 0) {
         printfContentLabel("Account to Upgrade");
-        prettyPrintBtsAccountIdType(op.accountId, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAccountIdType(op.accountId, ui_buffers.sign_tx.paramValue);
     } else if (argNum == 1) {
         printfContentLabel("Upgrade Path");
         printfContentParam(op.upgradeLtm?"Lifetime Membership":"None / No Upgrade");
     } else if (argNum == 2) {
         printfContentLabel("Fee");
-        prettyPrintBtsAssetType(op.feeAsset, txContent.txParamDisplayBuffer);
+        prettyPrintBtsAssetType(op.feeAsset, ui_buffers.sign_tx.paramValue);
     }
 }
 

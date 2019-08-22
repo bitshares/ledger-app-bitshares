@@ -117,10 +117,6 @@ typedef void operation_parser_f (const uint8_t *buffer, uint32_t bufferLength, u
 
 typedef struct txProcessingContent_t {
 
-    char txParamDisplayBuffer[128];     /* Text buffer for UI display of TxID, Operation
-                                         * Name, etc. */
-    char txLabelDisplayBuffer[48];      /* Text buffer for UI display of label for TxID,
-                                         * Operation Name, etc. */
     uint8_t txIdHash[32];               /* Not same as message hash; this is for TxID as
                                          * would be shown on a block explorer. */
     uint8_t argumentCount;              /* Argument count for *current* operation being

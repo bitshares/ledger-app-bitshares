@@ -25,8 +25,8 @@
 /**
  * Updates operation-related members of the `content` structure to reflect `currentOperation`
  * member, which we assume has already been set.  Specifically, we update `argumentCount` and
- * `operationParser`.  As an ancillary side-effect, we also populate `txLabelDisplayBuffer`
- * and `txParamDisplayBuffer` with the current operation name to support user display.
+ * `operationParser`.  As an ancillary side-effect, we also populate UI display buffers
+ * with the current operation name and count to support user display.
  */
 void updateOperationContent(txProcessingContent_t *content);
 
