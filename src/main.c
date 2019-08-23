@@ -354,7 +354,7 @@ void handleSign(uint8_t p1, uint8_t p2, const uint8_t *workBuffer,
             dataLength -= 4;
         }
         initTxProcessingContext(&sha256, &txIdSha256);
-        initTxProcessingContent(&txContent);
+        initTxProcessingContent();
     }
     else if (p1 != P1_MORE)
     {
@@ -619,9 +619,9 @@ unsigned char io_event(unsigned char channel)
                         }
                     }
                     if (ux_step == 2 && instruction == INS_SIGN) {
-                        updateOperationContent(&txContent); // sets argcount, parser, and
-                                                            // prints operation name into
-                                                            // display buffer
+                        updateOperationContent();   // sets argcount, parser, and
+                                                    // prints operation name into
+                                                    // display buffer
                         ux_step_count = 3 + txContent.argumentCount;
                     }
                     PRINTF("TICKER.out: Step: %u, Count %u; Ins: %d; CurrentOp: %u, OpCount: %u\n",

@@ -48,8 +48,8 @@ bool checkInitTxProcessingContext() {
     return (txStreamContext.state != TLV_NONE);
 }
 
-void initTxProcessingContent(txProcessingContent_t *content) { /* ConteNt */
-    os_memset(content, 0, sizeof(txProcessingContent_t));
+void initTxProcessingContent() { /* ConteNt */
+    os_memset(&txContent, 0, sizeof(txProcessingContent_t));
 }
 
 uint8_t readTxByte(txProcessingContext_t *context) {
@@ -76,18 +76,18 @@ void printTxId(char * dispbuffer, size_t length) {
     array_hexstr(dispbuffer+9, txContent.txIdHash+17, 3);
 }
 
-void printArgument(uint8_t argNum, txProcessingContent_t *content) {
+void printTxOpArgument(uint8_t argNum) {
 
-    const uint32_t opIdx = content->currentOperation;
-    const operationId_t opId = content->operationIds[opIdx];
-    const uint32_t offset = (opIdx == 0) ? 0 : content->operationOffsets[opIdx-1];
-    const uint8_t *buffer = content->operationDataBuffer + offset;
-    const uint32_t bufferLength = content->operationOffsets[opIdx] - offset;
+    const uint32_t opIdx = txContent.currentOperation;
+    const operationId_t opId = txContent.operationIds[opIdx];
+    const uint32_t offset = (opIdx == 0) ? 0 : txContent.operationOffsets[opIdx-1];
+    const uint8_t *buffer = txContent.operationDataBuffer + offset;
+    const uint32_t bufferLength = txContent.operationOffsets[opIdx] - offset;
     PRINTF("Printing arg %u to op %u (id %u) at offset %u length %u; parser %p\n",
-           (uint32_t)argNum, opIdx, (uint32_t)opId, offset, bufferLength, content->operationParser);
+           (uint32_t)argNum, opIdx, (uint32_t)opId, offset, bufferLength, txContent.operationParser);
 
     /* Parser was pre-selected, call by function pointer: */
-    content->operationParser(buffer, bufferLength, argNum);
+    txContent.operationParser(buffer, bufferLength, argNum);
 
 }
 

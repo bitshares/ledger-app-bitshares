@@ -100,9 +100,9 @@ const char * const op_names[] = {   // Deref with PIC or you gone get bit. E.g.:
     "asset_update_issuer"
 };
 
-void updateOperationContent(txProcessingContent_t *content) {
+void updateOperationContent() {
 
-    const operationId_t opId = content->operationIds[content->currentOperation];
+    const operationId_t opId = txContent.operationIds[txContent.currentOperation];
 
     const char * opName = "";
     if (opId < OP_NUM_KNOWN_OPS) {
@@ -111,34 +111,34 @@ void updateOperationContent(txProcessingContent_t *content) {
 
     switch (opId) {
     case OP_TRANSFER:
-        content->argumentCount = 4;
-        content->operationParser = parseTransferOperation;
+        txContent.argumentCount = 4;
+        txContent.operationParser = parseTransferOperation;
         break;
     case OP_LIMIT_ORDER_CREATE:
-        content->argumentCount = 6;
-        content->operationParser = parseLimitOrderCreateOperation;
+        txContent.argumentCount = 6;
+        txContent.operationParser = parseLimitOrderCreateOperation;
         break;
     case OP_LIMIT_ORDER_CANCEL:
-        content->argumentCount = 3;
-        content->operationParser = parseLimitOrderCancelOperation;
+        txContent.argumentCount = 3;
+        txContent.operationParser = parseLimitOrderCancelOperation;
         break;
     case OP_CALL_ORDER_UPDATE:  /* Unsupport */
     case OP_FILL_ORDER:         /* Unsupport */ /* virtual */
     case OP_ACCOUNT_CREATE:     /* Unsupport */
-        content->argumentCount = 2;
-        content->operationParser = parseUnsupportedOperation;
+        txContent.argumentCount = 2;
+        txContent.operationParser = parseUnsupportedOperation;
         break;
     case OP_ACCOUNT_UPDATE:
-        content->argumentCount = 5;
-        content->operationParser = parseAccountUpdateOperation;
+        txContent.argumentCount = 5;
+        txContent.operationParser = parseAccountUpdateOperation;
         break;
     case OP_ACCOUNT_WHITELIST:  /* Unsupport */
-        content->argumentCount = 2;
-        content->operationParser = parseUnsupportedOperation;
+        txContent.argumentCount = 2;
+        txContent.operationParser = parseUnsupportedOperation;
         break;
     case OP_ACCOUNT_UPGRADE:
-        content->argumentCount = 3;
-        content->operationParser = parseAccountUpgradeOperation;
+        txContent.argumentCount = 3;
+        txContent.operationParser = parseAccountUpgradeOperation;
         break;
     case OP_ACCOUNT_TRANSFER:   /* Unsupport */
     case OP_ASSET_CREATE:       // ...
@@ -180,12 +180,12 @@ void updateOperationContent(txProcessingContent_t *content) {
     case OP_EXECUTE_BID:         /* virtual */
     case OP_ASSET_CLAIM_POOL:
     case OP_ASSET_UPDATE_ISSUER:
-        content->argumentCount = 2;
-        content->operationParser = parseUnsupportedOperation;
+        txContent.argumentCount = 2;
+        txContent.operationParser = parseUnsupportedOperation;
         break;
     default:
-        content->argumentCount = 2;
-        content->operationParser = parseUnknownOperation;
+        txContent.argumentCount = 2;
+        txContent.operationParser = parseUnknownOperation;
         opName = "** Unknown Operation **";
         break;
     }
@@ -195,7 +195,7 @@ void updateOperationContent(txProcessingContent_t *content) {
                MIN(sizeof(ui_buffers.sign_tx.paramValue)-1,strlen(opName)));
     os_memset(ui_buffers.sign_tx.paramLabel, 0, sizeof(ui_buffers.sign_tx.paramLabel));
     snprintf(ui_buffers.sign_tx.paramLabel, sizeof(ui_buffers.sign_tx.paramLabel),
-             "Operation %u of %u", content->currentOperation+1, content->operationCount);
+             "Operation %u of %u", txContent.currentOperation+1, txContent.operationCount);
 
 }
 

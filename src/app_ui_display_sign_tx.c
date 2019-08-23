@@ -181,7 +181,7 @@ const bagl_element_t *  ui_approval_prepro(const bagl_element_t *element)
                 UX_CALLBACK_SET_INTERVAL(MAX(
                     3000, 1000 + bagl_label_roundtrip_duration_ms(element, 7)));
 
-                printArgument(ux_step - 3, &txContent);
+                printTxOpArgument(ux_step - 3);
                 break;
             }
         }
