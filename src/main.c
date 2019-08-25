@@ -34,23 +34,13 @@
 #include "app_ux.h"
 #include "app_ui_menus.h"
 #include "app_ui_displays.h"
-#include "string.h"
-#include "eos_utils.h"
 #include "bts_stream.h"
 #include "bts_parse_operations.h"
-
-#include "glyphs.h"
 
 unsigned char G_io_seproxyhal_spi_buffer[IO_SEPROXYHAL_BUFFER_SIZE_B];
 
 unsigned int io_seproxyhal_touch_settings(const bagl_element_t *e);
 unsigned int io_seproxyhal_touch_exit(const bagl_element_t *e);
-unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e);
-unsigned int io_seproxyhal_touch_tx_cancel(const bagl_element_t *e);
-
-uint32_t set_result_get_publicKey(void);
-
-#define MAX_BIP32_PATH 10
 
 #define CLA 0xB5
 #define INS_GET_PUBLIC_KEY 0x02
@@ -70,33 +60,8 @@ uint32_t set_result_get_publicKey(void);
 #define OFFSET_LC 4
 #define OFFSET_CDATA 5
 
-uint8_t const SECP256K1_N[] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                               0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe,
-                               0xba, 0xae, 0xdc, 0xe6, 0xaf, 0x48, 0xa0, 0x3b,
-                               0xbf, 0xd2, 0x5e, 0x8c, 0xd0, 0x36, 0x41, 0x41};
-
-typedef struct publicKeyContext_t
-{
-    cx_ecfp_public_key_t publicKey;
-    char address[60];
-    uint8_t chainCode[32];
-    bool getChaincode;
-} publicKeyContext_t;
-
-typedef struct transactionContext_t
-{
-    uint8_t pathLength;
-    uint32_t bip32Path[MAX_BIP32_PATH];
-    uint8_t hash[32];         // Message hash for which we will provide signature.
-} transactionContext_t;
-
 cx_sha256_t sha256;           // Message hash context (produces hash that we will sign)
 cx_sha256_t txIdSha256;       // Separate hash for txId (since it excludes ChainID)
-
-union {
-    publicKeyContext_t publicKeyContext;
-    transactionContext_t transactionContext;
-} tmpCtx; // Input and Output of app lifecycle, broadly.
 
 uint8_t instruction = 0x00;             // APDU INS byte.  Some ux steps need to know
                                         // which instruction we are handling.
@@ -106,94 +71,6 @@ unsigned int io_seproxyhal_touch_exit(const bagl_element_t *e)
     // Go back to the dashboard
     os_sched_exit(0);
     return 0; // do not redraw the widget
-}
-
-unsigned int io_seproxyhal_touch_tx_ok(const bagl_element_t *e)
-{
-    uint8_t privateKeyData[64];
-    cx_ecfp_private_key_t privateKey;
-    uint32_t tx = 0;
-    uint8_t V[33];
-    uint8_t K[32];
-    int tries = 0;
-
-    os_perso_derive_node_bip32(
-        CX_CURVE_256K1, tmpCtx.transactionContext.bip32Path,
-        tmpCtx.transactionContext.pathLength, privateKeyData, NULL);
-    cx_ecfp_init_private_key(CX_CURVE_256K1, privateKeyData, 32, &privateKey);
-    os_memset(privateKeyData, 0, sizeof(privateKeyData));
-
-    // Loop until a candidate matching the canonical signature is found
-
-    for (;;)
-    {
-        if (tries == 0)
-        {
-            rng_rfc6979(G_io_apdu_buffer + 100, tmpCtx.transactionContext.hash, privateKey.d, privateKey.d_len, SECP256K1_N, 32, V, K);
-        }
-        else
-        {
-            rng_rfc6979(G_io_apdu_buffer + 100, tmpCtx.transactionContext.hash, NULL, 0, SECP256K1_N, 32, V, K);
-        }
-        uint32_t infos;
-        tx = cx_ecdsa_sign(&privateKey, CX_NO_CANONICAL | CX_RND_PROVIDED | CX_LAST, CX_SHA256,
-                           tmpCtx.transactionContext.hash,
-                           32, G_io_apdu_buffer + 100, &infos);
-        if ((infos & CX_ECCINFO_PARITY_ODD) != 0)
-        {
-            G_io_apdu_buffer[100] |= 0x01;
-        }
-        G_io_apdu_buffer[0] = 27 + 4 + (G_io_apdu_buffer[100] & 0x01);
-        ecdsa_der_to_sig(G_io_apdu_buffer + 100, G_io_apdu_buffer + 1);
-        if (check_canonical(G_io_apdu_buffer + 1))
-        {
-            tx = 1 + 64;
-            break;
-        }
-        else
-        {
-            tries++;
-        }
-    }
-
-    os_memset(&privateKey, 0, sizeof(privateKey));
-    G_io_apdu_buffer[tx++] = 0x90;
-    G_io_apdu_buffer[tx++] = 0x00;
-    // Send back the response, do not restart the event loop
-    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, tx);
-    // Display back the original UX
-    ui_idle();
-
-    return 0; // do not redraw the widge
-}
-
-unsigned int io_seproxyhal_touch_tx_cancel(const bagl_element_t *e)
-{
-    G_io_apdu_buffer[0] = 0x69;
-    G_io_apdu_buffer[1] = 0x85;
-    // Send back the response, do not restart the event loop
-    io_exchange(CHANNEL_APDU | IO_RETURN_AFTER_TX, 2);
-    // Display back the original UX
-    ui_idle();
-    return 0; // do not redraw the widget
-}
-
-unsigned int ui_approval_nanos_button(unsigned int button_mask,
-                                      unsigned int button_mask_counter)
-{
-    switch (button_mask)
-    {
-    case BUTTON_EVT_RELEASED | BUTTON_LEFT:
-        io_seproxyhal_touch_tx_cancel(NULL);
-        break;
-
-    case BUTTON_EVT_RELEASED | BUTTON_RIGHT:
-    {
-        io_seproxyhal_touch_tx_ok(NULL);
-        break;
-    }
-    }
-    return 0;
 }
 
 unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len)
@@ -226,27 +103,6 @@ unsigned short io_exchange_al(unsigned char channel, unsigned short tx_len)
         THROW(INVALID_PARAMETER);
     }
     return 0;
-}
-
-uint32_t set_result_get_publicKey()
-{
-    uint32_t tx = 0;
-    G_io_apdu_buffer[tx++] = 65;
-    os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.publicKey.W, 65);
-    tx += 65;
-
-    uint32_t addressLength = strlen(tmpCtx.publicKeyContext.address);
-
-    G_io_apdu_buffer[tx++] = addressLength;
-    os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.address, addressLength);
-    tx += addressLength;
-    if (tmpCtx.publicKeyContext.getChaincode)
-    {
-        os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.chainCode,
-                   32);
-        tx += 32;
-    }
-    return tx;
 }
 
 void handleGetPublicKey(uint8_t p1, uint8_t p2, const uint8_t *dataBuffer,

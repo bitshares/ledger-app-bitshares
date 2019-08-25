@@ -22,3 +22,5 @@ ux_state_t ux;
 
 unsigned int ux_step;
 unsigned int ux_step_count;
+
+union ISRContext_u tmpCtx;    // Instruction Service Routine contexts

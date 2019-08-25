@@ -22,8 +22,6 @@
 unsigned int io_seproxyhal_touch_address_ok(const bagl_element_t *e);
 unsigned int io_seproxyhal_touch_address_cancel(const bagl_element_t *e);
 
-uint32_t set_result_get_publicKey();  // Defined in main.c
-
 /**
  * Button handler for the GetPublicKey UI.  Dispatch based on which
  * button pressed.
@@ -67,4 +65,25 @@ unsigned int io_seproxyhal_touch_address_cancel(const bagl_element_t *e)
     // Display back the original UX
     ui_idle();
     return 0; // do not redraw the widget
+}
+
+uint32_t set_result_get_publicKey()
+{
+    uint32_t tx = 0;
+    G_io_apdu_buffer[tx++] = 65;
+    os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.publicKey.W, 65);
+    tx += 65;
+
+    uint32_t addressLength = strlen(tmpCtx.publicKeyContext.address);
+
+    G_io_apdu_buffer[tx++] = addressLength;
+    os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.address, addressLength);
+    tx += addressLength;
+    if (tmpCtx.publicKeyContext.getChaincode)
+    {
+        os_memmove(G_io_apdu_buffer + tx, tmpCtx.publicKeyContext.chainCode,
+                   32);
+        tx += 32;
+    }
+    return tx;
 }
