@@ -49,6 +49,7 @@ from graphenecommon.exceptions import AssetDoesNotExistsException
 from grapheneapi.exceptions import RPCError
 from grapheneapi.exceptions import NumRetriesReached
 from datetime import datetime, timedelta
+from wallet_forms import *
 
 ##
 ## Args and defaults:
@@ -349,41 +350,6 @@ if __name__ == "__main__":
                              relief = "groove", background=bkgnd)
     frameActive.pack(padx=(5,8), expand=True, fill="both")
 
-    lblSpacerActiveTop = Label(frameActive, text="", background="green")
-    lblSpacerActiveTop.pack(expand=True, fill="y")
-
-    # Destination sub-frame:
-    frameToWhom = Frame(frameActive, background = bkgnd)
-    frameToWhom.pack(padx=10, pady=5, fill="x")
-
-    labelSendTo = Label(frameToWhom, text="Send To: (BitShares User Account)",
-                    font=("Helvetica", 16),
-                    background=bkgnd)
-    labelSendTo.pack(side="right")
-
-    to_account_name = Entry(frameToWhom)
-    to_account_name.pack(side="right", padx=10)
-
-    # Amount sub-frame:
-    frameSendAmount = Frame(frameActive, background = bkgnd)
-    frameSendAmount.pack(padx=10, pady=5, fill="x")
-
-    labelAmount = Label(frameSendAmount, text="Amount:",
-                    font=("Helvetica", 16),
-                    background=bkgnd)
-    labelAmount.pack(side="right")
-
-    box_amount_to_send = Entry(frameSendAmount)
-    box_amount_to_send.pack(side="right", padx=10)
-
-    labelAsset = Label(frameSendAmount, text="Asset:",
-                    font=("Helvetica", 16),
-                    background=bkgnd)
-    labelAsset.pack(padx=(20,0),side="right")
-
-    box_asset_to_send = Entry(frameSendAmount, width=10)
-    box_asset_to_send.pack(side="right", padx=10)
-
     # The Button
     def button_handler_Send(button, box):
         button.configure(state="disabled")
@@ -397,11 +363,11 @@ if __name__ == "__main__":
             button.update() # Eat any clicks that occured while disabled
             button.configure(state="normal") # Return to enabled state
             Logger.Write("READY.")
-    button_send = Button(frameActive, text="Send Tip!", command=lambda: button_handler_Send(button_send, to_account_name))
-    button_send.pack(pady=30)
+    #button_send = Button(frameActive, text="Send Tip!", command=lambda: button_handler_Send(button_send, to_account_name))
+    #button_send.pack(pady=30)
 
-    lblSpacerActiveBottom = Label(frameActive, text="", background="green")
-    lblSpacerActiveBottom.pack(expand=True, fill="y")
+    form_transfer = TransferOpFrame(frameActive)
+    form_transfer.pack(expand=True, fill="both")
 
 
     # Logging window
