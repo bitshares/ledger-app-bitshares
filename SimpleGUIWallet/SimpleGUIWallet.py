@@ -50,6 +50,7 @@ from grapheneapi.exceptions import RPCError
 from grapheneapi.exceptions import NumRetriesReached
 from datetime import datetime, timedelta
 from wallet_forms import *
+import Logger
 
 ##
 ## Args and defaults:
@@ -258,24 +259,7 @@ def parse_bip32_path(path):
 ##
 ## Logger class for writing to the Activity pane:
 ##
-class Logger:
-    message_window = None
-    message_body = ""
-    mirror_to_stdout = True
 
-    @classmethod
-    def Write(self, msgtext, *, echo=None):
-        if echo == True or (self.mirror_to_stdout==True and echo!=False):
-            print(msgtext)
-        self.message_body += msgtext + "\n"
-        self.message_window.configure(text=self.message_body)
-        self.message_window.update()
-
-    @classmethod
-    def Clear(self):
-        self.message_body = ""
-        self.message_window.configure(text=self.message_body)
-        self.message_window.update()
 
 ##
 ## UX Stuff:
@@ -350,36 +334,16 @@ if __name__ == "__main__":
                              relief = "groove", background=bkgnd)
     frameActive.pack(padx=(5,8), expand=True, fill="both")
 
-    # The Button
-    def button_handler_Send(button, box):
-        button.configure(state="disabled")
-        Logger.Clear()
-        try:
-            if len(to_account_name.get()) > 0:
-                sendTip(to_account_name.get())
-            else:
-                Logger.Write("Please provide an account name to send tip to!")
-        finally:
-            button.update() # Eat any clicks that occured while disabled
-            button.configure(state="normal") # Return to enabled state
-            Logger.Write("READY.")
-    #button_send = Button(frameActive, text="Send Tip!", command=lambda: button_handler_Send(button_send, to_account_name))
-    #button_send.pack(pady=30)
-
-    form_transfer = TransferOpFrame(frameActive)
+    # Transfer tab:
+    form_transfer = TransferOpFrame(frameActive, command=Logger.Write)
     form_transfer.pack(expand=True, fill="both")
 
 
     # Logging window
-    log_frame = LabelFrame(guiC, text="Activity", background=bkgnd,
-                           relief="groove")
-    log_frame.pack(side="bottom", expand=True, fill="both", padx=8, pady=(4,8))
-    messages = Message(log_frame,
-                       text="",
-                       width=580, background="light gray",
-                       anchor="n", pady=8, font="fixed")
-    messages.pack(expand=True, fill="both")
-    Logger.message_window = messages
+    form_activity = ActivityMessageFrame(guiC)
+    form_activity.pack(side="bottom", expand=True, fill="both", padx=8, pady=(4,8))
+
+    Logger.SetMessageWidget(form_activity.messages)
     log_print_startup_message()
 
     # start the GUI
