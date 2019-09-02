@@ -280,6 +280,15 @@ def log_print_startup_message():
     Logger.Write("READY.", echo=False)
 
 
+def getAccountBalances(account_name):
+    try:
+        spending_account = Account(account_name, blockchain_instance=blockchain)
+        return spending_account.balances
+    except AccountDoesNotExistsException:
+        Logger.Write("ERROR: Specified account does not exist on BitShares network.")
+        return []
+
+
 ##
 ## Main()
 ##
@@ -299,53 +308,54 @@ if __name__ == "__main__":
     guiA = Frame(gui, background = bkgnd)
     guiA.pack(fill="both")
     guiB = Frame(gui, background = bkgnd)
-    guiB.pack(expand=True, fill="both")
+    guiB.pack(expand=False, fill="both")
     guiC = Frame(gui, background = bkgnd)
-    guiC.pack(fill="both")
+    guiC.pack(expand=True, fill="both")
 
     # Form Variables:
     var_from_account_name = StringVar(gui, value = tip_sender)
+    var_selected_asset = StringVar(gui)
 
     ##
     ## Whoami Frame:
     ##
-    frameWhoAmI = Frame(guiA, background = bkgnd)
+    def account_balances_refresh(account_name):
+        balances = getAccountBalances(account_name)
+        frameAssets.setBalances(balances)
+    frameWhoAmI = WhoAmIFrame(guiA, textvariable=var_from_account_name,
+                              command=account_balances_refresh)
     frameWhoAmI.pack(padx=10, pady=(16,16), fill="both")
-    lbl_from_account_name = Label(frameWhoAmI, text="BitShares User Account:",
-                    font=("Helvetica", 16), background=bkgnd,)
-    lbl_from_account_name.pack(side="left")
-    box_from_account_name = Entry(frameWhoAmI, textvariable=var_from_account_name)
-    box_from_account_name.pack(side="left", padx=10)
-
     ##
     ## Asset List frame:
     ##
-    frameAssets = LabelFrame(guiB, text="Assets:", background = bkgnd)
+    frameAssets = AssetListFrame(guiB, text="Assets:", assettextvariable=var_selected_asset)
     frameAssets.pack(padx=(8,5), pady=0, side="left", expand=False, fill="y")
-    lst_assets = Listbox(frameAssets, bd=0)
-    lst_assets.pack(side="left", fill="y")
-    for item in ["one", "two", "three", "four"]:
-        lst_assets.insert(END, item)
-
     ##
     ## Active Operation Frame:
     ##
-    frameActive = LabelFrame(guiB, text="Transfer",
-                             relief = "groove", background=bkgnd)
+    frameActive = LabelFrame(guiB, text="Transfer", relief = "groove", background=bkgnd)
     frameActive.pack(padx=(5,8), expand=True, fill="both")
-
-    # Transfer tab:
-    form_transfer = TransferOpFrame(frameActive, command=Logger.Write)
+    ##
+    ## Transfer tab:
+    ##
+    def transferSendPreprocess(to_account, amount, asset_symbol):
+        Logger.Write("Wanting to send %s %s from %s to %s"
+                     % (amount, asset_symbol, var_from_account_name.get(), to_account))
+    form_transfer = TransferOpFrame(frameActive, command=transferSendPreprocess, assettextvariable=var_selected_asset)
     form_transfer.pack(expand=True, fill="both")
-
-
-    # Logging window
+    ##
+    ## Logging window
+    ##
     form_activity = ActivityMessageFrame(guiC)
     form_activity.pack(side="bottom", expand=True, fill="both", padx=8, pady=(4,8))
-
     Logger.SetMessageWidget(form_activity.messages)
-    log_print_startup_message()
+    ##
 
+    ##
+    ## Startup:
+    ##
+    log_print_startup_message()
+    account_balances_refresh(var_from_account_name.get())
     # start the GUI
     gui.mainloop()
 
