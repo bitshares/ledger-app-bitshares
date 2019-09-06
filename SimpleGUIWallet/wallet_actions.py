@@ -197,3 +197,30 @@ def broadcastTxWithProvidedSignature(tx_json, sig_bytes):
     except NumRetriesReached:
         Logger.Write("ERROR: Could not broadcast transaction: 'NumRetries' reached.  Check network connection.")
         raise
+
+def getPublicKeySequenceFromNano(bip32_parent_path, start_idx, num_results, hardened = True):
+
+    Addresses = []
+
+    try:
+        dongle = getDongle(True)
+    except:
+        Logger.Write("Ledger Nano not found! Is it plugged in and unlocked?")
+        return [] # TODO change to raise
+
+    for key_idx in range(start_idx, start_idx+num_results):
+        b32path = bip32_parent_path + ("/" if not bip32_parent_path.endswith('/') else "")
+        b32path += str(key_idx) + ("'" if hardened else "")
+        donglePath = parse_bip32_path(b32path)
+        apdu = binascii.unhexlify("B5020001" + "{:02x}".format(len(donglePath) + 1) + "{:02x}".format(int(len(donglePath) / 4))) + donglePath
+
+        result = dongle.exchange(apdu)
+        offset = 1 + result[0]
+        address = bytes(result[offset + 1: offset + 1 + result[offset]]).decode("utf-8")
+
+        ## TODO: Also extrack pubkey and assert that it produces same address
+
+        Addresses.append(address)
+
+    dongle.close()
+    return Addresses

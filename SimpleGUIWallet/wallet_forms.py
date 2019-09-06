@@ -191,3 +191,75 @@ class ActivityMessageFrame(ttk.Frame):
                                    width=580, background="light gray",
                                    anchor="n", pady=8, font="fixed")
         self.messages.pack(expand=True, fill="both")
+
+
+class QueryPublicKeysFrame(ttk.Frame):
+
+    def __init__(self, parent, *args, **kwargs):
+
+        self.lookup_command = kwargs.pop('lookupcommand', lambda *args, **kwargs: None)
+
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
+
+        common_args={}
+
+        ##
+        ## Upper Spacer:
+        ##
+
+        lblSpacerActiveTop = ttk.Label(self, text="", **common_args)
+        lblSpacerActiveTop.pack(expand=True, fill="y")
+
+        ##
+        ##  Lists:
+        ##
+
+        frameListGroup = ttk.Frame(self, **common_args)
+        frameListGroup.pack(padx=10, pady=5, fill="x")
+
+        frameOwnerKeys = ttk.LabelFrame(frameListGroup, text = "Owner:")
+        frameOwnerKeys.pack(expand=True, fill="both", side="left")
+
+        frameActiveKeys = ttk.LabelFrame(frameListGroup, text = "Active:")
+        frameActiveKeys.pack(expand=True, fill="both", side="left", padx=8)
+
+        frameMemoKeys = ttk.LabelFrame(frameListGroup, text = "Memo:")
+        frameMemoKeys.pack(expand=True, fill="both", side="left")
+
+        self.listOwnerKeys = tk.Listbox(frameOwnerKeys)
+        self.listOwnerKeys.pack(expand=True, fill="both")
+
+        self.listActiveKeys = tk.Listbox(frameActiveKeys)
+        self.listActiveKeys.pack(expand=True, fill="both")
+
+        self.listMemoKeys = tk.Listbox(frameMemoKeys)
+        self.listMemoKeys.pack(expand=True, fill="both")
+
+        ##
+        ## Buttons:
+        ##
+
+        self.button_get_addrs = ttk.Button(self, text="Query Addresses",
+                                     command=lambda: self.lookup_handler()
+        )
+        self.button_get_addrs.pack(pady=(10,15))
+
+    def lookup_handler(self):
+
+        addresses = self.lookup_command("48'/1'/0'/0'/", 0, 3, True)
+        self.listOwnerKeys.delete(0,tk.END)
+        for item in addresses:
+            self.listOwnerKeys.insert(tk.END, item)
+        self.listOwnerKeys.insert(tk.END, "...")
+
+        addresses = self.lookup_command("48'/1'/1'/0'/", 0, 3, True)
+        self.listActiveKeys.delete(0,tk.END)
+        for item in addresses:
+            self.listActiveKeys.insert(tk.END, item)
+        self.listActiveKeys.insert(tk.END, "...")
+
+        addresses = self.lookup_command("48'/1'/3'/0'/", 0, 3, True)
+        self.listMemoKeys.delete(0,tk.END)
+        for item in addresses:
+            self.listMemoKeys.insert(tk.END, item)
+        self.listMemoKeys.insert(tk.END, "...")

@@ -218,11 +218,13 @@ if __name__ == "__main__":
     form_transfer = TransferOpFrame(tabbed_Active, command=transferSendPreprocess, assettextvariable=var_selected_asset)
     form_transfer.pack(expand=True, fill="both")
 
-    form_blank_1 = ttk.Frame(tabbed_Active)
+    form_pubkeys = QueryPublicKeysFrame(tabbed_Active, lookupcommand=getPublicKeySequenceFromNano)
+    form_pubkeys.pack(expand=True, fill="both")
+
     form_blank_2 = ttk.Frame(tabbed_Active)
 
     tabbed_Active.add(form_transfer, text = 'Transfer')
-    tabbed_Active.add(form_blank_1, text = 'Get Pubkeys')
+    tabbed_Active.add(form_pubkeys, text = 'Get Pubkeys')
     tabbed_Active.add(form_blank_2, text = 'Raw Transactions')
 
     tabbed_Active.pack(expand=True, fill="both")
