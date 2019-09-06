@@ -1,7 +1,7 @@
 # Super Simple BitShare GUI Python Wallet - Not going for sophisticated here.
 #
 #
-# Run with:
+# Run with:  (Old stuff from former life as a demo app follow....)
 #
 #   python3 tip-app-01.py --sender=[sender_account_name]
 #
@@ -24,6 +24,7 @@
 #
 #   Or something appropriate for your system.
 #
+#   Also: $ pip3 install --user pyttk
 #
 
 ##
@@ -34,6 +35,7 @@ import binascii
 import struct
 import argparse
 from tkinter import *
+import ttk
 from bitshares import BitShares
 from bitsharesbase import operations
 from bitsharesbase.signedtransactions import Signed_Transaction
@@ -42,14 +44,12 @@ from bitshares.amount import Amount
 from bitshares.asset import Asset
 from bitshares.memo import Memo
 from asn1 import Encoder, Numbers
-from ledgerblue.comm import getDongle
-from ledgerblue.commException import CommException
 from graphenecommon.exceptions import AccountDoesNotExistsException
 from graphenecommon.exceptions import AssetDoesNotExistsException
 from grapheneapi.exceptions import RPCError
 from grapheneapi.exceptions import NumRetriesReached
-from datetime import datetime, timedelta
 from wallet_forms import *
+from wallet_actions import *
 import Logger
 
 ##
@@ -79,186 +79,46 @@ if args.amount is None:
     args.amount = 2.0
 
 bip32_path = args.path
-tip_sender = args.sender
+default_sender = args.sender
 tip_amount = args.amount
 tip_asset_display_symbol = args.symbol
 tip_asset_symbol = tip_asset_display_symbol.replace("bit","")
 
-try:
-    blockchain = BitShares(args.node, num_retries=0)
-except:
-    print("ERROR: Could not connect to API node at %s" % args.node)
-    exit()
 if tip_amount > 10.0:
     tip_amount = 10.0
     print("Sanity Guard: Tip amount capped at %f. Modify source to override."%tip_amount)
 
-##
-## Functions for building the demo transactions:
-##
+blockchain = initBlockchainObject(args.node)
 
 ##
-# Creates Transfer operation and appends to a transaction object:
-def append_transfer_tx(append_to, dest_account_name):
-    #
-    #  `append_to` is a TransactionBuilder object. (E.g. from BitShares.new_tx())
-    #  `dest_account_name` is a string account name.
-    #
-    account = Account(tip_sender, blockchain_instance=blockchain)
-    amount = Amount(tip_amount, tip_asset_symbol, blockchain_instance=blockchain)
-    try:
-        to = Account(dest_account_name, blockchain_instance=blockchain)
-    except NumRetriesReached:
-        Logger.Write("ERROR: Can't reach API node: 'NumRetries' reached.  Check network connection.")
-        raise
-    except:
-        Logger.Write("Problem locating destination account. Might not exist.")
-        raise
-    memoObj = Memo(from_account=account, to_account=to, blockchain_instance=blockchain)
-    memo_text = "" #"Signed by BitShares App on Ledger Nano S!"
-
-    op = operations.Transfer(
-        **{
-            "fee": {"amount": 0, "asset_id": "1.3.0"},
-            "from": account["id"],
-            "to": to["id"],
-            "amount": {"amount": int(amount), "asset_id": amount.asset["id"]},
-            "memo": memoObj.encrypt(memo_text),
-        }
-    )
-
-    append_to.appendOps(op)
-    return append_to
+## Functions for building the transactions and Nano interactions:
+##
 
 ##
 # Creates Tx, gets signature from Nano, and broadcasts:
-def sendTip(to_name):
-    #
-    #  `to_name` is account name (string) of recipient.
-    #
-    Logger.Write("Preparing to send %.1f %s to \"%s\"..." % (tip_amount, tip_asset_display_symbol, to_name))
-    tx_head = blockchain.new_tx()    # Pull recent TaPoS
+def sendTransfer(from_name, to_name, amount, symbol):
+
+    Logger.Write("Preparing to send %f %s from \"%s\" to \"%s\"..." % (amount, symbol, from_name, to_name))
+
     try:
-        dummy = tx_head['ref_block_num'] # Somehow this triggers tx_head to populate 'expiration'... (??)
-    except NumRetriesReached:
-        Logger.Write("ERROR: Can't reach API node: 'NumRetries' reached.  Check network connection.")
-        return
-    expiration = datetime.strptime(tx_head['expiration'], "%Y-%m-%dT%H:%M:%S") + timedelta(minutes=10)
-    tx_head['expiration'] = expiration.strftime("%Y-%m-%dT%H:%M:%S%Z") # Longer expiration to accomodate device interaction
-    try:
-        tx = append_transfer_tx(tx_head, to_name)
+
+        tx_json = generateTransferTxJSON(from_name, to_name, amount, symbol)
+        print("\nWe have constructed the following transaction:\n")
+        print(tx_json+"\n")
+
+        signData = getSerializedTxBytes(tx_json)
+        print("Serialized:\n")
+        print (binascii.hexlify(signData).decode() + "\n")
+
+        sig_bytes = getSignatureFromNano(signData, bip32_path)
+        print ("Got signature:\n")
+        print (binascii.hexlify(sig_bytes).decode() + "\n")
+
+        broadcastTxWithProvidedSignature(tx_json, sig_bytes)
+
     except:
-        Logger.Write("Could not construct transaction.  Please try again.")
+
         return
-    print("We have constructed the following transaction:")
-    print(tx)
-    tx_st = Signed_Transaction(
-            ref_block_num=tx['ref_block_num'],
-            ref_block_prefix=tx['ref_block_prefix'],
-            expiration=tx['expiration'],
-            operations=tx['operations'],
-    )
-    signData = encode(binascii.unhexlify(blockchain.rpc.chain_params['chain_id']), tx_st)
-    print("Serialized:")
-    print (binascii.hexlify(signData).decode())
-    donglePath = parse_bip32_path(bip32_path)
-    pathSize = int(len(donglePath) / 4)
-    try:
-        dongle = getDongle(True)
-    except:
-        Logger.Write("Ledger Nano not found! Is it plugged in and unlocked?")
-        return
-    Logger.Write("Created transaction.  Please review and confirm on Ledger Nano S...")
-    offset = 0
-    first = True
-    signSize = len(signData)
-    while offset != signSize:
-        if signSize - offset > 200:
-            chunk = signData[offset: offset + 200]
-        else:
-            chunk = signData[offset:]
-
-        if first:
-            totalSize = len(donglePath) + 1 + len(chunk)
-            apdu = binascii.unhexlify("B5040000" + "{:02x}".format(totalSize) + "{:02x}".format(pathSize)) + donglePath + chunk
-            first = False
-        else:
-            totalSize = len(chunk)
-            apdu = binascii.unhexlify("B5048000" + "{:02x}".format(totalSize)) + chunk
-
-        offset += len(chunk)
-        try:
-            result = dongle.exchange(apdu)
-        except CommException as e:
-            dongle.close()
-            if e.sw == 0x6e00:
-                Logger.Write("BitShares App not running on Nano.  Please check.")
-            else:
-                Logger.Write("Tx Not Broadcast.  User declined - transaction not signed.")
-            return
-        except:
-            dongle.close()
-            Logger.Write("An unknown error occured.  Was device unplugged?")
-            return
-        print (binascii.hexlify(result).decode())
-    dongle.close()
-    Logger.Write("Broadcasting transaction...")
-    tx_sig = blockchain.new_tx(json.loads(str(tx_st)))
-    tx_sig["signatures"].extend([binascii.hexlify(result).decode()])
-    try:
-        print (blockchain.broadcast(tx=tx_sig))
-        Logger.Write("Success!  Transaction has been sent.")
-    except RPCError as e:
-        Logger.Write("Could not broadcast transaction!")
-        Logger.Write(str(e))
-    except NumRetriesReached:
-        Logger.Write("ERROR: Could not broadcast transaction: 'NumRetries' reached.  Check network connection.")
-    except:
-        raise
-
-
-##
-## Stuff borrowed from signTransaction.py
-##
-
-def encode(chain_id, tx):
-    encoder = Encoder()
-
-    encoder.start()
-
-    encoder.write(struct.pack(str(len(chain_id)) + 's', chain_id), Numbers.OctetString)
-    encoder.write(bytes(tx['ref_block_num']), Numbers.OctetString)
-    encoder.write(bytes(tx['ref_block_prefix']), Numbers.OctetString)
-    encoder.write(bytes(tx['expiration']), Numbers.OctetString)
-    encoder.write(bytes(tx['operations'].length), Numbers.OctetString)
-    for opIdx in range(0, len(tx.toJson()['operations'])):
-        encoder.write(bytes([tx['operations'].data[opIdx].opId]), Numbers.OctetString)
-        encoder.write(bytes(tx['operations'].data[opIdx].op), Numbers.OctetString)
-
-    if 'extension' in tx:
-        encoder.write(bytes(tx['extension']), Numbers.OctetString)
-    else:
-        encoder.write(bytes([0]), Numbers.OctetString)
-
-    return encoder.output()
-
-def parse_bip32_path(path):
-    if len(path) == 0:
-        return bytes([])
-    result = bytes([])
-    elements = path.split('/')
-    for pathElement in elements:
-        element = pathElement.split('\'')
-        if len(element) == 1:
-            result = result + struct.pack(">I", int(element[0]))
-        else:
-            result = result + struct.pack(">I", 0x80000000 | int(element[0]))
-    return result
-
-
-##
-## Logger class for writing to the Activity pane:
-##
 
 
 ##
@@ -266,17 +126,6 @@ def parse_bip32_path(path):
 ##
 def log_print_startup_message():
     #Logger.Write("**** COMMODORE 64 BASIC V2  64K RAM SYSTEM  38911 BASIC BYTES FREE ****", echo=False)
-    try:
-        spending_account = Account(tip_sender, blockchain_instance=blockchain)
-        avail_balance = spending_account.balance(tip_asset_symbol)
-    except AccountDoesNotExistsException:
-        print("ERROR: Sending account does not exist on BitShares network.")
-        exit()
-    except AssetDoesNotExistsException:
-        print("ERROR: Chosen asset does not exist on BitShares network.")
-        exit()
-    Logger.Write("Sending tips from BitShares acount: \"%s\" (%s)" % (spending_account.name, spending_account.identifier))
-    Logger.Write("Available balance: %0.5f %s" % (avail_balance, tip_asset_display_symbol))
     Logger.Write("READY.", echo=False)
 
 
@@ -304,16 +153,37 @@ if __name__ == "__main__":
     gui.title("Super-Simple BitShares Wallet for Ledger Nano")
     gui.geometry("800x480")
     gui.minsize(640,480)
-    # Top, Middle, and Bottom regions, called guiA, guiB, guiC
-    guiA = Frame(gui, background = bkgnd)
-    guiA.pack(fill="both")
-    guiB = Frame(gui, background = bkgnd)
-    guiB.pack(expand=False, fill="both")
-    guiC = Frame(gui, background = bkgnd)
-    guiC.pack(expand=True, fill="both")
+    gui_style = ttk.Style()
+    gui_style.theme_use('clam')
+    #
+    # Window Regions:
+    #  +---------------------+
+    #  |     frame_top       |
+    #  +---------+-----------+
+    #  | frame_  | frame_    |
+    #  |    left |  center   |
+    #  +---------+-----------+
+    #  |    frame_bottom     |
+    #  +---------------------+
+    #
+    frame_top = ttk.Frame(gui)
+    frame_top.pack(fill="both")
+
+    paned_middle_bottom = ttk.PanedWindow(gui, orient=VERTICAL)
+    paned_middle_bottom.pack(fill=BOTH, expand=1)
+    paned_left_center = ttk.PanedWindow(paned_middle_bottom, orient=HORIZONTAL)
+    paned_left_center.pack(expand=False, fill="both")
+    paned_middle_bottom.add(paned_left_center)
+    frame_left = ttk.Frame(paned_left_center)
+    paned_left_center.add(frame_left)
+    frame_center = ttk.Frame(paned_left_center)
+    paned_left_center.add(frame_center)
+    frame_bottom = ttk.Frame(paned_middle_bottom)
+    paned_middle_bottom.add(frame_bottom)
 
     # Form Variables:
-    var_from_account_name = StringVar(gui, value = tip_sender)
+    var_from_account_name = StringVar(gui, value = default_sender)
+    var_bip32_path = StringVar(gui, value = bip32_path)
     var_selected_asset = StringVar(gui)
 
     ##
@@ -322,31 +192,45 @@ if __name__ == "__main__":
     def account_balances_refresh(account_name):
         balances = getAccountBalances(account_name)
         frameAssets.setBalances(balances)
-    frameWhoAmI = WhoAmIFrame(guiA, textvariable=var_from_account_name,
+    frameWhoAmI = WhoAmIFrame(frame_top, textvariable=var_from_account_name,
+                              textvariablebip32=var_bip32_path,
                               command=account_balances_refresh)
     frameWhoAmI.pack(padx=10, pady=(16,16), fill="both")
     ##
     ## Asset List frame:
     ##
-    frameAssets = AssetListFrame(guiB, text="Assets:", assettextvariable=var_selected_asset)
+    frameAssets = AssetListFrame(frame_left, text="Assets:", assettextvariable=var_selected_asset)
     frameAssets.pack(padx=(8,5), pady=0, side="left", expand=False, fill="y")
     ##
     ## Active Operation Frame:
     ##
-    frameActive = LabelFrame(guiB, text="Transfer", relief = "groove", background=bkgnd)
-    frameActive.pack(padx=(5,8), expand=True, fill="both")
+
+    tabbed_Active = ttk.Notebook(frame_center)
+
+
+    #frameActive = LabelFrame(guiB, text="Transfer", relief = "groove", background=bkgnd)
+    #frameActive.pack(padx=(5,8), expand=True, fill="both")
     ##
     ## Transfer tab:
     ##
-    def transferSendPreprocess(to_account, amount, asset_symbol):
-        Logger.Write("Wanting to send %s %s from %s to %s"
-                     % (amount, asset_symbol, var_from_account_name.get(), to_account))
-    form_transfer = TransferOpFrame(frameActive, command=transferSendPreprocess, assettextvariable=var_selected_asset)
+    def transferSendPreprocess(to_account, amount_str, asset_symbol):
+        sendTransfer(var_from_account_name.get(), to_account, float(amount_str), asset_symbol)
+    form_transfer = TransferOpFrame(tabbed_Active, command=transferSendPreprocess, assettextvariable=var_selected_asset)
     form_transfer.pack(expand=True, fill="both")
+
+    form_blank_1 = ttk.Frame(tabbed_Active)
+    form_blank_2 = ttk.Frame(tabbed_Active)
+
+    tabbed_Active.add(form_transfer, text = 'Transfer')
+    tabbed_Active.add(form_blank_1, text = 'Get Pubkeys')
+    tabbed_Active.add(form_blank_2, text = 'Raw Transactions')
+
+    tabbed_Active.pack(expand=True, fill="both")
+
     ##
     ## Logging window
     ##
-    form_activity = ActivityMessageFrame(guiC)
+    form_activity = ActivityMessageFrame(frame_bottom)
     form_activity.pack(side="bottom", expand=True, fill="both", padx=8, pady=(4,8))
     Logger.SetMessageWidget(form_activity.messages)
     ##

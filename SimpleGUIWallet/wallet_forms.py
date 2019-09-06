@@ -1,29 +1,41 @@
 import tkinter as tk
+import ttk
 import Logger
 
-class WhoAmIFrame(tk.Frame):
+class WhoAmIFrame(ttk.Frame):
 
     def __init__(self, parent, *args, **kwargs):
 
         self.button_command = kwargs.pop('command', lambda *args, **kwargs: None)
         self.textvariable = kwargs.pop('textvariable', None)
-        if not 'background' in kwargs: kwargs["background"] = parent["background"]
+        self.textvariable_path = kwargs.pop('textvariablebip32', None)
 
-        tk.Frame.__init__(self, parent, *args, **kwargs)
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
 
         common_args={}
-        common_args["background"] = self["background"]
 
-        lbl_from_account_name = tk.Label(self, text="BitShares User Account:",
+        frame_row_1 = ttk.Frame(self)
+        frame_row_1.pack(fill="x")
+        frame_row_2 = ttk.Frame(self)
+        frame_row_2.pack(fill="x")
+
+        lbl_from_account_name = ttk.Label(frame_row_1, text="BitShares User Account:",
                                          font=("Helvetica", 16), **common_args)
         lbl_from_account_name.pack(side="left")
 
-        box_from_account_name = tk.Entry(self, width=30, textvariable=self.textvariable)
+        box_from_account_name = ttk.Entry(frame_row_1, width=30, textvariable=self.textvariable)
         box_from_account_name.pack(side="left", padx=10)
 
-        self.button = tk.Button(self, text="Refresh Balances",
+        self.button = ttk.Button(frame_row_1, text="Refresh Balances",
                                      command=lambda: self.button_handler())
         self.button.pack(side="left", padx=5)
+
+        lbl_bip32_path = ttk.Label(frame_row_2, text="BIP32 Path:",
+                                         font=("Helvetica", 16), **common_args)
+        lbl_bip32_path.pack(side="left")
+
+        box_bip32_path = ttk.Entry(frame_row_2, width=30, textvariable=self.textvariable_path)
+        box_bip32_path.pack(side="left", padx=10)
 
     def button_handler(self):
         self.button.configure(state="disabled")
@@ -40,17 +52,15 @@ class WhoAmIFrame(tk.Frame):
             Logger.Write("READY.")
 
 
-class AssetListFrame(tk.LabelFrame):
+class AssetListFrame(ttk.LabelFrame):
 
     def __init__(self, parent, *args, **kwargs):
 
         self.asset_text_var = kwargs.pop('assettextvariable', None)
-        if not 'background' in kwargs: kwargs["background"] = parent["background"]
 
-        tk.LabelFrame.__init__(self, parent, *args, **kwargs)
+        ttk.LabelFrame.__init__(self, parent, *args, **kwargs)
 
         common_args={}
-        common_args["background"] = self["background"]
 
         self.Balances = ["One", "Two"]
 
@@ -76,37 +86,35 @@ class AssetListFrame(tk.LabelFrame):
         except:
             pass
 
-class TransferOpFrame(tk.Frame):
+class TransferOpFrame(ttk.Frame):
 
     def __init__(self, parent, *args, **kwargs):
 
         self.send_command = kwargs.pop('command', lambda *args, **kwargs: None)
         self.asset_text_var = kwargs.pop('assettextvariable', None)
-        if not 'background' in kwargs: kwargs["background"] = parent["background"]
 
-        tk.Frame.__init__(self, parent, *args, **kwargs)
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
 
         common_args={}
-        common_args["background"] = self["background"]
 
         ##
         ## Upper Spacer:
         ##
 
-        lblSpacerActiveTop = tk.Label(self, text="", **common_args)
+        lblSpacerActiveTop = ttk.Label(self, text="", **common_args)
         lblSpacerActiveTop.pack(expand=True, fill="y")
 
         ##
         ## Destination Account:
         ##
 
-        frameToWhom = tk.Frame(self, **common_args)
+        frameToWhom = ttk.Frame(self, **common_args)
         frameToWhom.pack(padx=10, pady=5, fill="x")
 
-        self.to_account_name = tk.Entry(frameToWhom)
+        self.to_account_name = ttk.Entry(frameToWhom)
         self.to_account_name.pack(side="right", padx=10)
 
-        labelSendTo = tk.Label(frameToWhom, text="Send To: (BitShares User Account)",
+        labelSendTo = ttk.Label(frameToWhom, text="Send To: (BitShares User Account)",
                                font=("Helvetica", 16), **common_args)
         labelSendTo.pack(side="right")
 
@@ -114,27 +122,27 @@ class TransferOpFrame(tk.Frame):
         ## Amount and Asset:
         ##
 
-        frameSendAmount = tk.Frame(self, **common_args)
+        frameSendAmount = ttk.Frame(self, **common_args)
         frameSendAmount.pack(padx=10, pady=5, fill="x")
 
-        self.box_asset_to_send = tk.Entry(frameSendAmount, width=10, textvariable=self.asset_text_var)
+        self.box_asset_to_send = ttk.Entry(frameSendAmount, width=10, textvariable=self.asset_text_var)
         self.box_asset_to_send.pack(side="right", padx=10)
 
-        labelAsset = tk.Label(frameSendAmount, text="Asset:",
+        labelAsset = ttk.Label(frameSendAmount, text="Asset:",
                            font=("Helvetica", 16), **common_args)
         labelAsset.pack(padx=(20,0),side="right")
 
-        self.box_amount_to_send = tk.Entry(frameSendAmount)
+        self.box_amount_to_send = ttk.Entry(frameSendAmount)
         self.box_amount_to_send.pack(side="right", padx=10)
 
-        labelAmount = tk.Label(frameSendAmount, text="Amount:",
+        labelAmount = ttk.Label(frameSendAmount, text="Amount:",
                             font=("Helvetica", 16), **common_args)
         labelAmount.pack(side="right")
 
         ##
         ## The Send Button:
         ##
-        self.button_send = tk.Button(self, text="Send Transfer",
+        self.button_send = ttk.Button(self, text="Send Transfer",
                                      command=lambda: self.button_send_handler()
         )
         self.button_send.pack(pady=30)
@@ -143,7 +151,7 @@ class TransferOpFrame(tk.Frame):
         ## Lower Spacer:
         ##
 
-        lblSpacerActiveBottom = tk.Label(self, text="", **common_args)
+        lblSpacerActiveBottom = ttk.Label(self, text="", **common_args)
         lblSpacerActiveBottom.pack(expand=True, fill="y")
 
     def button_send_handler(self):
@@ -169,17 +177,14 @@ class TransferOpFrame(tk.Frame):
             Logger.Write("READY.")
 
 
-class ActivityMessageFrame(tk.Frame):
+class ActivityMessageFrame(ttk.Frame):
     def __init__(self, parent, *args, **kwargs):
 
-        if not 'background' in kwargs: kwargs["background"] = parent["background"]
-
-        tk.Frame.__init__(self, parent, *args, **kwargs)
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
 
         common_args={}
-        common_args["background"] = self["background"]
 
-        log_frame = tk.LabelFrame(self, text="Activity", relief="groove",
+        log_frame = ttk.LabelFrame(self, text="Activity", relief="groove",
                                   **common_args)
         log_frame.pack(expand=True, fill="both")
         self.messages = tk.Message(log_frame, text="",
