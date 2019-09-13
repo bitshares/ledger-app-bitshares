@@ -151,7 +151,7 @@ if __name__ == "__main__":
     gui = Tk()
     gui.configure(background=bkgnd)
     gui.title("Super-Simple BitShares Wallet for Ledger Nano")
-    gui.geometry("800x480")
+    gui.geometry("800x560")
     gui.minsize(640,480)
     gui_style = ttk.Style()
     gui_style.theme_use('clam')
@@ -185,6 +185,32 @@ if __name__ == "__main__":
     var_from_account_name = StringVar(gui, value = default_sender)
     var_bip32_path = StringVar(gui, value = bip32_path)
     var_selected_asset = StringVar(gui)
+    var_tx_json = StringVar(gui)
+    var_tx_serial = StringVar(gui)      # Hex representation of serial bytes
+    var_tx_signature = StringVar(gui)   # Hex representation of signature
+
+    def serializeTxJSON():  # var_tx_json ->(turn crank)-> var_tx_serial:
+        try:
+            signData = getSerializedTxBytes(var_tx_json.get())
+            var_tx_serial.set(binascii.hexlify(signData).decode())
+        except json.decoder.JSONDecodeError as e:
+            var_tx_serial.set("<<TX COULD NOT BE SERIALIZED>>")
+            Logger.Write("JSON Decode Error: " + str(e))
+        except:
+            var_tx_serial.set("<<TX COULD NOT BE SERIALIZED>>")
+        finally:
+            pass
+
+    def signTxHexBytes():   # var_tx_serial ->(turn crank)-> var_tx_signature:
+        try:
+            txHex = "".join(var_tx_serial.get().split())
+            signData = binascii.unhexlify(txHex)
+            sig_bytes = getSignatureFromNano(signData, var_bip32_path.get())
+            var_tx_signature.set(binascii.hexlify(sig_bytes).decode())
+        except:
+            var_tx_signature.set("<<COULD NOT GET SIGNATURE>>")
+        finally:
+            pass
 
     ##
     ## Whoami Frame:
@@ -221,11 +247,16 @@ if __name__ == "__main__":
     form_pubkeys = QueryPublicKeysFrame(tabbed_Active, lookupcommand=getPublicKeySequenceFromNano)
     form_pubkeys.pack(expand=True, fill="both")
 
-    form_blank_2 = ttk.Frame(tabbed_Active)
+    form_raw_tx = RawTransactionsFrame(tabbed_Active,
+                            serializecommand=serializeTxJSON,
+                            signcommand=signTxHexBytes,
+                            jsonvar=var_tx_json, serialvar=var_tx_serial,
+                            signaturevar=var_tx_signature)
+    form_raw_tx.pack()
 
     tabbed_Active.add(form_transfer, text = 'Transfer')
     tabbed_Active.add(form_pubkeys, text = 'Get Pubkeys')
-    tabbed_Active.add(form_blank_2, text = 'Raw Transactions')
+    tabbed_Active.add(form_raw_tx, text = 'Raw Transactions')
 
     tabbed_Active.pack(expand=True, fill="both")
 

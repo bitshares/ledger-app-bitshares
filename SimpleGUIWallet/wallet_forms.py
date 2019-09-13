@@ -1,6 +1,57 @@
 import tkinter as tk
+from tkinter.scrolledtext import ScrolledText
 import ttk
 import Logger
+
+class ScrolledTextVarBound(ScrolledText):
+    # A scrolled Text widget, but bound to a StringVar just like Entry
+    # widgets can do.  By default, Text widgets don't support the
+    # `textvariable` config option (like Entry widgets do).  So we add
+    # that functionality in here, including setting up necessary tracing
+    # and callbacks so that the two entities track each other.
+    #
+    def __init__(self, parent, *args, **kwargs):
+
+        self.textvariable = kwargs.pop('textvariable', None)  # Remote tk.StringVar
+
+        ScrolledText.__init__(self, parent, *args, **kwargs)
+
+        # Generally, we respond when remote is updated.  Unless WE are
+        # the one who updated it...
+        self.watch_remote = True
+        self.watch_local = True
+
+        # Notice when remote variable changes:
+        self.textvariable.trace("w", self.remote_change_callback)
+
+        # Notice when local content changes:
+        self.bind("<<Modified>>", self.on_text_modified)
+
+    def on_text_modified(self, event, *args):
+        # We "notice" text changes by catching <<Modified>> event, which is a slight
+        # abuse, as this is meant as event when modified from a saved state, not *each*
+        # and every modification.  Thus we have to set our modified flag back to False
+        # every time we catch.  And something is causeing this event to "bounce" - it
+        # gets called twice every time we actually modify, which also double-calls
+        # local_change_callback... for the moment this seems harmless though.
+        self.edit_modified(False)
+        self.local_change_callback()
+
+    def local_change_callback(self, *args):
+        if self.watch_local:
+            old_watch = self.watch_remote
+            self.watch_remote = False
+            self.textvariable.set(self.get(1.0, tk.END))
+            self.watch_remote = old_watch
+
+    def remote_change_callback(self, *args):
+        if self.watch_remote:
+            old_watch = self.watch_local
+            self.watch_local = False
+            self.delete(1.0, tk.END)
+            self.insert(tk.END, self.textvariable.get())
+            self.watch_local = old_watch
+
 
 class WhoAmIFrame(ttk.Frame):
 
@@ -263,3 +314,93 @@ class QueryPublicKeysFrame(ttk.Frame):
         for item in addresses:
             self.listMemoKeys.insert(tk.END, item)
         self.listMemoKeys.insert(tk.END, "...")
+
+
+class RawTransactionsFrame(ttk.Frame):
+
+    def __init__(self, parent, *args, **kwargs):
+
+        self.serialize_command = kwargs.pop('serializecommand', lambda *args, **kwargs: None)
+        self.sign_command = kwargs.pop('signcommand', lambda *args, **kwargs: None)
+        self.tx_json_tkvar = kwargs.pop('jsonvar', None)
+        self.tx_serial_tkvar = kwargs.pop('serialvar', None)
+        self.tx_signature_tkvar = kwargs.pop('signaturevar', None)
+
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
+
+        common_args={}
+
+        ##
+        ## JSON Tx Panel
+        ##
+
+        frame_tx_json = ttk.LabelFrame(self, text = "Transaction JSON:")
+        frame_tx_json.pack(padx=6, pady=(8,4), expand=True, fill="both")
+
+        self.entryTxJSON = ScrolledTextVarBound(frame_tx_json, height=5, textvariable=self.tx_json_tkvar)
+        self.entryTxJSON.pack(expand=True, fill="both")
+
+        self.tx_json_tkvar.trace("w", self.tx_json_changed)
+
+        ##
+        ## Serialized Tx Panel
+        ##
+
+        frame_tx_serial = ttk.LabelFrame(self, text = "Serialized Tx:")
+        frame_tx_serial.pack(padx=6, pady=4, expand=True, fill="both")
+
+        self.entryTxSerial = ScrolledTextVarBound(frame_tx_serial, height=3, textvariable=self.tx_serial_tkvar)
+        self.entryTxSerial.pack(expand=True, fill="both")
+        self.entryTxSerial.defaultFgColor = self.entryTxSerial.cget("fg")
+
+        self.tx_serial_tkvar.trace("w", self.tx_serial_changed)
+
+        ##
+        ## Signature Panel
+        ##
+
+        frame_tx_signature = ttk.LabelFrame(self, text = "Signature:")
+        frame_tx_signature.pack(padx=6, pady=4, expand=True, fill="both")
+
+        self.entryTxSig = ScrolledTextVarBound(frame_tx_signature, height=2, textvariable=self.tx_signature_tkvar)
+        self.entryTxSig.pack(expand=True, fill="both")
+
+        ##
+        ## Buttons:
+        ##
+
+        buttons_frame = ttk.Frame(self)
+        buttons_frame.pack(pady=(4,8))
+
+        self.btnSerialize = ttk.Button(buttons_frame, text="Serialize",
+                                       command=lambda: self.serialize_handler())
+        self.btnSerialize.pack(padx=4, side="left")
+
+        self.btnSign = ttk.Button(buttons_frame, text="Sign",
+                                  command=lambda: self.sign_handler())
+        self.btnSign.pack(padx=4, side="left")
+
+        self.btnBroadcast = ttk.Button(buttons_frame, text="Broadcast Tx")
+        self.btnBroadcast.pack(padx=4, side="left")
+
+
+    def tx_json_changed(self, *args):
+        self.entryTxSerial.config(fg="gray")
+        # ^
+        # Twiddle foreground colors of entryTxSerial to indicate correspondence
+        # to current contents of entryTxJSON.
+        # v
+    def tx_serial_changed(self, *args):
+        self.entryTxSerial.config(fg=self.entryTxSerial.defaultFgColor)
+
+    def serialize_handler(self):
+        Logger.Clear()
+        Logger.Write("Attempting to serialize JSON transaction...")
+        self.serialize_command()
+        Logger.Write("READY.")
+
+    def sign_handler(self):
+        Logger.Clear()
+        Logger.Write("Asking Nano to sign serialized transaction...")
+        self.sign_command()
+        Logger.Write("READY.")
