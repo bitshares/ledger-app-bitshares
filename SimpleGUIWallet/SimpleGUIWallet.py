@@ -151,7 +151,7 @@ if __name__ == "__main__":
     gui = Tk()
     gui.configure(background=bkgnd)
     gui.title("Super-Simple BitShares Wallet for Ledger Nano")
-    gui.geometry("800x560")
+    gui.geometry("800x580")
     gui.minsize(640,480)
     gui_style = ttk.Style()
     gui_style.theme_use('clam')
