@@ -380,6 +380,10 @@ class RawTransactionsFrame(ttk.Frame):
         buttons_frame = ttk.Frame(self)
         buttons_frame.pack(pady=(4,8))
 
+        self.btnColorize = ttk.Button(buttons_frame, text="Colorize Serial",
+                                       command=lambda: self.colorizeSerialHex(self.entryTxSerial))
+        self.btnColorize.pack(padx=4, side="left")
+
         self.btnSerialize = ttk.Button(buttons_frame, text="Serialize",
                                        command=lambda: self.serialize_handler())
         self.btnSerialize.pack(padx=4, side="left")
@@ -415,32 +419,75 @@ class RawTransactionsFrame(ttk.Frame):
         Logger.Write("READY.")
 
     def colorizeSerialHex(self, w):
-        tindex = w.index("1.0 + 0c")
-        print(tindex)
-        tindex = self.applyTlvTagColor(w, tindex, "chainid")
-        tindex = self.applyTlvTagColor(w, tindex, "txfield")
-        tindex = self.applyTlvTagColor(w, tindex, "txfield")
-        tindex = self.applyTlvTagColor(w, tindex, "txfield")
-        tindex = self.applyTlvTagColor(w, tindex, "txfield")
-        tindex = self.applyTlvTagColor(w, tindex, "opid")
-        tindex = self.applyTlvTagColor(w, tindex, "opdata")
-        tindex = self.applyTlvTagColor(w, tindex, "txfield")
-        tindex = self.applyTlvTagColor(w, tindex, "txfield")
+        for tag in w.tag_names():
+            w.tag_remove(tag, "1.0", tk.END)
+        try:
+            tindex = w.index("1.0 + 0c")
+            # ChainID
+            tindex = self.applyTlvTagColor(w, tindex, "chainid")
+            # Ref block, num, and expiration:
+            tindex = self.applyTlvTagColor(w, tindex, "txfield")
+            tindex = self.applyTlvTagColor(w, tindex, "txfield")
+            tindex = self.applyTlvTagColor(w, tindex, "txfield")
+            # Num operations:
+            tindex = self.applyTlvTagColor(w, tindex, "txfield")
+            numOps = int.from_bytes(binascii.unhexlify("".join(w.lastHexField.split())), byteorder="big", signed=False)
+            # Operations:
+            while numOps > 0:
+                numOps -= 1
+                tindex = self.applyTlvTagColor(w, tindex, "opid")
+                tindex = self.applyTlvTagColor(w, tindex, "opdata")
+            # Tx Extensions
+            tindex = self.applyTlvTagColor(w, tindex, "txfield")
+        except:
+            pass
 
     def applyTlvTagColor(self, w, tindex, tagname):
+
+        def getHexBytes(tindex, numbytes):
+            charbuf = ""
+            nibblecount = 0
+            charcount = 0
+            char = ''
+            while nibblecount < (2*numbytes):
+                char = w.get(tindex+"+%dc"%charcount, tindex+"+%dc"%(1+charcount))
+                if len(char) == 0:
+                    raise Exception("Hex stream ended before N bytes read.")
+                if len(char) != 1:
+                    raise Exception("Hex stream unexpected char string read.")
+                charcount += 1
+                if char.isspace():
+                    charbuf += char
+                    continue
+                if char in '0123456789abcdefABCDEF':
+                    nibblecount +=1
+                    charbuf += char
+                    continue
+                raise Exception("Unparsible Hex character.")
+            return charbuf
+
         tindex0 = tindex
-        tindex1 = w.index(tindex0+"+2c")
-        tindex2 = w.index(tindex1+"+2c")
+        tagHex = getHexBytes(tindex0, 1)
+        tagByte = binascii.unhexlify("".join(tagHex.split()))
+        if tagByte!=b'\x04':
+            raise Exception()
+        tindex1 = w.index(tindex0+"+%dc"%(len(tagHex)))
 
-        tagByte = binascii.unhexlify(w.get(tindex0, tindex1))
-        if tagByte==b'\x04':
-            w.tag_add("tlvtag", tindex0, tindex1)
+        tagLenHex = getHexBytes(tindex1, 1) # TODO: Is a varint so could be >1 bytes
+        tagLen = int.from_bytes(binascii.unhexlify("".join(tagLenHex.split())), byteorder="big", signed=False)
+        tindex2 = w.index(tindex1+"+%dc"%(len(tagLenHex)))
+
+        if tagLen > 0:
+            fieldHex = getHexBytes(tindex2, tagLen)
+            tindex3 = w.index(tindex2 + "+%dc"%(len(fieldHex)))
+            w.lastHexField = fieldHex  # Stash this value somewhere it can be found
         else:
-            return tindex
+            tindex3 = tindex2
+            w.lastHexField = ""
 
-        tagLenB = binascii.unhexlify(w.get(tindex1, tindex2))
-        tagLen = int.from_bytes(tagLenB, byteorder="big", signed=False)
-        tindex3 = w.index(tindex2 + "+%dc"%(2*tagLen))
+        # TODO: when applying tags avoid leading/trailing whitespace
+
+        w.tag_add("tlvtag", tindex0, tindex1)
         w.tag_add("tlvlen", tindex1, tindex2)
         if tagLen > 0:
             w.tag_add(tagname, tindex2, tindex3)
