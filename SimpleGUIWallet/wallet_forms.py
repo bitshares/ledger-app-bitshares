@@ -1,3 +1,4 @@
+import binascii
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import ttk
@@ -337,7 +338,7 @@ class RawTransactionsFrame(ttk.Frame):
         frame_tx_json = ttk.LabelFrame(self, text = "Transaction JSON:")
         frame_tx_json.pack(padx=6, pady=(8,4), expand=True, fill="both")
 
-        self.entryTxJSON = ScrolledTextVarBound(frame_tx_json, height=5, textvariable=self.tx_json_tkvar)
+        self.entryTxJSON = ScrolledTextVarBound(frame_tx_json, height=6, textvariable=self.tx_json_tkvar)
         self.entryTxJSON.pack(expand=True, fill="both")
 
         self.tx_json_tkvar.trace("w", self.tx_json_changed)
@@ -349,9 +350,16 @@ class RawTransactionsFrame(ttk.Frame):
         frame_tx_serial = ttk.LabelFrame(self, text = "Serialized Tx:")
         frame_tx_serial.pack(padx=6, pady=4, expand=True, fill="both")
 
-        self.entryTxSerial = ScrolledTextVarBound(frame_tx_serial, height=3, textvariable=self.tx_serial_tkvar)
+        self.entryTxSerial = ScrolledTextVarBound(frame_tx_serial, height=4, textvariable=self.tx_serial_tkvar)
         self.entryTxSerial.pack(expand=True, fill="both")
         self.entryTxSerial.defaultFgColor = self.entryTxSerial.cget("fg")
+        self.entryTxSerial.tag_configure("tlvtag", background="lightgray")
+        self.entryTxSerial.tag_configure("tlvlen", background="lightgray")
+        self.entryTxSerial.tag_configure("chainid", background="cyan")
+        self.entryTxSerial.tag_configure("txfield", background="yellow")
+        self.entryTxSerial.tag_configure("opid", background="lightgreen")
+        self.entryTxSerial.tag_configure("opdata", background="lightgreen")
+        self.entryTxSerial.tag_raise("sel")
 
         self.tx_serial_tkvar.trace("w", self.tx_serial_changed)
 
@@ -397,6 +405,7 @@ class RawTransactionsFrame(ttk.Frame):
         Logger.Clear()
         Logger.Write("Attempting to serialize JSON transaction...")
         self.serialize_command()
+        self.colorizeSerialHex(self.entryTxSerial)
         Logger.Write("READY.")
 
     def sign_handler(self):
@@ -404,3 +413,36 @@ class RawTransactionsFrame(ttk.Frame):
         Logger.Write("Asking Nano to sign serialized transaction...")
         self.sign_command()
         Logger.Write("READY.")
+
+    def colorizeSerialHex(self, w):
+        tindex = w.index("1.0 + 0c")
+        print(tindex)
+        tindex = self.applyTlvTagColor(w, tindex, "chainid")
+        tindex = self.applyTlvTagColor(w, tindex, "txfield")
+        tindex = self.applyTlvTagColor(w, tindex, "txfield")
+        tindex = self.applyTlvTagColor(w, tindex, "txfield")
+        tindex = self.applyTlvTagColor(w, tindex, "txfield")
+        tindex = self.applyTlvTagColor(w, tindex, "opid")
+        tindex = self.applyTlvTagColor(w, tindex, "opdata")
+        tindex = self.applyTlvTagColor(w, tindex, "txfield")
+        tindex = self.applyTlvTagColor(w, tindex, "txfield")
+
+    def applyTlvTagColor(self, w, tindex, tagname):
+        tindex0 = tindex
+        tindex1 = w.index(tindex0+"+2c")
+        tindex2 = w.index(tindex1+"+2c")
+
+        tagByte = binascii.unhexlify(w.get(tindex0, tindex1))
+        if tagByte==b'\x04':
+            w.tag_add("tlvtag", tindex0, tindex1)
+        else:
+            return tindex
+
+        tagLenB = binascii.unhexlify(w.get(tindex1, tindex2))
+        tagLen = int.from_bytes(tagLenB, byteorder="big", signed=False)
+        tindex3 = w.index(tindex2 + "+%dc"%(2*tagLen))
+        w.tag_add("tlvlen", tindex1, tindex2)
+        if tagLen > 0:
+            w.tag_add(tagname, tindex2, tindex3)
+
+        return tindex3
