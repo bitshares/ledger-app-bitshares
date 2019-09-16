@@ -151,7 +151,7 @@ if __name__ == "__main__":
     gui = Tk()
     gui.configure(background=bkgnd)
     gui.title("Super-Simple BitShares Wallet for Ledger Nano")
-    gui.geometry("800x580")
+    gui.geometry("800x600")
     gui.minsize(640,480)
     gui_style = ttk.Style()
     gui_style.theme_use('clam')
@@ -209,8 +209,12 @@ if __name__ == "__main__":
             var_tx_signature.set(binascii.hexlify(sig_bytes).decode())
         except:
             var_tx_signature.set("<<COULD NOT GET SIGNATURE>>")
-        finally:
-            pass
+            raise
+
+    def broadcastSignedTx():  # Combine var_tx_json & var_tx_signature, broadcast
+        sigHex = var_tx_signature.get().strip()
+        sig_bytes = binascii.unhexlify(sigHex)
+        broadcastTxWithProvidedSignature(var_tx_json.get(), sig_bytes)
 
     ##
     ## Whoami Frame:
@@ -227,32 +231,42 @@ if __name__ == "__main__":
     ##
     frameAssets = AssetListFrame(frame_left, text="Assets:", assettextvariable=var_selected_asset)
     frameAssets.pack(padx=(8,5), pady=0, side="left", expand=False, fill="y")
+
     ##
-    ## Active Operation Frame:
+    ## Active Operation Tabbed Notebook container:
     ##
 
     tabbed_Active = ttk.Notebook(frame_center)
 
-
-    #frameActive = LabelFrame(guiB, text="Transfer", relief = "groove", background=bkgnd)
-    #frameActive.pack(padx=(5,8), expand=True, fill="both")
     ##
     ## Transfer tab:
     ##
+
     def transferSendPreprocess(to_account, amount_str, asset_symbol):
         sendTransfer(var_from_account_name.get(), to_account, float(amount_str), asset_symbol)
     form_transfer = TransferOpFrame(tabbed_Active, command=transferSendPreprocess, assettextvariable=var_selected_asset)
     form_transfer.pack(expand=True, fill="both")
 
+    ##
+    ## Public Keys Tab:
+    ##
+
     form_pubkeys = QueryPublicKeysFrame(tabbed_Active, lookupcommand=getPublicKeySequenceFromNano)
     form_pubkeys.pack(expand=True, fill="both")
+
+    ##
+    ## Raw Transactions Tab:
+    ##
 
     form_raw_tx = RawTransactionsFrame(tabbed_Active,
                             serializecommand=serializeTxJSON,
                             signcommand=signTxHexBytes,
+                            broadcastcommand=broadcastSignedTx,
                             jsonvar=var_tx_json, serialvar=var_tx_serial,
                             signaturevar=var_tx_signature)
     form_raw_tx.pack()
+
+    ## Finalize tabbed container:
 
     tabbed_Active.add(form_transfer, text = 'Transfer')
     tabbed_Active.add(form_pubkeys, text = 'Get Pubkeys')

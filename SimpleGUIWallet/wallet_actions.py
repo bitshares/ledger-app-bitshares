@@ -146,7 +146,7 @@ def getSignatureFromNano(serial_tx_bytes, bip32_path):
     except:
         Logger.Write("Ledger Nano not found! Is it plugged in and unlocked?")
         raise
-    Logger.Write("Created transaction.  Please review and confirm on Ledger Nano S...")
+    Logger.Write("Please review and confirm transaction on Ledger Nano S...")
     offset = 0
     first = True
     signSize = len(serial_tx_bytes)
@@ -172,7 +172,7 @@ def getSignatureFromNano(serial_tx_bytes, bip32_path):
             if e.sw == 0x6e00:
                 Logger.Write("BitShares App not running on Nano.  Please check.")
             else:
-                Logger.Write("Tx Not Broadcast.  User declined - transaction not signed.")
+                Logger.Write("User declined - transaction not signed.")
             raise
         except:
             dongle.close()
