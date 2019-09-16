@@ -323,6 +323,7 @@ class RawTransactionsFrame(ttk.Frame):
 
         self.serialize_command = kwargs.pop('serializecommand', lambda *args, **kwargs: None)
         self.sign_command = kwargs.pop('signcommand', lambda *args, **kwargs: None)
+        self.broadcast_command = kwargs.pop('broadcastcommand', lambda *args, **kwargs: None)
         self.tx_json_tkvar = kwargs.pop('jsonvar', None)
         self.tx_serial_tkvar = kwargs.pop('serialvar', None)
         self.tx_signature_tkvar = kwargs.pop('signaturevar', None)
@@ -335,7 +336,7 @@ class RawTransactionsFrame(ttk.Frame):
         ## JSON Tx Panel
         ##
 
-        frame_tx_json = ttk.LabelFrame(self, text = "Transaction JSON:")
+        frame_tx_json = ttk.LabelFrame(self, text = "1. Paste transaction JSON here:")
         frame_tx_json.pack(padx=6, pady=(8,4), expand=True, fill="both")
 
         self.entryTxJSON = ScrolledTextVarBound(frame_tx_json, height=6, textvariable=self.tx_json_tkvar)
@@ -347,7 +348,7 @@ class RawTransactionsFrame(ttk.Frame):
         ## Serialized Tx Panel
         ##
 
-        frame_tx_serial = ttk.LabelFrame(self, text = "Serialized Tx:")
+        frame_tx_serial = ttk.LabelFrame(self, text = "2. Click \"Serialize\" to get APDU bytes for Nano to sign:")
         frame_tx_serial.pack(padx=6, pady=4, expand=True, fill="both")
 
         self.entryTxSerial = ScrolledTextVarBound(frame_tx_serial, height=4, textvariable=self.tx_serial_tkvar)
@@ -367,11 +368,14 @@ class RawTransactionsFrame(ttk.Frame):
         ## Signature Panel
         ##
 
-        frame_tx_signature = ttk.LabelFrame(self, text = "Signature:")
+        frame_tx_signature = ttk.LabelFrame(self, text = "3. Click \"Sign\" to get signature from Nano. Then click \"Broadcast\" when ready to send:")
         frame_tx_signature.pack(padx=6, pady=4, expand=True, fill="both")
 
         self.entryTxSig = ScrolledTextVarBound(frame_tx_signature, height=2, textvariable=self.tx_signature_tkvar)
         self.entryTxSig.pack(expand=True, fill="both")
+        self.entryTxSig.defaultFgColor = self.entryTxSig.cget("fg")
+
+        self.tx_signature_tkvar.trace("w", self.tx_sig_changed)
 
         ##
         ## Buttons:
@@ -380,47 +384,101 @@ class RawTransactionsFrame(ttk.Frame):
         buttons_frame = ttk.Frame(self)
         buttons_frame.pack(pady=(4,8))
 
-        self.btnColorize = ttk.Button(buttons_frame, text="Colorize Serial",
-                                       command=lambda: self.colorizeSerialHex(self.entryTxSerial))
-        self.btnColorize.pack(padx=4, side="left")
+        self.var_colorize = tk.IntVar(value=1)
+        self.chkColorize = ttk.Checkbutton(buttons_frame, text="Colorize Serial",
+                                           variable=self.var_colorize, command=lambda: self.colorize_check_handler())
+        self.chkColorize.pack(padx=4, side="left")
 
-        self.btnSerialize = ttk.Button(buttons_frame, text="Serialize",
+        self.btnSerialize = ttk.Button(buttons_frame, text="1. Serialize",
                                        command=lambda: self.serialize_handler())
         self.btnSerialize.pack(padx=4, side="left")
 
-        self.btnSign = ttk.Button(buttons_frame, text="Sign",
-                                  command=lambda: self.sign_handler())
+        self.btnSign = ttk.Button(buttons_frame, text="2. Sign",
+                                  command=lambda: self.sign_handler(),
+                                  state="disabled")
         self.btnSign.pack(padx=4, side="left")
 
-        self.btnBroadcast = ttk.Button(buttons_frame, text="Broadcast Tx")
+        self.btnBroadcast = ttk.Button(buttons_frame, text="3. Broadcast",
+                                       command=lambda: self.broadcast_handler(),
+                                       state="disabled")
         self.btnBroadcast.pack(padx=4, side="left")
 
 
     def tx_json_changed(self, *args):
         self.entryTxSerial.config(fg="gray")
+        self.btnSign.configure(state="disabled")
+        self.btnBroadcast.configure(state="disabled")
         # ^
         # Twiddle foreground colors of entryTxSerial to indicate correspondence
         # to current contents of entryTxJSON.
         # v
     def tx_serial_changed(self, *args):
         self.entryTxSerial.config(fg=self.entryTxSerial.defaultFgColor)
+        self.entryTxSig.config(fg="gray")
+        self.btnSign.configure(state="normal")
+        self.btnBroadcast.configure(state="disabled")
+        # ^
+        # v
+    def tx_sig_changed(self, *args):
+        self.entryTxSig.config(fg=self.entryTxSig.defaultFgColor)
+        possible_hex = self.tx_signature_tkvar.get().strip()
+        try:
+            binascii.unhexlify(possible_hex) # raise if not valid hex
+            valid_hex = True
+        except:
+            valid_hex = False
+        if valid_hex and len(possible_hex) > 0:
+            self.btnBroadcast.update() # Eat any clicks queued while disabled
+            self.btnBroadcast.configure(state="normal")
+        else:
+            self.btnBroadcast.configure(state="disabled")
+
+    def colorize_check_handler(self):
+        self.colorizeSerialHex(self.entryTxSerial)
 
     def serialize_handler(self):
+        self.btnSerialize.configure(state="disabled")
         Logger.Clear()
         Logger.Write("Attempting to serialize JSON transaction...")
-        self.serialize_command()
+        try:
+            self.serialize_command()
+        except:
+            pass
         self.colorizeSerialHex(self.entryTxSerial)
+        self.btnSerialize.update()
+        self.btnSerialize.configure(state="normal")
         Logger.Write("READY.")
 
     def sign_handler(self):
+        self.btnSign.configure(state="disabled")
+        self.btnBroadcast.configure(state="disabled")
         Logger.Clear()
         Logger.Write("Asking Nano to sign serialized transaction...")
-        self.sign_command()
+        try:
+            self.sign_command()
+            Logger.Write("Received signature from Nano.  Click \"Broadcast\" when ready to transmit.")
+        except:
+            pass
+        self.btnSign.update() # Eat any clicks that occured while disabled.
+        self.btnSign.configure(state="normal")
+        Logger.Write("READY.")
+
+    def broadcast_handler(self):
+        self.btnBroadcast.configure(state="disabled")
+        Logger.Clear()
+        try:
+            self.broadcast_command()
+        except:
+            pass
+        self.btnBroadcast.update() # Eat any clicks queued while disabled
+        self.btnBroadcast.configure(state="normal")
         Logger.Write("READY.")
 
     def colorizeSerialHex(self, w):
         for tag in w.tag_names():
             w.tag_remove(tag, "1.0", tk.END)
+        if self.var_colorize.get() != 1:
+            return
         try:
             tindex = w.index("1.0 + 0c")
             # ChainID
