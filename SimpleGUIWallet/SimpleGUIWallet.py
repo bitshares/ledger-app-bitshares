@@ -90,36 +90,6 @@ if tip_amount > 10.0:
 
 blockchain = initBlockchainObject(args.node)
 
-##
-## Functions for building the transactions and Nano interactions:
-##
-
-##
-# Creates Tx, gets signature from Nano, and broadcasts:
-def sendTransfer(from_name, to_name, amount, symbol):
-
-    Logger.Write("Preparing to send %f %s from \"%s\" to \"%s\"..." % (amount, symbol, from_name, to_name))
-
-    try:
-
-        tx_json = generateTransferTxJSON(from_name, to_name, amount, symbol)
-        print("\nWe have constructed the following transaction:\n")
-        print(tx_json+"\n")
-
-        signData = getSerializedTxBytes(tx_json)
-        print("Serialized:\n")
-        print (binascii.hexlify(signData).decode() + "\n")
-
-        sig_bytes = getSignatureFromNano(signData, bip32_path)
-        print ("Got signature:\n")
-        print (binascii.hexlify(sig_bytes).decode() + "\n")
-
-        broadcastTxWithProvidedSignature(tx_json, sig_bytes)
-
-    except:
-
-        return
-
 
 ##
 ## UX Stuff:
@@ -196,8 +166,10 @@ if __name__ == "__main__":
         except json.decoder.JSONDecodeError as e:
             var_tx_serial.set("<<TX COULD NOT BE SERIALIZED>>")
             Logger.Write("JSON Decode Error: " + str(e))
+            raise
         except:
             var_tx_serial.set("<<TX COULD NOT BE SERIALIZED>>")
+            raise
         finally:
             pass
 
@@ -215,6 +187,17 @@ if __name__ == "__main__":
         sigHex = var_tx_signature.get().strip()
         sig_bytes = binascii.unhexlify(sigHex)
         broadcastTxWithProvidedSignature(var_tx_json.get(), sig_bytes)
+
+    def sendTransfer(from_name, to_name, amount, symbol):
+        try:
+            Logger.Write("Preparing to send %f %s from \"%s\" to \"%s\"..." % (amount, symbol, from_name, to_name))
+            tx_json = generateTransferTxJSON(from_name, to_name, amount, symbol)
+            var_tx_json.set(tx_json)
+            serializeTxJSON()
+            signTxHexBytes()
+            broadcastSignedTx()
+        except:
+            return
 
     ##
     ## Whoami Frame:
