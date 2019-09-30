@@ -65,13 +65,19 @@ def appendTransferOpToTx(builder, from_name, to_name, amount, symbol):
 
     try:
         account = Account(from_name, blockchain_instance=blockchain)
-        amountAsset = Amount(amount, symbol, blockchain_instance=blockchain)
         to = Account(to_name, blockchain_instance=blockchain)
+        amountAsset = Amount(amount, symbol, blockchain_instance=blockchain)
     except NumRetriesReached:
         Logger.Write("ERROR: Can't reach API node: 'NumRetries' reached.  Check network connection.")
         raise
-    except:
-        Logger.Write("Problem locating source or destination account, or asset. Might not exist.")
+    except AssetDoesNotExistsException as e:
+        Logger.Write("ERROR: Asset or token '%s' not known."%str(e))
+        raise
+    except AccountDoesNotExistsException as e:
+        Logger.Write("ERROR: Account '%s' not known."%str(e))
+        raise
+    except Exception as e:
+        Logger.Write("Unknown problem constructing Transfer operation: %s"%str(e))
         raise
 
     memoObj = Memo(from_account=account, to_account=to, blockchain_instance=blockchain)

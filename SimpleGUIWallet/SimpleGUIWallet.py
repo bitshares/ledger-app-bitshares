@@ -190,14 +190,17 @@ if __name__ == "__main__":
 
     def sendTransfer(from_name, to_name, amount, symbol):
         try:
+            var_tx_json.set("")
+            var_tx_serial.set("")
+            var_tx_signature.set("")
             Logger.Write("Preparing to send %f %s from \"%s\" to \"%s\"..." % (amount, symbol, from_name, to_name))
             tx_json = generateTransferTxJSON(from_name, to_name, amount, symbol)
             var_tx_json.set(tx_json)
             serializeTxJSON()
             signTxHexBytes()
             broadcastSignedTx()
-        except:
-            return
+        except Exception as e:
+            pass
 
     ##
     ## Whoami Frame:
@@ -225,8 +228,8 @@ if __name__ == "__main__":
     ## Transfer tab:
     ##
 
-    def transferSendPreprocess(to_account, amount_str, asset_symbol):
-        sendTransfer(var_from_account_name.get(), to_account, float(amount_str), asset_symbol)
+    def transferSendPreprocess(to_account, amount, asset_symbol):
+        sendTransfer(var_from_account_name.get(), to_account, amount, asset_symbol)
     form_transfer = TransferOpFrame(tabbed_Active, command=transferSendPreprocess, assettextvariable=var_selected_asset)
     form_transfer.pack(expand=True, fill="both")
 

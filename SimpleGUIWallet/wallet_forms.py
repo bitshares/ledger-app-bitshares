@@ -212,17 +212,19 @@ class TransferOpFrame(ttk.Frame):
         try:
             account_name = self.to_account_name.get()
             asset_symbol = self.box_asset_to_send.get()
-            amount = self.box_amount_to_send.get()
+            amount_str = self.box_amount_to_send.get()
             if len(account_name) == 0:
                 Logger.Write("Please provide an account name to send to!")
                 return
             if len(asset_symbol) == 0:
                 Logger.Write("Please specify asset to send!")
                 return
-            if len(amount) == 0:
+            if len(amount_str) == 0:
                 Logger.Write("Please specify amount to send!")
                 return
-            self.send_command(account_name, amount, asset_symbol)
+            self.send_command(account_name, float(amount_str), asset_symbol)
+        except ValueError as e:
+            Logger.Write("ValueError: %s"%str(e))
         finally:
             self.button_send.update() # Eat any clicks that occured while disabled
             self.button_send.configure(state="normal") # Return to enabled state
