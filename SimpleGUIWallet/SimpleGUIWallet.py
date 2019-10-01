@@ -99,9 +99,14 @@ def log_print_startup_message():
     Logger.Write("READY.", echo=False)
 
 
+def pprintHistoryItem(item):
+    return "OpID: %d \tBlock: %d" % (item['op'][0], item['block_num'])
+
 def getAccountBalances(account_name):
     try:
         spending_account = Account(account_name, blockchain_instance=blockchain)
+        #for histItem in spending_account.history(limit=10):
+        #    print (pprintHistoryItem(histItem))
         return spending_account.balances
     except AccountDoesNotExistsException:
         Logger.Write("ERROR: Specified account does not exist on BitShares network.")
@@ -187,6 +192,7 @@ if __name__ == "__main__":
         sigHex = var_tx_signature.get().strip()
         sig_bytes = binascii.unhexlify(sigHex)
         broadcastTxWithProvidedSignature(var_tx_json.get(), sig_bytes)
+        account_balances_refresh()
 
     def sendTransfer(from_name, to_name, amount, symbol):
         try:
@@ -205,8 +211,8 @@ if __name__ == "__main__":
     ##
     ## Whoami Frame:
     ##
-    def account_balances_refresh(account_name):
-        balances = getAccountBalances(account_name)
+    def account_balances_refresh():
+        balances = getAccountBalances(var_from_account_name.get())
         frameAssets.setBalances(balances)
     frameWhoAmI = WhoAmIFrame(frame_top, textvariable=var_from_account_name,
                               textvariablebip32=var_bip32_path,
@@ -272,7 +278,7 @@ if __name__ == "__main__":
     ## Startup:
     ##
     log_print_startup_message()
-    account_balances_refresh(var_from_account_name.get())
+    account_balances_refresh()
     # start the GUI
     gui.mainloop()
 

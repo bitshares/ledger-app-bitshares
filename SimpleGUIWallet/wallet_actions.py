@@ -192,12 +192,12 @@ def broadcastTxWithProvidedSignature(tx_json, sig_bytes):
     signed_tx = blockchain.new_tx(json.loads(str(tx_json)))
     signed_tx["signatures"].extend([binascii.hexlify(sig_bytes).decode()])
 
-    Logger.Write("Broadcasting transaction...")
+    Logger.Write("Broadcasting transaction...", echo=True)
     try:
         print (blockchain.broadcast(tx=signed_tx))
-        Logger.Write("Success!  Transaction has been sent.")
+        Logger.Write("Success!  Transaction has been sent.", echo=True)
     except RPCError as e:
-        Logger.Write("Could not broadcast transaction!")
+        Logger.Write("Could not broadcast transaction!", echo=True)
         Logger.Write(str(e))
         raise
     except NumRetriesReached:

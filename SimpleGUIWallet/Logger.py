@@ -4,7 +4,7 @@
 class LoggerInstance:
     message_window = None
     message_body = ""
-    mirror_to_stdout = True
+    mirror_to_stdout = False
 
     def Write(self, msgtext, *, echo=None):
         if echo == True or (self.mirror_to_stdout==True and echo!=False):

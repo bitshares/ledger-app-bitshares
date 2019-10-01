@@ -97,7 +97,7 @@ class WhoAmIFrame(ttk.Frame):
             if len(account_name) == 0:
                 Logger.Write("Please provide an account name!")
                 return
-            self.button_command(account_name)
+            self.button_command()
         finally:
             self.button.update() # Eat any clicks that occured while disabled
             self.button.configure(state="normal") # Return to enabled state
