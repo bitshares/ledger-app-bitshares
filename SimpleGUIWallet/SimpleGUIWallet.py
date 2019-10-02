@@ -88,29 +88,14 @@ if tip_amount > 10.0:
     tip_amount = 10.0
     print("Sanity Guard: Tip amount capped at %f. Modify source to override."%tip_amount)
 
-blockchain = initBlockchainObject(args.node)
-
 
 ##
 ## UX Stuff:
 ##
 def log_print_startup_message():
     #Logger.Write("**** COMMODORE 64 BASIC V2  64K RAM SYSTEM  38911 BASIC BYTES FREE ****", echo=False)
+    Logger.Clear()
     Logger.Write("READY.", echo=False)
-
-
-def pprintHistoryItem(item):
-    return "OpID: %d \tBlock: %d" % (item['op'][0], item['block_num'])
-
-def getAccountBalances(account_name):
-    try:
-        spending_account = Account(account_name, blockchain_instance=blockchain)
-        #for histItem in spending_account.history(limit=10):
-        #    print (pprintHistoryItem(histItem))
-        return spending_account.balances
-    except AccountDoesNotExistsException:
-        Logger.Write("ERROR: Specified account does not exist on BitShares network.")
-        return []
 
 
 ##
@@ -192,7 +177,7 @@ if __name__ == "__main__":
         sigHex = var_tx_signature.get().strip()
         sig_bytes = binascii.unhexlify(sigHex)
         broadcastTxWithProvidedSignature(var_tx_json.get(), sig_bytes)
-        account_balances_refresh()
+        account_info_refresh()
 
     def sendTransfer(from_name, to_name, amount, symbol):
         try:
@@ -211,18 +196,38 @@ if __name__ == "__main__":
     ##
     ## Whoami Frame:
     ##
-    def account_balances_refresh():
-        balances = getAccountBalances(var_from_account_name.get())
+    def account_info_refresh():
+        try:
+            spending_account = Account(var_from_account_name.get(), blockchain_instance=blockchain)
+            balances = spending_account.balances
+            history = spending_account.history(limit=16)
+        except AccountDoesNotExistsException:
+            Logger.Write("ERROR: Specified account does not exist on BitShares network.")
+            balances = []
+            history = []
         frameAssets.setBalances(balances)
+        frameHistory.setHistory(history)
+
     frameWhoAmI = WhoAmIFrame(frame_top, textvariable=var_from_account_name,
                               textvariablebip32=var_bip32_path,
-                              command=account_balances_refresh)
+                              command=account_info_refresh)
     frameWhoAmI.pack(padx=10, pady=(16,16), fill="both")
+
     ##
-    ## Asset List frame:
+    ## Asset List and History frames in tabbed_AccountInfo Notebook:
     ##
-    frameAssets = AssetListFrame(frame_left, text="Assets:", assettextvariable=var_selected_asset)
-    frameAssets.pack(padx=(8,5), pady=0, side="left", expand=False, fill="y")
+
+    tabbed_AccountInfo = ttk.Notebook(frame_left)
+
+    frameAssets = AssetListFrame(tabbed_AccountInfo, assettextvariable=var_selected_asset)
+    frameAssets.pack(side="left", expand=False, fill="y")
+
+    frameHistory = HistoryListFrame(tabbed_AccountInfo, jsonvar=var_tx_json)
+    frameHistory.pack()
+
+    tabbed_AccountInfo.add(frameAssets, text = 'Assets')
+    tabbed_AccountInfo.add(frameHistory, text = 'History')
+    tabbed_AccountInfo.pack(padx=(8,1), expand=True, fill="both")
 
     ##
     ## Active Operation Tabbed Notebook container:
@@ -264,7 +269,7 @@ if __name__ == "__main__":
     tabbed_Active.add(form_pubkeys, text = 'Get Pubkeys')
     tabbed_Active.add(form_raw_tx, text = 'Raw Transactions')
 
-    tabbed_Active.pack(expand=True, fill="both")
+    tabbed_Active.pack(padx=(1,8), expand=True, fill="both")
 
     ##
     ## Logging window
@@ -277,8 +282,10 @@ if __name__ == "__main__":
     ##
     ## Startup:
     ##
+    Logger.Write("Initializing...")
+    blockchain = initBlockchainObject(args.node)
+    account_info_refresh()
     log_print_startup_message()
-    account_balances_refresh()
     # start the GUI
     gui.mainloop()
 

@@ -1,8 +1,11 @@
 import binascii
+import json
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import ttk
 import Logger
+from bitshares.block import BlockHeader
+from bitsharesbase.operations import getOperationNameForId
 
 class ScrolledTextVarBound(ScrolledText):
     # A scrolled Text widget, but bound to a StringVar just like Entry
@@ -97,6 +100,7 @@ class WhoAmIFrame(ttk.Frame):
             if len(account_name) == 0:
                 Logger.Write("Please provide an account name!")
                 return
+            Logger.Write("Refreshing account balances and history for '%s'..." % account_name)
             self.button_command()
         finally:
             self.button.update() # Eat any clicks that occured while disabled
@@ -104,25 +108,26 @@ class WhoAmIFrame(ttk.Frame):
             Logger.Write("READY.")
 
 
-class AssetListFrame(ttk.LabelFrame):
+class AssetListFrame(ttk.Frame):
 
     def __init__(self, parent, *args, **kwargs):
 
         self.asset_text_var = kwargs.pop('assettextvariable', None)
 
-        ttk.LabelFrame.__init__(self, parent, *args, **kwargs)
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
 
         common_args={}
 
-        self.Balances = ["One", "Two"]
+        self.Balances = []
 
-        self.lst_assets = tk.Listbox(self, bd=0)
-        self.lst_assets.pack(side="left", fill="y")
+        self.lst_assets = tk.Listbox(self, bd=1, relief="sunken")
+        self.lst_assets.pack(padx=2, pady=2, side="left", fill="both", expand=True)
         self.lst_assets.bind("<ButtonRelease-1>", self.on_click)
 
         self.refresh()
 
     def setBalances(self, AssetList):
+        # AssetList is a list of bitshares.amount.Amount
         self.Balances = AssetList
         self.refresh()
 
@@ -135,7 +140,50 @@ class AssetListFrame(ttk.LabelFrame):
         try:
             idx = self.lst_assets.index(self.lst_assets.curselection())
             self.asset_text_var.set(self.Balances[idx].symbol)
-        except:
+        except Exception:
+            pass
+
+class HistoryListFrame(ttk.Frame):
+
+    def __init__(self, parent, *args, **kwargs):
+
+        self.tx_json_tkvar = kwargs.pop('jsonvar', None)
+
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
+
+        common_args={}
+
+        self.HistItems = []
+
+        self.lst_assets = tk.Listbox(self, bd=1, relief="sunken")
+        self.lst_assets.pack(padx=2, pady=2, side="left", fill="both", expand=True)
+        self.lst_assets.bind("<Double-Button-1>", self.on_double_click)
+
+        self.refresh()
+
+    def setHistory(self, HistList):
+        # HistList is an iterator over dict objects containing the operation wrapped in metadata
+        self.HistItems = []     # Let's make it into a proper list though.
+        for item in HistList:
+            self.HistItems.append(item)
+        self.refresh()
+
+    def pprintHistoryItem(self, item):
+        block = BlockHeader(item["block_num"])
+        return "%s, %s (Block: %d)" % (getOperationNameForId(item['op'][0]),
+                                       block.time(),
+                                       item['block_num'])
+
+    def refresh(self):
+        self.lst_assets.delete(0, tk.END)
+        for item in self.HistItems:
+            self.lst_assets.insert(tk.END, self.pprintHistoryItem(item))
+
+    def on_double_click(self, *args):
+        try:
+            idx = self.lst_assets.index(self.lst_assets.curselection())
+            self.tx_json_tkvar.set(json.dumps(self.HistItems[idx]["op"]))
+        except Exception:
             pass
 
 class TransferOpFrame(ttk.Frame):
