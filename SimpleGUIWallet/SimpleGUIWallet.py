@@ -248,7 +248,7 @@ if __name__ == "__main__":
     ## Public Keys Tab:
     ##
 
-    form_pubkeys = QueryPublicKeysFrame(tabbed_Active, lookupcommand=getPublicKeySequenceFromNano)
+    form_pubkeys = QueryPublicKeysFrame(tabbed_Active, lookupcommand=getPublicKeyListFromNano)
     form_pubkeys.pack(expand=True, fill="both")
 
     ##
@@ -282,8 +282,9 @@ if __name__ == "__main__":
     ##
     ## Startup:
     ##
-    Logger.Write("Initializing...")
+    Logger.Write("Initializing: Looking for BitShares network...")
     blockchain = initBlockchainObject(args.node)
+    Logger.Write("Getting account info for '%s'..."%var_from_account_name.get())
     account_info_refresh()
     log_print_startup_message()
     # start the GUI

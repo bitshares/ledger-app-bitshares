@@ -204,6 +204,45 @@ def broadcastTxWithProvidedSignature(tx_json, sig_bytes):
         Logger.Write("ERROR: Could not broadcast transaction: 'NumRetries' reached.  Check network connection.")
         raise
 
+def getPublicKeyListFromNano(bip32_paths, confirm_on_device = False):
+
+    Addresses = []
+
+    try:
+        dongle = getDongle(True)
+    except:
+        Logger.Write("Ledger Nano not found! Is it plugged in and unlocked?")
+        return [] # TODO change to raise
+
+    for path in bip32_paths:
+        donglePath = parse_bip32_path(path)
+        apdu = binascii.unhexlify("B5020001" + "{:02x}".format(len(donglePath) + 1) + "{:02x}".format(int(len(donglePath) / 4))) + donglePath
+
+        try:
+            result = dongle.exchange(apdu)
+        except CommException as e:
+            dongle.close()
+            if e.sw == 0x6e00:
+                Logger.Write("BitShares App not running on Nano.  Please check.")
+            else:
+                Logger.Write("Warning! Address not confirmed by user, or other error.")
+            return Addresses
+        except Exception:
+            dongle.close()
+            Logger.Write("An unknown error occured.  Was device unplugged?")
+            return Addresses
+
+        offset = 1 + result[0]
+        address = bytes(result[offset + 1: offset + 1 + result[offset]]).decode("utf-8")
+
+        ## TODO: Also extract pubkey and assert that it produces same address
+
+        Addresses.append(address)
+
+    dongle.close()
+    return Addresses
+
+
 def getPublicKeySequenceFromNano(bip32_parent_path, start_idx, num_results, hardened = True):
 
     Addresses = []

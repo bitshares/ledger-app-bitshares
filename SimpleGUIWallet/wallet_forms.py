@@ -85,7 +85,7 @@ class WhoAmIFrame(ttk.Frame):
                                      command=lambda: self.button_handler())
         self.button.pack(side="left", padx=5)
 
-        lbl_bip32_path = ttk.Label(frame_row_2, text="BIP32 Path:",
+        lbl_bip32_path = ttk.Label(frame_row_2, text="SLIP48 Path:",
                                          font=("Helvetica", 16), **common_args)
         lbl_bip32_path.pack(side="left")
 
@@ -303,20 +303,43 @@ class QueryPublicKeysFrame(ttk.Frame):
 
         ttk.Frame.__init__(self, parent, *args, **kwargs)
 
-        common_args={}
+        self.numOwnerPaths = 3
+        self.numActivePaths = 3
+        self.numMemoPaths = 3
+        self.numOwnerKeys = 3
+        self.numActiveKeys = 3
+        self.numMemoKeys = 3
+        self.ownerPaths = ["48'/1'/0'/0'/0'","48'/1'/0'/0'/1'","48'/1'/0'/0'/2'"]
+        self.activePaths = ["48'/1'/1'/0'/0'","48'/1'/1'/0'/1'","48'/1'/1'/0'/2'"]
+        self.memoPaths = ["48'/1'/3'/0'/0'","48'/1'/3'/0'/1'","48'/1'/3'/0'/2'"]
+        self.ownerKeys = []
+        self.activeKeys = []
+        self.memoKeys = []
+
+        self.accountIndex_var = tk.StringVar(self, value = "0'")
 
         ##
         ## Upper Spacer:
         ##
 
-        lblSpacerActiveTop = ttk.Label(self, text="", **common_args)
-        lblSpacerActiveTop.pack(expand=True, fill="y")
+        lblSLIPInfo = ttk.Label(self, text="SLIP-0048 schema:  48' / 1' / role' / account-index' / key-index'")
+        lblSLIPInfo.pack(padx=10, pady=(10,6), expand=True, fill="x")
+
+        frameAccountIndex = ttk.Frame(self)
+        frameAccountIndex.pack(padx=10, expand=True, fill="x")
+        labelAccountIndex = ttk.Label(frameAccountIndex, text="Account: ")
+        labelAccountIndex.pack(side="left")
+        self.boxAccountIndex = ttk.Entry(frameAccountIndex, textvariable=self.accountIndex_var, width=8, state="disabled")
+        self.boxAccountIndex.pack(side="left")
+
+        lblRolesAndKeys = ttk.Label(self, text="Roles and Keys:")
+        lblRolesAndKeys.pack(padx=10, pady=(6,0), expand=True, fill="x")
 
         ##
         ##  Lists:
         ##
 
-        frameListGroup = ttk.Frame(self, **common_args)
+        frameListGroup = ttk.Frame(self)
         frameListGroup.pack(padx=10, pady=5, fill="x")
 
         frameOwnerKeys = ttk.LabelFrame(frameListGroup, text = "Owner:")
@@ -330,41 +353,87 @@ class QueryPublicKeysFrame(ttk.Frame):
 
         self.listOwnerKeys = tk.Listbox(frameOwnerKeys)
         self.listOwnerKeys.pack(expand=True, fill="both")
+        self.listOwnerKeys.bind("<ButtonRelease-1>", self.on_click_owners)
 
         self.listActiveKeys = tk.Listbox(frameActiveKeys)
         self.listActiveKeys.pack(expand=True, fill="both")
+        self.listActiveKeys.bind("<ButtonRelease-1>", self.on_click_actives)
 
         self.listMemoKeys = tk.Listbox(frameMemoKeys)
         self.listMemoKeys.pack(expand=True, fill="both")
+        self.listMemoKeys.bind("<ButtonRelease-1>", self.on_click_memos)
 
         ##
         ## Buttons:
         ##
 
         self.button_get_addrs = ttk.Button(self, text="Query Addresses",
-                                     command=lambda: self.lookup_handler()
+                                     command=lambda: self.on_click_get_addrs()
         )
         self.button_get_addrs.pack(pady=(10,15))
 
+        ##
+
+        self.refresh()
+
+    def refresh(self):
+        self.refresh_keylistbox(self.listOwnerKeys, self.ownerPaths, self.ownerKeys)
+        self.refresh_keylistbox(self.listActiveKeys, self.activePaths, self.activeKeys)
+        self.refresh_keylistbox(self.listMemoKeys, self.memoPaths, self.memoKeys)
+
+    def refresh_keylistbox(self, listbox, paths, keys):
+        listbox.delete(0,tk.END)
+        for idx in range(len(paths)):
+            itemtext = "%s (%s)" % (paths[idx], keys[idx] if idx < len(keys) else "??")
+            listbox.insert(tk.END, itemtext)
+        listbox.insert(tk.END, "...")
+
+    def on_click_get_addrs(self):
+
+        self.button_get_addrs.configure(state="disabled")
+        Logger.Clear()
+        try:
+            self.lookup_handler()
+        finally:
+            self.button_get_addrs.update() # Eat any clicks that occured while disabled
+            self.button_get_addrs.configure(state="normal") # Return to enabled state
+            Logger.Write("READY.")
+
     def lookup_handler(self):
 
-        addresses = self.lookup_command("48'/1'/0'/0'/", 0, 3, True)
-        self.listOwnerKeys.delete(0,tk.END)
-        for item in addresses:
-            self.listOwnerKeys.insert(tk.END, item)
-        self.listOwnerKeys.insert(tk.END, "...")
+        # Owner Keys:
+        Logger.Write("Querying Owner key paths from Nano...")
+        self.ownerKeys = self.lookup_command(self.ownerPaths, False)
+        self.refresh_keylistbox(self.listOwnerKeys, self.ownerPaths, self.ownerKeys)
+        self.listOwnerKeys.update()
 
-        addresses = self.lookup_command("48'/1'/1'/0'/", 0, 3, True)
-        self.listActiveKeys.delete(0,tk.END)
-        for item in addresses:
-            self.listActiveKeys.insert(tk.END, item)
-        self.listActiveKeys.insert(tk.END, "...")
+        # Active Keys:
+        Logger.Write("Querying Active key paths from Nano...")
+        self.activeKeys = self.lookup_command(self.activePaths, False)
+        self.refresh_keylistbox(self.listActiveKeys, self.activePaths, self.activeKeys)
+        self.listActiveKeys.update()
 
-        addresses = self.lookup_command("48'/1'/3'/0'/", 0, 3, True)
-        self.listMemoKeys.delete(0,tk.END)
-        for item in addresses:
-            self.listMemoKeys.insert(tk.END, item)
-        self.listMemoKeys.insert(tk.END, "...")
+        # Memo Keys:
+        Logger.Write("Querying Memo key paths from Nano...")
+        self.memoKeys = self.lookup_command(self.memoPaths, False)
+        self.refresh_keylistbox(self.listMemoKeys, self.memoPaths, self.memoKeys)
+        self.listMemoKeys.update()
+
+    def on_click_keylistbox(self, listbox, paths):
+        idx = listbox.index(listbox.curselection())
+        if idx < len(paths):
+            print ("Clicked Path: %s" % paths[idx])
+        else:
+            print ("Clicked elsewhere")
+
+    def on_click_owners(self, *args):
+        self.on_click_keylistbox(self.listOwnerKeys, self.ownerPaths)
+
+    def on_click_actives(self, *args):
+        self.on_click_keylistbox(self.listActiveKeys, self.activePaths)
+
+    def on_click_memos(self, *args):
+        self.on_click_keylistbox(self.listMemoKeys, self.memoPaths)
 
 
 class RawTransactionsFrame(ttk.Frame):
