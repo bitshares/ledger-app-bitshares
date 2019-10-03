@@ -205,14 +205,15 @@ def broadcastTxWithProvidedSignature(tx_json, sig_bytes):
         raise
 
 def getPublicKeyListFromNano(bip32_paths, confirm_on_device = False):
-
+    # Captures all exceptions and does not re-raise. Will return an empty or partial
+    # list if we don't suceed in retrieving all keys. To determine success or
+    # (partial) failure, compare length of return list to length of key list.
     Addresses = []
-
     try:
         dongle = getDongle(True)
     except:
         Logger.Write("Ledger Nano not found! Is it plugged in and unlocked?")
-        return [] # TODO change to raise
+        return []
 
     for path in bip32_paths:
         donglePath = parse_bip32_path(path)
@@ -236,34 +237,6 @@ def getPublicKeyListFromNano(bip32_paths, confirm_on_device = False):
         address = bytes(result[offset + 1: offset + 1 + result[offset]]).decode("utf-8")
 
         ## TODO: Also extract pubkey and assert that it produces same address
-
-        Addresses.append(address)
-
-    dongle.close()
-    return Addresses
-
-
-def getPublicKeySequenceFromNano(bip32_parent_path, start_idx, num_results, hardened = True):
-
-    Addresses = []
-
-    try:
-        dongle = getDongle(True)
-    except:
-        Logger.Write("Ledger Nano not found! Is it plugged in and unlocked?")
-        return [] # TODO change to raise
-
-    for key_idx in range(start_idx, start_idx+num_results):
-        b32path = bip32_parent_path + ("/" if not bip32_parent_path.endswith('/') else "")
-        b32path += str(key_idx) + ("'" if hardened else "")
-        donglePath = parse_bip32_path(b32path)
-        apdu = binascii.unhexlify("B5020001" + "{:02x}".format(len(donglePath) + 1) + "{:02x}".format(int(len(donglePath) / 4))) + donglePath
-
-        result = dongle.exchange(apdu)
-        offset = 1 + result[0]
-        address = bytes(result[offset + 1: offset + 1 + result[offset]]).decode("utf-8")
-
-        ## TODO: Also extrack pubkey and assert that it produces same address
 
         Addresses.append(address)
 

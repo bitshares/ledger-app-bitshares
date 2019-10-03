@@ -94,7 +94,7 @@ if tip_amount > 10.0:
 ##
 def log_print_startup_message():
     #Logger.Write("**** COMMODORE 64 BASIC V2  64K RAM SYSTEM  38911 BASIC BYTES FREE ****", echo=False)
-    Logger.Clear()
+    #Logger.Clear()
     Logger.Write("READY.", echo=False)
 
 
@@ -144,6 +144,7 @@ if __name__ == "__main__":
     # Form Variables:
     var_from_account_name = StringVar(gui, value = default_sender)
     var_bip32_path = StringVar(gui, value = bip32_path)
+    var_bip32_key = StringVar(gui, value = "")
     var_selected_asset = StringVar(gui)
     var_tx_json = StringVar(gui)
     var_tx_serial = StringVar(gui)      # Hex representation of serial bytes
@@ -209,7 +210,8 @@ if __name__ == "__main__":
         frameHistory.setHistory(history)
 
     frameWhoAmI = WhoAmIFrame(frame_top, textvariable=var_from_account_name,
-                              textvariablebip32=var_bip32_path,
+                              textvar_bip32_path=var_bip32_path,
+                              textvar_bip32_key=var_bip32_key,
                               command=account_info_refresh)
     frameWhoAmI.pack(padx=10, pady=(16,16), fill="both")
 
@@ -248,7 +250,10 @@ if __name__ == "__main__":
     ## Public Keys Tab:
     ##
 
-    form_pubkeys = QueryPublicKeysFrame(tabbed_Active, lookupcommand=getPublicKeyListFromNano)
+    form_pubkeys = QueryPublicKeysFrame(tabbed_Active,
+                                        textvar_bip32_path=var_bip32_path,
+                                        textvar_bip32_key=var_bip32_key,
+                                        lookupcommand=getPublicKeyListFromNano)
     form_pubkeys.pack(expand=True, fill="both")
 
     ##
@@ -266,7 +271,7 @@ if __name__ == "__main__":
     ## Finalize tabbed container:
 
     tabbed_Active.add(form_transfer, text = 'Transfer')
-    tabbed_Active.add(form_pubkeys, text = 'Get Pubkeys')
+    tabbed_Active.add(form_pubkeys, text = 'Public Keys')
     tabbed_Active.add(form_raw_tx, text = 'Raw Transactions')
 
     tabbed_Active.pack(padx=(1,8), expand=True, fill="both")
@@ -286,6 +291,10 @@ if __name__ == "__main__":
     blockchain = initBlockchainObject(args.node)
     Logger.Write("Getting account info for '%s'..."%var_from_account_name.get())
     account_info_refresh()
+    Logger.Write("Checking if Nano present and querrying public key...")
+    tmp_keys = getPublicKeyListFromNano([var_bip32_path.get()], False)
+    if len(tmp_keys) == 1:
+        var_bip32_key.set(tmp_keys[0])
     log_print_startup_message()
     # start the GUI
     gui.mainloop()
