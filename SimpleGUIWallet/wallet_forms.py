@@ -57,6 +57,34 @@ class ScrolledTextVarBound(ScrolledText):
             self.watch_local = old_watch
 
 
+class ScrolledListbox(tk.Listbox):
+
+    def __init__(self, parent, *args, **kwargs):
+
+        frameargs = {"borderwidth": kwargs.pop('borderwidth', 2),
+                     "relief": kwargs.pop('relief', "ridge")}
+
+        self.frame = ttk.Frame(parent, **frameargs)
+
+        tk.Listbox.__init__(self, self.frame, *args, relief="sunken", **kwargs)
+
+        self.vScroll = tk.Scrollbar(self.frame, orient="vertical")
+        self.vScroll.pack(side="right", expand=False, fill="y")
+
+        self.config(yscrollcommand=self.vScroll.set)
+        self.vScroll.config(command=self.yview)
+
+        self.hScroll = tk.Scrollbar(self.frame, orient="horizontal")
+        self.hScroll.pack(side="bottom", expand=False, fill="x")
+
+        self.config(xscrollcommand=self.hScroll.set)
+        self.hScroll.config(command=self.xview)
+
+    def pack(self, *args, **kwargs):
+        self.frame.pack(*args, **kwargs)
+        super(ScrolledListbox, self).pack(expand=True, fill="both")
+
+
 class WhoAmIFrame(ttk.Frame):
 
     def __init__(self, parent, *args, **kwargs):
@@ -127,7 +155,7 @@ class AssetListFrame(ttk.Frame):
 
         self.Balances = []
 
-        self.lst_assets = tk.Listbox(self, bd=1, relief="sunken")
+        self.lst_assets = ScrolledListbox(self)
         self.lst_assets.pack(padx=2, pady=2, side="left", fill="both", expand=True)
         self.lst_assets.bind("<ButtonRelease-1>", self.on_click)
 
@@ -137,6 +165,7 @@ class AssetListFrame(ttk.Frame):
         # AssetList is a list of bitshares.amount.Amount
         self.Balances = AssetList
         self.refresh()
+        self.lst_assets.update()
 
     def refresh(self):
         self.lst_assets.delete(0, tk.END)
@@ -158,33 +187,46 @@ class HistoryListFrame(ttk.Frame):
 
         ttk.Frame.__init__(self, parent, *args, **kwargs)
 
-        common_args={}
-
         self.HistItems = []
+        self.accountId = ""
 
-        self.lst_assets = tk.Listbox(self, bd=1, relief="sunken")
+        self.lst_assets = ScrolledListbox(self)
         self.lst_assets.pack(padx=2, pady=2, side="left", fill="both", expand=True)
         self.lst_assets.bind("<Double-Button-1>", self.on_double_click)
 
         self.refresh()
 
-    def setHistory(self, HistList):
+    def setHistory(self, HistList, accountId):
         # HistList is an iterator over dict objects containing the operation wrapped in metadata
-        self.HistItems = []     # Let's make it into a proper list though.
+        self.HistItems = []        # Let's make it into a proper list though.
+        self.accountId = accountId # Used to determine if history items are to/from
         for item in HistList:
             self.HistItems.append(item)
         self.refresh()
 
-    def pprintHistoryItem(self, item):
-        block = BlockHeader(item["block_num"])
-        return "%s, %s (Block: %d)" % (getOperationNameForId(item['op'][0]),
-                                       block.time(),
-                                       item['block_num'])
+    def pprintHistoryItem(self, item, resolve_time=True):
+        block_time = "..."
+        if resolve_time:
+            block = BlockHeader(item["block_num"]) # This can be slow, waits on API call
+            block_time = block.time()
+        if item['op'][0] == 0:
+            if (item['op'][1]['to']==self.accountId) and (item['op'][1]['from']!=self.accountId):
+                op_desc = "Receive"
+            elif (item['op'][1]['to']!=self.accountId) and (item['op'][1]['from']==self.accountId):
+                op_desc = "Send"
+            else:
+                op_desc = "Transfer"
+        else:
+            op_desc = "%s"%getOperationNameForId(item['op'][0])
+        return "%s - %s (Block: %d)" % (op_desc, block_time, item['block_num'])
 
     def refresh(self):
         self.lst_assets.delete(0, tk.END)
+        count = 0
         for item in self.HistItems:
-            self.lst_assets.insert(tk.END, self.pprintHistoryItem(item))
+            resolve_time = (count < 3) # Limit how many we get full date for (API call.. slow)
+            self.lst_assets.insert(tk.END, self.pprintHistoryItem(item, resolve_time=resolve_time))
+            count+=1
 
     def on_double_click(self, *args):
         try:
@@ -347,24 +389,24 @@ class QueryPublicKeysFrame(ttk.Frame):
         frameListGroup = ttk.Frame(self)
         frameListGroup.pack(padx=10, pady=5, fill="x")
 
-        frameOwnerKeys = ttk.LabelFrame(frameListGroup, text = "Owner role:")
+        frameOwnerKeys = ttk.LabelFrame(frameListGroup, text = "Owner role:", borderwidth=0)
         frameOwnerKeys.pack(expand=True, fill="both", side="left")
 
-        frameActiveKeys = ttk.LabelFrame(frameListGroup, text = "Active role:")
+        frameActiveKeys = ttk.LabelFrame(frameListGroup, text = "Active role:", borderwidth=0)
         frameActiveKeys.pack(expand=True, fill="both", side="left", padx=8)
 
-        frameMemoKeys = ttk.LabelFrame(frameListGroup, text = "Memo role:")
+        frameMemoKeys = ttk.LabelFrame(frameListGroup, text = "Memo role:", borderwidth=0)
         frameMemoKeys.pack(expand=True, fill="both", side="left")
 
-        self.listOwnerKeys = tk.Listbox(frameOwnerKeys, height=8)
+        self.listOwnerKeys = ScrolledListbox(frameOwnerKeys, height=8, width=6)
         self.listOwnerKeys.pack(expand=True, fill="both")
         self.listOwnerKeys.bind("<ButtonRelease-1>", self.on_click_owners)
 
-        self.listActiveKeys = tk.Listbox(frameActiveKeys, height=8)
+        self.listActiveKeys = ScrolledListbox(frameActiveKeys, height=8, width=6)
         self.listActiveKeys.pack(expand=True, fill="both")
         self.listActiveKeys.bind("<ButtonRelease-1>", self.on_click_actives)
 
-        self.listMemoKeys = tk.Listbox(frameMemoKeys, height=8)
+        self.listMemoKeys = ScrolledListbox(frameMemoKeys, height=8, width=6)
         self.listMemoKeys.pack(expand=True, fill="both")
         self.listMemoKeys.bind("<ButtonRelease-1>", self.on_click_memos)
 

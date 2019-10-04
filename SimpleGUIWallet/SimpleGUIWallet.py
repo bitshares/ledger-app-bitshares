@@ -178,7 +178,7 @@ if __name__ == "__main__":
         sigHex = var_tx_signature.get().strip()
         sig_bytes = binascii.unhexlify(sigHex)
         broadcastTxWithProvidedSignature(var_tx_json.get(), sig_bytes)
-        account_info_refresh()
+        gui.after(3200, account_info_refresh) # Wait-a-block, then refresh
 
     def sendTransfer(from_name, to_name, amount, symbol):
         try:
@@ -201,13 +201,13 @@ if __name__ == "__main__":
         try:
             spending_account = Account(var_from_account_name.get(), blockchain_instance=blockchain)
             balances = spending_account.balances
-            history = spending_account.history(limit=16)
+            history = spending_account.history(limit=40)
         except AccountDoesNotExistsException:
             Logger.Write("ERROR: Specified account does not exist on BitShares network.")
             balances = []
             history = []
         frameAssets.setBalances(balances)
-        frameHistory.setHistory(history)
+        frameHistory.setHistory(history, spending_account.identifier)
 
     frameWhoAmI = WhoAmIFrame(frame_top, textvariable=var_from_account_name,
                               textvar_bip32_path=var_bip32_path,
