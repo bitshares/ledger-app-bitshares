@@ -280,7 +280,7 @@ if __name__ == "__main__":
     ## Logging window
     ##
     form_activity = ActivityMessageFrame(frame_bottom)
-    form_activity.pack(side="bottom", expand=True, fill="both", padx=8, pady=(4,8))
+    form_activity.pack(side="bottom", expand=True, fill="both", padx=8, pady=(2,8))
     Logger.SetMessageWidget(form_activity.messages)
     ##
 

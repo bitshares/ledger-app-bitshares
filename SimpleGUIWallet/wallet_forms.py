@@ -3,6 +3,7 @@ import json
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import ttk
+import webbrowser
 import Logger
 from bitshares.block import BlockHeader
 from bitsharesbase.operations import getOperationNameForId
@@ -112,7 +113,7 @@ class WhoAmIFrame(ttk.Frame):
 
         self.button = ttk.Button(frame_row_1, text="Refresh Balances",
                                      command=lambda: self.button_handler())
-        self.button.pack(side="left", padx=5)
+        self.button.pack(side="left", padx=5, pady=(0,2))
 
         lbl_bip32_path = ttk.Label(frame_row_2, text="SLIP48 Path:",
                                          font=("Helvetica", 16))
@@ -124,7 +125,7 @@ class WhoAmIFrame(ttk.Frame):
         lbl_bip32_key_label = ttk.Label(frame_row_2, text="PubKey: ")
         lbl_bip32_key_label.pack(side="left")
 
-        lbl_bip32_key = ttk.Label(frame_row_2, textvariable=self.textvariable_key)
+        lbl_bip32_key = ttk.Entry(frame_row_2, width=48, textvariable=self.textvariable_key, state="readonly")
         lbl_bip32_key.pack(side="left")
 
     def button_handler(self):
@@ -191,8 +192,15 @@ class HistoryListFrame(ttk.Frame):
         self.accountId = ""
 
         self.lst_assets = ScrolledListbox(self)
-        self.lst_assets.pack(padx=2, pady=2, side="left", fill="both", expand=True)
-        self.lst_assets.bind("<Double-Button-1>", self.on_double_click)
+        self.lst_assets.pack(padx=2, pady=2, side="top", fill="both", expand=True)
+
+        button_frame = ttk.Frame(self)
+        button_frame.pack(expand=False, fill="x", side="top")
+
+        button_rawtx = ttk.Button(button_frame, text="Tx JSON", width=10, command=self.on_click_rawtx)
+        button_rawtx.pack(side="left", fill="x", expand=True)
+        button_explore = ttk.Button(button_frame, text="Block Explorer", command=self.on_click_explore)
+        button_explore.pack(side="left", fill="x", expand=True)
 
         self.refresh()
 
@@ -228,10 +236,17 @@ class HistoryListFrame(ttk.Frame):
             self.lst_assets.insert(tk.END, self.pprintHistoryItem(item, resolve_time=resolve_time))
             count+=1
 
-    def on_double_click(self, *args):
+    def on_click_rawtx(self, *args):
         try:
             idx = self.lst_assets.index(self.lst_assets.curselection())
             self.tx_json_tkvar.set(json.dumps(self.HistItems[idx]["op"]))
+        except Exception:
+            pass
+
+    def on_click_explore(self, *args):
+        try:
+            idx = self.lst_assets.index(self.lst_assets.curselection())
+            webbrowser.open("https://bitshares-explorer.io/#/operations/%s"%self.HistItems[idx]['id'])
         except Exception:
             pass
 
@@ -335,11 +350,10 @@ class ActivityMessageFrame(ttk.Frame):
 
         common_args={}
 
-        log_frame = ttk.LabelFrame(self, text="Activity", relief="groove",
-                                  **common_args)
+        log_frame = ttk.Frame(self, relief="groove", borderwidth=2)
         log_frame.pack(expand=True, fill="both")
         self.messages = tk.Message(log_frame, text="",
-                                   width=580, background="light gray",
+                                   width=640, background="light gray",
                                    anchor="n", pady=8, font="fixed")
         self.messages.pack(expand=True, fill="both")
 
