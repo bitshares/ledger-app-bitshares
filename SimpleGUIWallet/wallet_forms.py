@@ -5,7 +5,7 @@ from tkinter.scrolledtext import ScrolledText
 import ttk
 import webbrowser
 import Logger
-from bitshares.block import BlockHeader
+from bitshares.block import Block, BlockHeader
 from bitsharesbase.operations import getOperationNameForId
 
 class ScrolledTextVarBound(ScrolledText):
@@ -237,11 +237,18 @@ class HistoryListFrame(ttk.Frame):
             count+=1
 
     def on_click_rawtx(self, *args):
+        idx = self.lst_assets.index(self.lst_assets.curselection())
+        Logger.Clear()
+        Logger.Write("Retrieving transaction from block %d..."%self.HistItems[idx]["block_num"])
         try:
-            idx = self.lst_assets.index(self.lst_assets.curselection())
-            self.tx_json_tkvar.set(json.dumps(self.HistItems[idx]["op"]))
-        except Exception:
+            block=Block(self.HistItems[idx]["block_num"])
+            trx=block.get('transactions')[self.HistItems[idx]["trx_in_block"]]
+            self.tx_json_tkvar.set(json.dumps(trx))
+            Logger.Write("Transaction JSON is in 'Raw Transactions' tab.")
+        except Exception as e:
+            Logger.Write("Error occurred: %s"%str(e))
             pass
+        Logger.Write("READY.")
 
     def on_click_explore(self, *args):
         try:
