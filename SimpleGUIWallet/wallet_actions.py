@@ -217,7 +217,12 @@ def getPublicKeyListFromNano(bip32_paths, confirm_on_device = False):
 
     for path in bip32_paths:
         donglePath = parse_bip32_path(path)
-        apdu = binascii.unhexlify("B5020001" + "{:02x}".format(len(donglePath) + 1) + "{:02x}".format(int(len(donglePath) / 4))) + donglePath
+        apdu = binascii.unhexlify("B502"
+                                  + ("01" if confirm_on_device else "00")
+                                  + "00"
+                                  + "{:02x}".format(len(donglePath) + 1)
+                                  + "{:02x}".format(int(len(donglePath) / 4))
+        ) + donglePath
 
         try:
             result = dongle.exchange(apdu)

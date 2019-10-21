@@ -435,10 +435,18 @@ class QueryPublicKeysFrame(ttk.Frame):
         ## Buttons:
         ##
 
-        self.button_get_addrs = ttk.Button(self, text="Query Addresses",
+        frameButtons = ttk.Frame(self)
+        frameButtons.pack(pady=(4,8), side="right")
+
+        self.button_get_addrs = ttk.Button(frameButtons, text="Query Addresses",
                                      command=lambda: self.on_click_get_addrs()
         )
-        self.button_get_addrs.pack(pady=(10,15))
+        self.button_get_addrs.pack(side="left")
+
+        self.button_confirm_addr = ttk.Button(frameButtons, text="Confirm Address",
+                                     command=lambda: self.on_click_confirm_addr()
+        )
+        self.button_confirm_addr.pack(padx=(12,28), side="left")
 
         ##
 
@@ -473,6 +481,17 @@ class QueryPublicKeysFrame(ttk.Frame):
             self.button_get_addrs.configure(state="normal") # Return to enabled state
             Logger.Write("READY.")
 
+    def on_click_confirm_addr(self):
+
+        self.button_confirm_addr.configure(state="disabled")
+        Logger.Clear()
+        try:
+            self.address_confirm_handler()
+        finally:
+            self.button_confirm_addr.update() # Eat any clicks that occured while disabled
+            self.button_confirm_addr.configure(state="normal") # Return to enabled state
+            Logger.Write("READY.")
+
     def lookup_handler(self):
 
         self.clear_keys()
@@ -496,6 +515,17 @@ class QueryPublicKeysFrame(ttk.Frame):
         self.memoKeys = self.lookup_command(self.memoPaths, False)
         self.refresh_keylistbox(self.listMemoKeys, self.memoPaths, self.memoKeys)
         self.listMemoKeys.update()
+
+    def address_confirm_handler(self):
+        path = self.textvariable_path.get()
+        Logger.Write("Confirming public key for path %s..."%path)
+        try:
+            address = self.lookup_command([path], False)[0]
+            Logger.Write("I retrieve key: %s" % address)
+            Logger.Write("Please confirm that this matches the key shown on device...")
+            self.lookup_command([path], True)
+        except:
+            Logger.Write("Could not confirm public key on device. Do not trust unconfirmed keys.")
 
     def on_click_keylistbox(self, listbox, paths, keys):
         idx = listbox.index(listbox.curselection())
