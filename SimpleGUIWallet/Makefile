@@ -4,10 +4,25 @@ ICONSET_ICON=build/SimpleGUI.png
 ICNS_FILE=build/app.icns
 ICO_FILE=build/app.ico
 
+UNIX_NAME="simpleguiwallet"
+BUNDLE_NAME="SimpleGUIWallet"
+VERSION_STRING="0.0.0"
+
+
 default:
 
 clean:
 	rm -rf build
+
+cleanall:
+	rm -rf build dist __pycache__
+
+app: $(ICNS_FILE)
+	pyinstaller -y build.spec
+
+dmg: dist/$(BUNDLE_NAME).app
+	dmgbuild -s dmg_settings.py "$(BUNDLE_NAME) $(VERSION_STRING)" dist/$(UNIX_NAME)-$(VERSION_STRING)-osx.dmg
+
 
 $(ICONSET_DIR):
 	mkdir -p $(ICONSET_DIR)
