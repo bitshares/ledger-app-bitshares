@@ -4,10 +4,9 @@ ICONSET_ICON=build/SimpleGUI.png
 ICNS_FILE=build/app.icns
 ICO_FILE=build/app.ico
 
-UNIX_NAME=simpleguiwallet
-BUNDLE_NAME=SimpleGUIWallet
-VERSION_STRING=0.0.0
-
+UNIX_NAME=$(shell python3 version.py --uname)
+BUNDLE_NAME=$(shell python3 version.py --bundle)
+VERSION_STRING=$(shell python3 version.py --version)
 
 default:
 

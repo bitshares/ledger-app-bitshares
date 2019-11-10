@@ -7,6 +7,7 @@ import webbrowser
 import Logger
 from bitshares.block import Block, BlockHeader
 from bitsharesbase.operations import getOperationNameForId
+import version as version
 
 class ScrolledTextVarBound(ScrolledText):
     # A scrolled Text widget, but bound to a StringVar just like Entry
@@ -780,3 +781,36 @@ class RawTransactionsFrame(ttk.Frame):
             w.tag_add(tagname, tindex2, tindex3)
 
         return tindex3
+
+class AboutFrame(ttk.Frame):
+
+    def __init__(self, parent, *args, **kwargs):
+
+        ttk.Frame.__init__(self, parent, *args, **kwargs)
+
+        ##
+        ## Upper Spacer:
+        ##
+
+        lblSpacerActiveTop = ttk.Label(self, text="")
+        lblSpacerActiveTop.pack(expand=True, fill="y")
+
+        ##
+        ## App Version
+        ##
+
+        labelAppVersion = ttk.Label(self, text="SimpleGUIWallet, version "+version.VERSION)
+        labelAppVersion.pack(pady=10)
+        labelAppVersion1 = ttk.Label(self, text="A very simple wallet for BitShares.")
+        labelAppVersion1.pack()
+        labelAppVersion2 = ttk.Label(self, text="No keys are stored by this app.")
+        labelAppVersion2.pack()
+        labelAppVersion3 = ttk.Label(self, text="Transactions are signed by hardware wallet.")
+        labelAppVersion3.pack()
+
+        ##
+        ## Lower Spacer:
+        ##
+
+        lblSpacerActiveBottom = ttk.Label(self, text="")
+        lblSpacerActiveBottom.pack(expand=True, fill="y")

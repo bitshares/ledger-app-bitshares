@@ -268,11 +268,19 @@ if __name__ == "__main__":
                             signaturevar=var_tx_signature)
     form_raw_tx.pack()
 
+    ##
+    ## About Tab:
+    ##
+
+    form_about = AboutFrame(tabbed_Active)
+    form_about.pack()
+
     ## Finalize tabbed container:
 
     tabbed_Active.add(form_transfer, text = 'Transfer')
     tabbed_Active.add(form_pubkeys, text = 'Public Keys')
     tabbed_Active.add(form_raw_tx, text = 'Raw Transactions')
+    tabbed_Active.add(form_about, text = 'About')
 
     tabbed_Active.pack(padx=(1,8), expand=True, fill="both")
 
