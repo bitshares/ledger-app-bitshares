@@ -12,7 +12,7 @@ graphenelib==1.2.0
 hidapi==0.7.99.post21
 idna==2.8
 ledgerblue==0.1.29
-Pillow==5.4.1
+Pillow==6.2.0
 protobuf==3.10.0
 pycryptodome==3.8.2
 pycryptodomex==3.9.0
