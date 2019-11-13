@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 import ttk
 import webbrowser
-import Logger
+from logger import Logger
 from bitshares.block import Block, BlockHeader
 from bitsharesbase.operations import getOperationNameForId
 import version as version

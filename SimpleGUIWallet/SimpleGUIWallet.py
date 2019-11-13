@@ -50,7 +50,7 @@ from grapheneapi.exceptions import RPCError
 from grapheneapi.exceptions import NumRetriesReached
 from wallet_forms import *
 from wallet_actions import *
-import Logger
+from logger import Logger
 
 ##
 ## Args and defaults:

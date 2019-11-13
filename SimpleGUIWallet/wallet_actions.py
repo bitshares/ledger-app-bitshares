@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 import binascii
 import struct
 import json
-import Logger
+from logger import Logger
 
 
 def initBlockchainObject(api_node):

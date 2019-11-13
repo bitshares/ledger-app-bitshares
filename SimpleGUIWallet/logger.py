@@ -22,12 +22,3 @@ class LoggerInstance:
         self.message_window = msgbox
 
 Logger = LoggerInstance()
-
-def Write(*args, **kwargs):
-    Logger.Write(*args, **kwargs)
-
-def Clear(*args, **kwargs):
-    Logger.Clear(*args, **kwargs)
-
-def SetMessageWidget(*args, **kwargs):
-    Logger.SetMessageWidget(*args, **kwargs)
