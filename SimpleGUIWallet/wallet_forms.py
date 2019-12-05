@@ -267,14 +267,13 @@ class TransferOpFrame(ttk.Frame):
 
         ttk.Frame.__init__(self, parent, *args, **kwargs)
 
-        common_args={}
+        label_args={"font": ("Helvetica", 16)}  # (Larger font spec for field labels.)
 
         tk.Message(self, width=480, anchor="nw", justify="left",
                    background = ttk.Style().lookup("TFrame", "background"),
                    text = "" +
-            "Set sending account name and SLIP48 path of signing key in the panel above.  " +
-            "Specify recipient account, amount, and asset symbol below.  " +
-            "You can check your account balances and history in the panel to the left.\n\n" +
+            "Transfer from your account (named above) to a recipient (named below).  " +
+            "Transaction will be signed on your Ledger Nano S device, using the key indicated by the SLIP48 path above.\n\n" +
             "Note: A small required fee in BTS will be added to your transaction."
         ).pack(expand=True, fill="x", padx=10, pady=(4,24))
 
@@ -282,41 +281,41 @@ class TransferOpFrame(ttk.Frame):
         ## Destination Account:
         ##
 
-        frameToWhom = ttk.Frame(self, **common_args)
+        frameToWhom = ttk.Frame(self)
         frameToWhom.pack(padx=10, pady=5, fill="x")
 
-        self.to_account_name = ttk.Entry(frameToWhom)
-        self.to_account_name.pack(side="right", padx=10)
-
-        labelSendTo = ttk.Label(frameToWhom, text="Send To: (BitShares User Account)",
-                               font=("Helvetica", 16), **common_args)
-        labelSendTo.pack(side="right")
+        ttk.Label(frameToWhom, text="Send To: (BitShares User Account)", anchor="e", **label_args
+        ).pack(side="left", expand=True, fill="x")
+        self.recipient_text_var = tk.StringVar(value="")
+        self.to_account_name = ttk.Entry(frameToWhom, textvariable=self.recipient_text_var)
+        self.to_account_name.pack(side="left", padx=10)
+        self.to_account_name.bind("<FocusOut>", self.recipient_focus_out)
+        self.recipient_text_var.trace("w", self.any_field_on_change)
 
         ##
         ## Amount and Asset:
         ##
 
-        frameSendAmount = ttk.Frame(self, **common_args)
+        frameSendAmount = ttk.Frame(self)
         frameSendAmount.pack(padx=10, pady=5, fill="x")
 
+        ttk.Label(frameSendAmount, text="Amount:", anchor="e", **label_args).pack(side="left", expand=True, fill="x")
+        self.amount_text_var = tk.StringVar(value="0")
+        self.box_amount_to_send = ttk.Entry(frameSendAmount, textvariable=self.amount_text_var, justify="right")
+        self.box_amount_to_send.pack(side="left", padx=10)
+        self.box_amount_to_send.bind("<FocusOut>", self.amount_focus_out)
+        self.amount_text_var.trace("w", self.any_field_on_change)
+
+        ttk.Label(frameSendAmount, text="Asset:", **label_args).pack(padx=(20,0),side="left")
         self.box_asset_to_send = ttk.Entry(frameSendAmount, width=10, textvariable=self.asset_text_var)
-        self.box_asset_to_send.pack(side="right", padx=10)
-
-        labelAsset = ttk.Label(frameSendAmount, text="Asset:",
-                           font=("Helvetica", 16), **common_args)
-        labelAsset.pack(padx=(20,0),side="right")
-
-        self.box_amount_to_send = ttk.Entry(frameSendAmount)
-        self.box_amount_to_send.pack(side="right", padx=10)
-
-        labelAmount = ttk.Label(frameSendAmount, text="Amount:",
-                            font=("Helvetica", 16), **common_args)
-        labelAmount.pack(side="right")
+        self.box_asset_to_send.pack(side="left", padx=10)
+        self.box_asset_to_send.bind("<FocusOut>", self.symbol_focus_out)
+        self.asset_text_var.trace("w", self.any_field_on_change)
 
         ##
         ## The Send Button:
         ##
-        self.button_send = ttk.Button(self, text="Send Transfer",
+        self.button_send = ttk.Button(self, text="Send Transfer", state="disabled",
                                      command=lambda: self.button_send_handler()
         )
         self.button_send.pack(pady=36)
@@ -325,8 +324,60 @@ class TransferOpFrame(ttk.Frame):
         ## Lower Spacer:
         ##
 
-        lblSpacerActiveBottom = ttk.Label(self, text="", **common_args)
+        lblSpacerActiveBottom = ttk.Label(self, text="")
         lblSpacerActiveBottom.pack(expand=True, fill="y")
+
+    def any_field_on_change(self, *args):
+        print("Checking...")
+        self.enable_send_if_all_fields_valid()
+
+    def recipient_focus_out(self, *args):
+        recipient_str = self.recipient_text_var.get().strip().lower()
+        self.recipient_text_var.set(recipient_str)
+
+    def symbol_focus_out(self, *args):
+        symbol = self.asset_text_var.get().strip().upper()
+        self.asset_text_var.set(symbol)
+
+    def amount_focus_out(self, *args):
+        amount_str = self.amount_text_var.get().strip()
+        self.amount_text_var.set(amount_str)
+
+    def recipient_is_validatable(self):
+        recipient_str = self.recipient_text_var.get().strip().lower()
+        if len(recipient_str) == 0:
+            return False
+        ok = "qwertyuiopasdfghjklzxcvbnm0123456789-."
+        if not all(c in ok for c in recipient_str):
+            return False
+        return True
+
+    def symbol_is_validatable(self):
+        symbol = self.asset_text_var.get().strip().upper()
+        if len(symbol) == 0:
+            return False
+        ok = "QWERTYUIOPASDFGHJKLZXCVBNM0123456789."
+        if not all(c in ok for c in symbol):
+            return False
+        return True
+
+    def amount_is_validatable(self):
+        amount_str = self.amount_text_var.get().strip()
+        ok = "0123456789."
+        if not all(c in ok for c in amount_str):
+            return False
+        try:
+            return float(amount_str) > 0
+        except ValueError:
+            return False
+
+    def enable_send_if_all_fields_valid(self):
+        if (self.symbol_is_validatable() and
+          self.amount_is_validatable() and
+          self.recipient_is_validatable()):
+            self.button_send.configure(state="normal")
+        else:
+            self.button_send.configure(state="disabled")
 
     def button_send_handler(self):
         self.button_send.configure(state="disabled")

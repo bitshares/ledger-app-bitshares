@@ -124,7 +124,7 @@ if __name__ == "__main__":
     var_from_account_name = StringVar(gui, value = default_sender)
     var_bip32_path = StringVar(gui, value = bip32_path)
     var_bip32_key = StringVar(gui, value = "")
-    var_selected_asset = StringVar(gui)
+    var_selected_asset = StringVar(gui, value="BTS")
     var_tx_json = StringVar(gui)
     var_tx_serial = StringVar(gui)      # Hex representation of serial bytes
     var_tx_signature = StringVar(gui)   # Hex representation of signature
