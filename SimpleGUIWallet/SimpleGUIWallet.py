@@ -94,6 +94,8 @@ if __name__ == "__main__":
     gui.minsize(640,480)
     gui_style = ttk.Style()
     gui_style.theme_use('clam')
+    gui_style.map("TEntry",fieldbackground=[("readonly", gui_style.lookup("TFrame", "background")), ("disabled", gui_style.lookup("TFrame", "background"))])
+    gui_style.map("TEntry",foreground=[("readonly", gui_style.lookup("TFrame", "foreground")), ("disabled", gui_style.lookup("TFrame", "foreground"))])
     #
     # Window Regions:
     #  +---------------------+
@@ -222,7 +224,7 @@ if __name__ == "__main__":
 
     def transferSendPreprocess(to_account, amount, asset_symbol):
         sendTransfer(var_from_account_name.get(), to_account, amount, asset_symbol)
-    form_transfer = TransferOpFrame(tabbed_Active, command=transferSendPreprocess, assettextvariable=var_selected_asset)
+    form_transfer = TransferOpFrame(tabbed_Active, command=transferSendPreprocess, assettextvariable=var_selected_asset, sendernamevariable=var_from_account_name)
     form_transfer.pack(expand=True, fill="both")
 
     ##

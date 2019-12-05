@@ -264,6 +264,7 @@ class TransferOpFrame(ttk.Frame):
 
         self.send_command = kwargs.pop('command', lambda *args, **kwargs: None)
         self.asset_text_var = kwargs.pop('assettextvariable', None)
+        self.sender_text_var = kwargs.pop('sendernamevariable', None)
 
         ttk.Frame.__init__(self, parent, *args, **kwargs)
 
@@ -272,10 +273,22 @@ class TransferOpFrame(ttk.Frame):
         tk.Message(self, width=480, anchor="nw", justify="left",
                    background = ttk.Style().lookup("TFrame", "background"),
                    text = "" +
-            "Transfer from your account (named above) to a recipient (named below).  " +
-            "Transaction will be signed on your Ledger Nano S device, using the key indicated by the SLIP48 path above.\n\n" +
-            "Note: A small required fee in BTS will be added to your transaction."
-        ).pack(expand=True, fill="x", padx=10, pady=(4,24))
+            "1. Check sender's account name and SLIP48 path of signing key above.\n" +
+            "2. Set recipient, amount, and asset symbol below.\n" +
+            "3. Click \"Send Transfer\" to sign transaction on Ledger Nano S device\n    and broadcast to network."
+        ).pack(expand=True, fill="x", padx=10, pady=(4,12))
+
+        ##
+        ## Sender Account: (Read-Only)
+        ##
+
+        frameFromWhom = ttk.Frame(self)
+        frameFromWhom.pack(padx=10, pady=5, fill="x")
+
+        ttk.Label(frameFromWhom, text="Send From:", anchor="e", **label_args
+        ).pack(side="left", expand=True, fill="x")
+        self.box_sender_name = ttk.Entry(frameFromWhom, textvariable=self.sender_text_var, justify="center", state="disabled")
+        self.box_sender_name.pack(side="left", padx=10)
 
         ##
         ## Destination Account:
@@ -287,7 +300,7 @@ class TransferOpFrame(ttk.Frame):
         ttk.Label(frameToWhom, text="Send To: (BitShares User Account)", anchor="e", **label_args
         ).pack(side="left", expand=True, fill="x")
         self.recipient_text_var = tk.StringVar(value="")
-        self.to_account_name = ttk.Entry(frameToWhom, textvariable=self.recipient_text_var)
+        self.to_account_name = ttk.Entry(frameToWhom, textvariable=self.recipient_text_var, justify="center")
         self.to_account_name.pack(side="left", padx=10)
         self.to_account_name.bind("<FocusOut>", self.recipient_focus_out)
         self.recipient_text_var.trace("w", self.any_field_on_change)
@@ -312,13 +325,15 @@ class TransferOpFrame(ttk.Frame):
         self.box_asset_to_send.bind("<FocusOut>", self.symbol_focus_out)
         self.asset_text_var.trace("w", self.any_field_on_change)
 
+        ttk.Label(self, text="This transaction will incur a small transaction fee in BTS,\nas required by the network fee schedule.", font="-slant italic", justify="center").pack(pady=6)
+
         ##
         ## The Send Button:
         ##
         self.button_send = ttk.Button(self, text="Send Transfer", state="disabled",
                                      command=lambda: self.button_send_handler()
         )
-        self.button_send.pack(pady=36)
+        self.button_send.pack(pady=24)
 
         ##
         ## Lower Spacer:
@@ -328,7 +343,6 @@ class TransferOpFrame(ttk.Frame):
         lblSpacerActiveBottom.pack(expand=True, fill="y")
 
     def any_field_on_change(self, *args):
-        print("Checking...")
         self.enable_send_if_all_fields_valid()
 
     def recipient_focus_out(self, *args):
