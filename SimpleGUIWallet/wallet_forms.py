@@ -269,12 +269,14 @@ class TransferOpFrame(ttk.Frame):
 
         common_args={}
 
-        ##
-        ## Upper Spacer:
-        ##
-
-        lblSpacerActiveTop = ttk.Label(self, text="", **common_args)
-        lblSpacerActiveTop.pack(expand=True, fill="y")
+        tk.Message(self, width=480, anchor="nw", justify="left",
+                   background = ttk.Style().lookup("TFrame", "background"),
+                   text = "" +
+            "Set sending account name and SLIP48 path of signing key in the panel above.  " +
+            "Specify recipient account, amount, and asset symbol below.  " +
+            "You can check your account balances and history in the panel to the left.\n\n" +
+            "Note: A small required fee in BTS will be added to your transaction."
+        ).pack(expand=True, fill="x", padx=10, pady=(4,24))
 
         ##
         ## Destination Account:
@@ -317,7 +319,7 @@ class TransferOpFrame(ttk.Frame):
         self.button_send = ttk.Button(self, text="Send Transfer",
                                      command=lambda: self.button_send_handler()
         )
-        self.button_send.pack(pady=30)
+        self.button_send.pack(pady=36)
 
         ##
         ## Lower Spacer:
@@ -799,14 +801,23 @@ class AboutFrame(ttk.Frame):
         ## App Version
         ##
 
-        labelAppVersion = ttk.Label(self, text="SimpleGUIWallet, version "+version.VERSION)
-        labelAppVersion.pack(pady=10)
-        labelAppVersion1 = ttk.Label(self, text="A very simple wallet for BitShares.")
-        labelAppVersion1.pack()
-        labelAppVersion2 = ttk.Label(self, text="No keys are stored by this app.")
-        labelAppVersion2.pack()
-        labelAppVersion3 = ttk.Label(self, text="Transactions are signed by hardware wallet.")
-        labelAppVersion3.pack()
+        labelAppVersion = ttk.Label(self, text="SimpleGUIWallet, version "+version.VERSION, font=("fixed", 16),)
+        labelAppVersion.pack(pady=4)
+
+        labelAppDescription = tk.Message(self, width=420, anchor="n", justify="center",
+                                         background = ttk.Style().lookup("TFrame", "background"),
+                                         text = "" +
+            "A very simple wallet for BitShares. No private or public keys are stored by this app. " +
+            "Transactions are sent to Ledger Nano S device for signing, and then broadcast to network.\n\n" +
+            "Specify your own account name above.  View account assets at left.  Use the tabs in this widget " +
+            "for various operations (e.g. Transfer), or to browse public keys managed by your Ledger device.  " +
+            "Your account will need a key from the device listed in its \"authorities\" before you can sign transactions.")
+        labelAppDescription.pack(expand=True, fill="x")
+
+        labelAppTutorial = ttk.Label(self, text="A tutorial is available at https://how.bitshares.works/",
+                                     foreground="blue", font=("fixed","12", "italic"), cursor="hand2")
+        labelAppTutorial.pack(pady=4)
+        labelAppTutorial.bind("<ButtonRelease-1>", self.on_click_tutorial)
 
         ##
         ## Lower Spacer:
@@ -814,3 +825,10 @@ class AboutFrame(ttk.Frame):
 
         lblSpacerActiveBottom = ttk.Label(self, text="")
         lblSpacerActiveBottom.pack(expand=True, fill="y")
+
+    def on_click_tutorial(self, *args):
+        try:
+            webbrowser.open("https://how.bitshares.works/en/master/user_guide/ledger_nano.html")
+        except Exception:
+            pass
+

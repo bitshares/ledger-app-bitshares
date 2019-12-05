@@ -1,17 +1,14 @@
-# Super Simple BitShare GUI Python Wallet - Not going for sophisticated here.
+# Super Simple BitShares GUI Python Wallet - Not going for sophisticated here.
 #
+# Run with:
 #
-# Run with:  (Old stuff from former life as a demo app follow....)
-#
-#   python3 tip-app-01.py --sender=[sender_account_name]
+#   python3 SimpleGUIWallet.py [--sender=<sender_account_name>]
 #
 #   Options:
 #
-#     --sender=[name]      (Default: "ledger-demo")
-#     --node=[api_node]    (Default: "wss://bitshares.openledger.info/ws")
-#     --path=[bip32_path]  (Default: "48'/1'/1'/0'/0'")
-#     --symbol=[asset_sym] (Default: "BTS".  OK to include "bit" in bitASSETS if desired for display)
-#     --amount=[float]     (Default: 2.0) Amount of tip.
+#     --sender=<name>      (Default: "ledger-demo")
+#     --node=<api_node>    (Default: "wss://bitshares.openledger.info/ws")
+#     --path=<bip32_path>  (Default: "48'/1'/1'/0'/0'")
 #
 # Dependencies:
 #
@@ -59,8 +56,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--node', help="BitShares API node to be use.")
 parser.add_argument('--sender', help="BitShares account name from which to send tips.")
 parser.add_argument('--path', help="BIP 32 path to use for signing.")
-parser.add_argument('--symbol', help="Asset to use for tips. Default 'BTS'.")
-parser.add_argument('--amount', type=float, help="Amount of tip. Default 2.0.")
 args = parser.parse_args()
 
 if args.node is None:
@@ -72,21 +67,8 @@ if args.path is None:
 if args.sender is None:
     args.sender = "ledger-demo"
 
-if args.symbol is None:
-    args.symbol = "BTS"
-
-if args.amount is None:
-    args.amount = 2.0
-
 bip32_path = args.path
 default_sender = args.sender
-tip_amount = args.amount
-tip_asset_display_symbol = args.symbol
-tip_asset_symbol = tip_asset_display_symbol.replace("bit","")
-
-if tip_amount > 10.0:
-    tip_amount = 10.0
-    print("Sanity Guard: Tip amount capped at %f. Modify source to override."%tip_amount)
 
 
 ##
@@ -105,11 +87,8 @@ def log_print_startup_message():
 ##
 if __name__ == "__main__":
 
-    bkgnd = "light blue"
-
     # Create a GUI window, then three top-to-bottom subregions as frames:
     gui = Tk()
-    gui.configure(background=bkgnd)
     gui.title("Super-Simple BitShares Wallet for Ledger Nano")
     gui.geometry("800x600")
     gui.minsize(640,480)
