@@ -6,7 +6,7 @@
 #
 #   Options:
 #
-#     --sender=<name>      (Default: "ledger-demo")
+#     --sender=<name>      (Default: None)
 #     --node=<api_node>    (Default: "wss://bitshares.openledger.info/ws")
 #     --path=<bip32_path>  (Default: "48'/1'/1'/0'/0'")
 #
@@ -65,7 +65,7 @@ if args.path is None:
     args.path = "48'/1'/1'/0'/0'"
 
 if args.sender is None:
-    args.sender = "ledger-demo"
+    args.sender = ""
 
 bip32_path = args.path
 default_sender = args.sender
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     paned_middle_bottom.add(frame_bottom)
 
     # Form Variables:
-    var_from_account_name = StringVar(gui, value = default_sender)
+    var_from_account_name = StringVar(gui, value = "")
     var_bip32_path = StringVar(gui, value = bip32_path)
     var_bip32_key = StringVar(gui, value = "")
     var_selected_asset = StringVar(gui, value="BTS")
@@ -276,14 +276,16 @@ if __name__ == "__main__":
     ##
     ## Startup:
     ##
-    Logger.Write("Initializing: Looking for BitShares network...")
-    blockchain = initBlockchainObject(args.node)
-    Logger.Write("Getting account info for '%s'..."%var_from_account_name.get())
-    account_info_refresh()
     Logger.Write("Checking if Nano present and querrying public key...")
     tmp_keys = getPublicKeyListFromNano([var_bip32_path.get()], False)
     if len(tmp_keys) == 1:
         var_bip32_key.set(tmp_keys[0])
+    Logger.Write("Initializing: Looking for BitShares network...")
+    blockchain = initBlockchainObject(args.node)
+    var_from_account_name.set(default_sender.strip().lower())
+    if is_valid_account_name(var_from_account_name.get()):
+        Logger.Write("Getting account info for '%s'..."%var_from_account_name.get())
+        account_info_refresh()
     log_print_startup_message()
     # start the GUI
     gui.mainloop()

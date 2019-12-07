@@ -9,6 +9,23 @@ from bitshares.block import Block, BlockHeader
 from bitsharesbase.operations import getOperationNameForId
 import version as version
 
+def is_valid_account_name(name):
+    # Rules: https://github.com/bitshares/bitshares-core/blob/master/libraries/protocol/account.cpp
+    # Perma: https://github.com/bitshares/bitshares-core/blob/a7f4f071324c81a6033965e79141fffeb143c03f/libraries/protocol/account.cpp#L30
+    # This is not a FULL check, but will return false on blatant offenders.
+    if len(name) < 3:
+        return False
+    if len(name) > 63:
+        return False
+    ok_first = "qwertyuiopasdfghjklzxcvbnm"
+    if not name[0] in ok_first:
+        return False
+    ok = "qwertyuiopasdfghjklzxcvbnm0123456789-."
+    if not all(c in ok for c in name):
+        return False
+    return True
+
+
 class ScrolledTextVarBound(ScrolledText):
     # A scrolled Text widget, but bound to a StringVar just like Entry
     # widgets can do.  By default, Text widgets don't support the
@@ -105,12 +122,13 @@ class WhoAmIFrame(ttk.Frame):
         frame_row_2 = ttk.Frame(self)
         frame_row_2.pack(fill="x")
 
-        lbl_from_account_name = ttk.Label(frame_row_1, text="BitShares User Account:",
-                                         font=("Helvetica", 16), **common_args)
-        lbl_from_account_name.pack(side="left")
+        ttk.Label(frame_row_1, text="BitShares User Account:", font=("Helvetica", 16)
+        ).pack(side="left")
 
         box_from_account_name = ttk.Entry(frame_row_1, width=30, textvariable=self.textvariable)
         box_from_account_name.pack(side="left", padx=10)
+        box_from_account_name.bind("<FocusOut>", self.sender_focus_out)
+        self.textvariable.trace("w", self.sender_field_on_change)
 
         self.button = ttk.Button(frame_row_1, text="Refresh Balances",
                                      command=lambda: self.button_handler())
@@ -128,6 +146,20 @@ class WhoAmIFrame(ttk.Frame):
 
         lbl_bip32_key = ttk.Entry(frame_row_2, width=48, textvariable=self.textvariable_key, state="readonly")
         lbl_bip32_key.pack(side="left")
+
+    def sender_field_on_change(self, *args):
+        if self.sender_is_validatable():
+            self.button.configure(state="normal")
+        else:
+            self.button.configure(state="disabled")
+
+    def sender_is_validatable(self):
+        sender_str = self.textvariable.get().strip().lower()
+        return is_valid_account_name(sender_str)
+
+    def sender_focus_out(self, *args):
+        sender_str = self.textvariable.get().strip().lower()
+        self.textvariable.set(sender_str)
 
     def button_handler(self):
         self.button.configure(state="disabled")
@@ -289,6 +321,7 @@ class TransferOpFrame(ttk.Frame):
         ).pack(side="left", expand=True, fill="x")
         self.box_sender_name = ttk.Entry(frameFromWhom, textvariable=self.sender_text_var, justify="center", state="disabled")
         self.box_sender_name.pack(side="left", padx=10)
+        self.sender_text_var.trace("w", self.any_field_on_change)
 
         ##
         ## Destination Account:
@@ -357,14 +390,13 @@ class TransferOpFrame(ttk.Frame):
         amount_str = self.amount_text_var.get().strip()
         self.amount_text_var.set(amount_str)
 
+    def sender_is_validatable(self):
+        sender_str = self.sender_text_var.get().strip().lower()
+        return is_valid_account_name(sender_str)
+
     def recipient_is_validatable(self):
         recipient_str = self.recipient_text_var.get().strip().lower()
-        if len(recipient_str) == 0:
-            return False
-        ok = "qwertyuiopasdfghjklzxcvbnm0123456789-."
-        if not all(c in ok for c in recipient_str):
-            return False
-        return True
+        return is_valid_account_name(recipient_str)
 
     def symbol_is_validatable(self):
         symbol = self.asset_text_var.get().strip().upper()
@@ -386,9 +418,12 @@ class TransferOpFrame(ttk.Frame):
             return False
 
     def enable_send_if_all_fields_valid(self):
-        if (self.symbol_is_validatable() and
-          self.amount_is_validatable() and
-          self.recipient_is_validatable()):
+        if (
+                self.symbol_is_validatable() and
+                self.amount_is_validatable() and
+                self.sender_is_validatable() and
+                self.recipient_is_validatable()
+        ):
             self.button_send.configure(state="normal")
         else:
             self.button_send.configure(state="disabled")
