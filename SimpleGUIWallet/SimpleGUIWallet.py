@@ -183,12 +183,14 @@ if __name__ == "__main__":
             spending_account = Account(var_from_account_name.get(), blockchain_instance=blockchain)
             balances = spending_account.balances
             history = spending_account.history(limit=40)
+            account_id = spending_account.identifier
         except AccountDoesNotExistsException:
             Logger.Write("ERROR: Specified account does not exist on BitShares network.")
             balances = []
             history = []
+            account_id = ""
         frameAssets.setBalances(balances)
-        frameHistory.setHistory(history, spending_account.identifier)
+        frameHistory.setHistory(history, account_id)
 
     frameWhoAmI = WhoAmIFrame(frame_top, textvariable=var_from_account_name,
                               textvar_bip32_path=var_bip32_path,

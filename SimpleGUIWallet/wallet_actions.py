@@ -230,6 +230,9 @@ def getPublicKeyListFromNano(bip32_paths, confirm_on_device = False):
             dongle.close()
             if e.sw == 0x6e00:
                 Logger.Write("BitShares App not running on Nano.  Please check.")
+            elif e.sw == 0x6985:
+                Logger.Write("Warning! Address not confirmed by user - may not be valid!")
+                raise
             else:
                 Logger.Write("Warning! Address not confirmed by user, or other error.")
             return Addresses

@@ -108,6 +108,7 @@ class WhoAmIFrame(ttk.Frame):
 
     def __init__(self, parent, *args, **kwargs):
 
+        self.parent = parent
         self.button_command = kwargs.pop('command', lambda *args, **kwargs: None)
         self.textvariable = kwargs.pop('textvariable', None)
         self.textvariable_path = kwargs.pop('textvar_bip32_path', None)
@@ -128,24 +129,23 @@ class WhoAmIFrame(ttk.Frame):
         box_from_account_name = ttk.Entry(frame_row_1, width=30, textvariable=self.textvariable)
         box_from_account_name.pack(side="left", padx=10)
         box_from_account_name.bind("<FocusOut>", self.sender_focus_out)
+        box_from_account_name.bind("<Return>", self.sender_focus_out)
         self.textvariable.trace("w", self.sender_field_on_change)
 
-        self.button = ttk.Button(frame_row_1, text="Refresh Balances",
-                                     command=lambda: self.button_handler())
+        self.button = ttk.Button(frame_row_1, text="Refresh Balances", command=lambda: self.button_handler())
         self.button.pack(side="left", padx=5, pady=(0,2))
+        self.btn_copypub = ttk.Button(frame_row_1, text="Copy PubKey", command=lambda: self.btn_copy_handler())
+        self.btn_copypub.pack(side="left", padx=5, pady=(0,2))
 
-        lbl_bip32_path = ttk.Label(frame_row_2, text="SLIP48 Path:",
-                                         font=("Helvetica", 16))
-        lbl_bip32_path.pack(side="left")
-
+        ttk.Label(frame_row_2, text="SLIP48 Path:", font=("Helvetica", 16)).pack(side="left")
         box_bip32_path = ttk.Entry(frame_row_2, width=16, textvariable=self.textvariable_path)
         box_bip32_path.pack(side="left", padx=10)
+        self.textvariable_path.trace("w", self.path_on_change)
 
-        lbl_bip32_key_label = ttk.Label(frame_row_2, text="PubKey: ")
-        lbl_bip32_key_label.pack(side="left")
-
-        lbl_bip32_key = ttk.Entry(frame_row_2, width=48, textvariable=self.textvariable_key, state="readonly")
-        lbl_bip32_key.pack(side="left")
+        ttk.Label(frame_row_2, text="PubKey: ").pack(side="left")
+        box_bip32_key = ttk.Entry(frame_row_2, width=48, textvariable=self.textvariable_key, state="readonly")
+        box_bip32_key.pack(side="left")
+        self.textvariable_key.trace("w", self.pubkey_on_change)
 
     def sender_field_on_change(self, *args):
         if self.sender_is_validatable():
@@ -160,6 +160,26 @@ class WhoAmIFrame(ttk.Frame):
     def sender_focus_out(self, *args):
         sender_str = self.textvariable.get().strip().lower()
         self.textvariable.set(sender_str)
+        if not str(self.button["state"]) == "disabled":
+            self.button_handler()
+
+    def path_on_change(self, *args):
+        self.textvariable_key.set("")
+
+    def pubkey_on_change(self, *args):
+        if len(self.textvariable_key.get())>0:
+            self.btn_copypub.configure(state="normal")
+        else:
+            self.btn_copypub.configure(state="disabled")
+
+    def btn_copy_handler(self):
+        address = self.textvariable_key.get()
+        self.parent.clipboard_clear()
+        self.parent.clipboard_append(address)
+        Logger.Clear()
+        Logger.Write(("Public key %s copied to clipboard.\n" +
+                      "Have you confirmed this key on your hardware device? See Public Keys tab. " +
+                      "Do not add to a live account if you have not confirmed on device.") % address)
 
     def button_handler(self):
         self.button.configure(state="disabled")
@@ -624,10 +644,12 @@ class QueryPublicKeysFrame(ttk.Frame):
         Logger.Write("Confirming public key for path %s..."%path)
         try:
             address = self.lookup_command([path], False)[0]
+            self.textvariable_key.set(address)
             Logger.Write("I retrieve key: %s" % address)
             Logger.Write("Please confirm that this matches the key shown on device...")
             self.lookup_command([path], True)
         except:
+            self.textvariable_key.set("")
             Logger.Write("Could not confirm public key on device. Do not trust unconfirmed keys.")
 
     def on_click_keylistbox(self, listbox, paths, keys):
