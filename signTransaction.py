@@ -126,8 +126,8 @@ with open(args.file) as f:
         offset += len(chunk)
         result = dongle.exchange(apdu)
         print (binascii.hexlify(result).decode())
-        if args.broadcast:
-            tx_sig = blockchain.new_tx(json.loads(str(tx)))
-            tx_sig["signatures"].extend([binascii.hexlify(result).decode()])
-            print (tx_sig)
-            print (blockchain.broadcast(tx=tx_sig))
+    if args.broadcast:
+        tx_sig = blockchain.new_tx(json.loads(str(tx)))
+        tx_sig["signatures"].extend([binascii.hexlify(result).decode()])
+        print (tx_sig)
+        print (blockchain.broadcast(tx=tx_sig))
