@@ -41,6 +41,8 @@ To use the generic wallet via the scripts, refer to `signTransaction.py`, `getPu
 
 GUI wallet front-end support for Ledger Nano S is being developed independently by multiple wallet developers.  This repository contains the back-end app for your Nano that the wallets will connect to via USB.  As such, this repository is intended primarily for developers and wallet integrators.  If you are a regular user, then it is anticipated that by the time the GUI apps are ready, this back-end app will be available for download directly to your device via the Ledger Live app store.  You will not need to get the app from here.
 
+There is however a very rudimentary GUI Wallet that accompanies this repository to enable basic use of the Nano S while awaiting integration into existing BitShares wallets.  It is located in the [SimpleGUIWallet/](/SimpleGUIWallet/) folder and exaplained in the README file there.
+
 A list of supporting GUI apps will be added here when available.
 
 ## Building and installing the app
@@ -49,15 +51,15 @@ If you are installing the app from this repository, you will need a development 
 
 ### Configuring Ledger build environment with Ledger-Vagrant
 
-A ready-to-use build environment hosted in a virtual machine is available via [fix/ledger-vagrant](https://github.com/fix/ledger-vagrant).  To use it, you will need [Vagrant](https://www.vagrantup.com) and [VirtualBox](https://www.virtualbox.org) on your build machine.  Then run the following:
+A ready-to-use build environment hosted in a virtual machine is available via [christophersanborn/ledger-vagrant](https://github.com/christophersanborn/ledger-vagrant).  This pre-configured VM-based environment saves you the trouble of needing to configure the cross-compiling tools for building apps for the Ledger Nano.  To use it, you will need [Vagrant](https://www.vagrantup.com) and [VirtualBox](https://www.virtualbox.org) on your build machine.  Then run the following:
 
 ```
-git clone https://github.com/fix/ledger-vagrant
+git clone https://github.com/christophersanborn/ledger-vagrant
 cd ledger-vagrant
 vagrant up
 ```
 
-This will take a few minutes to install.  For more info on setting up the build environment, refer to [fix/ledger-vagrant](https://github.com/fix/ledger-vagrant).  Once the virtual machine is up and running, you can connect to it with:
+This will take a few minutes to install.  For more info on setting up the build environment, refer to [christophersanborn/ledger-vagrant](https://github.com/christophersanborn/ledger-vagrant).  Once the virtual machine is up and running, you can connect to it with:
 
 ```
 vagrant ssh
@@ -67,7 +69,7 @@ vagrant ssh
 
 [Python-bitshares](https://github.com/bitshares/python-bitshares) is a python library that allows working with BitShares transactions, and is required by the example python scripts provided with this project.  It is not strictly needed to compile and install the device app, but if you wish to use the sample scripts to test the app, you will need python-bitshares.
 
-If not already connected, connect to your virtual mahine with:
+If not already connected, connect to your virtual machine with:
 
 ```
 vagrant ssh
@@ -84,24 +86,6 @@ sudo pip3 install bitshares
 Note that python-bitshares is a Python 3 project, and that it's important to use `pip3` and not `pip` to do the installs.
 
 #### Install additional dependencies
-
----TEMPORARY FIXES---
-
-Some dependencies are broken in their latest versions, as of 2019-06-20.
-
-Fix udev-rules:  We need to pull an earlier version of the udev-rules script.  Run the following inside the VM:
-
-```
-wget -q -O - https://raw.githubusercontent.com/LedgerHQ/udev-rules/20cc1651eb551c4855aaa56628c77eaeb3031c22/add_udev_rules.sh | sudo bash
-```
-
-Pin an older version of 'pillow' (a dependency of `ledgerblue`; version 6.0.0 fails to install, so pin 5.4.1):
-
-```
-sudo pip3 install pillow==5.4.1
-```
-
----END TEMPORARY FIXES---
 
 A few things that we need are missing from the ledger-vagrant pre-configured build environment.  If you intend to use the included python scripts, then also install the following:
 
@@ -120,7 +104,7 @@ With the build environment configured, we can now clone, compile, and load ledge
 
 ```
 cd apps/
-git clone https://github.com/christophersanborn/ledger-app-bitshares
+git clone https://github.com/bitshares/ledger-app-bitshares
 
 ```
 
