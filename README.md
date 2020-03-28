@@ -47,11 +47,13 @@ A list of supporting GUI apps will be added here when available.
 
 ## Building and installing the app
 
-If you are installing the app from this repository, you will need a development environment to support compiling the app and loading onto your Ledger Nano S device.
+If you are installing the app from this repository (not recommended for regular users, who should instead install the app on their device through [LedgerLive](https://www.ledger.com/ledger-live)), you will need a development environment that supports cross-compiling to the embedded ARM architecture of the Nano device. This environment can be configured in a virtual machine created with Vagrant, as described below.
 
-### Configuring Ledger build environment with Ledger-Vagrant
+Note that the following build environment assumes Firmware version 1.6.x is installed on you Ledger Nano.
 
-A ready-to-use build environment hosted in a virtual machine is available via [christophersanborn/ledger-vagrant](https://github.com/christophersanborn/ledger-vagrant).  This pre-configured VM-based environment saves you the trouble of needing to configure the cross-compiling tools for building apps for the Ledger Nano.  To use it, you will need [Vagrant](https://www.vagrantup.com) and [VirtualBox](https://www.virtualbox.org) on your build machine.  Then run the following:
+#### Configuring Ledger build environment with Ledger-Vagrant
+
+A ready-to-use build environment configured in a virtual machine is available via [christophersanborn/ledger-vagrant](https://github.com/christophersanborn/ledger-vagrant).  This pre-configured VM-based environment saves you the trouble of needing to configure the cross-compiling tools for building apps for the Ledger Nano.  To use it, you will need [Vagrant](https://www.vagrantup.com) and [VirtualBox](https://www.virtualbox.org) installed on your build machine.  Then run the following:
 
 ```
 git clone https://github.com/christophersanborn/ledger-vagrant
@@ -59,44 +61,13 @@ cd ledger-vagrant
 vagrant up
 ```
 
-This will take a few minutes to install.  For more info on setting up the build environment, refer to [christophersanborn/ledger-vagrant](https://github.com/christophersanborn/ledger-vagrant).  Once the virtual machine is up and running, you can connect to it with:
+This creates the virtual machine, and will take a few minutes to complete.  For more info on setting up the build environment, refer to [christophersanborn/ledger-vagrant](https://github.com/christophersanborn/ledger-vagrant).  Once the virtual machine is up and running, you can connect to it with:
 
 ```
 vagrant ssh
 ```
 
-#### Install python-bitshares
-
-[Python-bitshares](https://github.com/bitshares/python-bitshares) is a python library that allows working with BitShares transactions, and is required by the example python scripts provided with this project.  It is not strictly needed to compile and install the device app, but if you wish to use the sample scripts to test the app, you will need python-bitshares.
-
-If not already connected, connect to your virtual machine with:
-
-```
-vagrant ssh
-```
-
-Then install required dependencies and the library with:
-
-```
-sudo apt-get install libffi-dev libssl-dev python-dev python3-dev python3-pip
-sudo pip3 install --upgrade setuptools
-sudo pip3 install bitshares
-```
-
-Note that python-bitshares is a Python 3 project, and that it's important to use `pip3` and not `pip` to do the installs.
-
-#### Install additional dependencies
-
-A few things that we need are missing from the ledger-vagrant pre-configured build environment.  If you intend to use the included python scripts, then also install the following:
-
-```
-sudo pip3 install base58 asn1 enum34
-sudo pip3 install ledgerblue
-```
-
-Note that installing `ledgerblue` may seem redundant since ledger-vagrant installs it, but note that we are installing the Python 3 version of it here, and our scripts won't work without it.  (Ledger-vagrant only installs the Python 2.7 version.)
-
-### Compile and load the Ledger app
+#### Compile and load the Ledger app
 
 With the build environment configured, we can now clone, compile, and load ledger-app-bitshares.  Note that when you installed ledger-vagrant, it created an `apps/` directory that is accessible in both the host filesystem and the virtual machine. 
 
@@ -120,11 +91,11 @@ make
   * Install the app on your Ledger with: `make load`
   * Remove the app from the Ledger with: `make delete`
 
-### Testing the app
+#### Testing the app
 
 Once loaded on your device, the app shows up in the Nano's dashboard as "BitShares" with the familiar icon.  Select it and start the app by pressing both buttons on the Nano simultaneously.
 
-#### BitShares wallet addresses:
+##### BitShares wallet addresses:
 
 You can retrieve a BitShares public key managed by the Nano with `getPublicKey.py`.  Examples:
 
@@ -141,7 +112,7 @@ You can see a range of addresses and an illustration of the SLIP-0048 scheme wit
 python3 testDerivationPathGeneration.py
 ```
 
-#### Signing transactions:
+##### Signing transactions:
 
 Some example transactions are included as .json files in the `example-tx` directory.  We can ask the BitShares app on the Nano to sign one of these transactions with the `signTransaction.py` python script.  Examples:
 
@@ -158,7 +129,7 @@ One particularly interesting example transaction is `tx_trade_and_transfer.json`
 python3 signTransaction.py --file=example-tx/tx_trade_and_transfer.json
 ```
 
-#### Developer notes:
+##### Developer notes:
 
 * The python scripts will show a hex representation of the bytes exchanged with the device in the terminal output.  This will be useful in confirming your understanding of the communication protocol with the device, and help with GUI wallet integration efforts.
 
