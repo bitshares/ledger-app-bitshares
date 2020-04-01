@@ -32,11 +32,16 @@ function refresh_dependencies() {
     pip3 install -r requirements.txt > /dev/null
 }
 
+# Check that we're in the right location and dependencies are installed:
 do_checks
 if [ ! -d env ]; then
     install_env_and_deps
 fi
 source env/bin/activate
 refresh_dependencies  # (In case requirements.txt changes. Fast if no update needed.)
+
+# Start the Wallet:
 echo "Starting SimpleGUIWallet..."
-python3 SimpleGUIWallet.py
+# Note, if you want the wallet to "remember" your user id, replace next line with:
+# python3 SimpleGUIWallet.py --user your-user-name "$@"
+python3 SimpleGUIWallet.py "$@"
