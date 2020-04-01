@@ -62,13 +62,13 @@ def encode(chain_id, tx):
     return encoder.output()
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--chain_id', help="Blockchain chain ID")
-parser.add_argument('--path', help="BIP 32 path to retrieve")
-parser.add_argument('--file', help="Transaction in JSON format")
-parser.add_argument('--broadcast', help="Broadcast the transaction", action='store_true')
-parser.add_argument('--node', help="Node to be used to broadcast")
-parser.add_argument('--tapos', help="Enable TaPOS", action='store_true')
-parser.add_argument('--expire', help="Sets the transaction expiration to [minutes] in the future")
+parser.add_argument('--chain_id', help="use a custom Chain ID")
+parser.add_argument('--path', help="SLIP-0048 path to use for signing")
+parser.add_argument('--file', help="read transaction from JSON-formatted FILE")
+parser.add_argument('--broadcast', help="broadcast transaction to network after signing", action='store_true')
+parser.add_argument('--node', help="set node to be used for broadcast")
+parser.add_argument('--tapos', help="get recent TaPOS block from network", action='store_true')
+parser.add_argument('--expire', help="set the transaction expiration to [minutes] in the future")
 args = parser.parse_args()
 
 if args.path is None:
