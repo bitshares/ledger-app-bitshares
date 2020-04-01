@@ -53,9 +53,9 @@ from logger import Logger
 ## Args and defaults:
 ##
 parser = argparse.ArgumentParser()
-parser.add_argument('--node', help="BitShares API node to be use.")
-parser.add_argument('--sender', help="BitShares account name from which to send tips.")
-parser.add_argument('--path', help="BIP 32 path to use for signing.")
+parser.add_argument('--node', help="specify a BitShares API node to use")
+parser.add_argument('--user', help="set BitShares user account name")
+parser.add_argument('--path', help="SLIP-0048 path to use for signing")
 args = parser.parse_args()
 
 if args.node is None:
@@ -64,11 +64,11 @@ if args.node is None:
 if args.path is None:
     args.path = "48'/1'/1'/0'/0'"
 
-if args.sender is None:
-    args.sender = ""
+if args.user is None:
+    args.user = ""
 
 bip32_path = args.path
-default_sender = args.sender
+default_sender = args.user
 
 
 ##
