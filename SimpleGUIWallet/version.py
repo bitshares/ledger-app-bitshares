@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION="0.0.0"
+VERSION="0.0.1-rc"
 
 BUNDLE_NAME="SimpleGUIWallet"
 UNIX_NAME="simpleguiwallet"
