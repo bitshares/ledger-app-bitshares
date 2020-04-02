@@ -1,62 +1,70 @@
+"""
+Various window tabs, panels and input forms of the SimpleGUIWallet
+"""
+
+##
+## Module imports:
+##
+
+# Python Standard Modules:
+
+import webbrowser
 import binascii
+import string
 import json
+import ttk
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
-import ttk
-import webbrowser
-from logger import Logger
+
+# BitShares modules:
+
 from bitshares.block import Block, BlockHeader
 from bitsharesbase.operations import getOperationNameForId
+
+# Third-party:
+
 import version as version
 
-def is_valid_account_name(name):
-    # Rules: https://github.com/bitshares/bitshares-core/blob/master/libraries/protocol/account.cpp
-    # Perma: https://github.com/bitshares/bitshares-core/blob/a7f4f071324c81a6033965e79141fffeb143c03f/libraries/protocol/account.cpp#L30
-    # This is not a FULL check, but will return false on blatant offenders.
-    if len(name) < 3:
-        return False
-    if len(name) > 63:
-        return False
-    ok_first = "qwertyuiopasdfghjklzxcvbnm"
-    if not name[0] in ok_first:
-        return False
-    ok = "qwertyuiopasdfghjklzxcvbnm0123456789-."
-    if not all(c in ok for c in name):
-        return False
-    return True
+# Local modules:
 
+from logger import Logger
+from wallet_actions import is_valid_account_name
+
+
+##
+## Classes:
+##
 
 class ScrolledTextVarBound(ScrolledText):
-    # A scrolled Text widget, but bound to a StringVar just like Entry
-    # widgets can do.  By default, Text widgets don't support the
-    # `textvariable` config option (like Entry widgets do).  So we add
-    # that functionality in here, including setting up necessary tracing
-    # and callbacks so that the two entities track each other.
-    #
+    """
+    A scrolled Text widget, but bound to a StringVar just like Entry
+    widgets can do.  By default, Text widgets don't support the
+    `textvariable` config option (like Entry widgets do).  So we add
+    that functionality in here, including setting up necessary tracing
+    and callbacks so that the two entities track each other.
+    """
+
     def __init__(self, parent, *args, **kwargs):
-
-        self.textvariable = kwargs.pop('textvariable', None)  # Remote tk.StringVar
-
+        self.textvariable = kwargs.pop("textvariable", None)  # Remote tk.StringVar
         ScrolledText.__init__(self, parent, *args, **kwargs)
-
         # Generally, we respond when remote is updated.  Unless WE are
         # the one who updated it...
         self.watch_remote = True
         self.watch_local = True
-
         # Notice when remote variable changes:
         self.textvariable.trace("w", self.remote_change_callback)
-
         # Notice when local content changes:
         self.bind("<<Modified>>", self.on_text_modified)
 
-    def on_text_modified(self, event, *args):
-        # We "notice" text changes by catching <<Modified>> event, which is a slight
-        # abuse, as this is meant as event when modified from a saved state, not *each*
-        # and every modification.  Thus we have to set our modified flag back to False
-        # every time we catch.  And something is causeing this event to "bounce" - it
-        # gets called twice every time we actually modify, which also double-calls
-        # local_change_callback... for the moment this seems harmless though.
+    def on_text_modified(self, *args):
+        """
+        We "notice" text changes by catching <<Modified>> event, which is a slight
+        abuse, as this is meant as event when modified from a saved state, not *each*
+        and every modification.  Thus we have to set our modified flag back to False
+        every time we catch.  And something is causeing this event to "bounce" - it
+        gets called twice every time we actually modify, which also double-calls
+        local_change_callback... for the moment this seems harmless though.
+        """
         self.edit_modified(False)
         self.local_change_callback()
 
@@ -77,27 +85,25 @@ class ScrolledTextVarBound(ScrolledText):
 
 
 class ScrolledListbox(tk.Listbox):
+    """
+    Reusable list box with scrolling ability along two axes
+    """
 
     def __init__(self, parent, *args, **kwargs):
-
-        frameargs = {"borderwidth": kwargs.pop('borderwidth', 2),
-                     "relief": kwargs.pop('relief', "ridge")}
-
+        frameargs = {
+            "borderwidth": kwargs.pop("borderwidth", 2),
+            "relief": kwargs.pop("relief", "ridge"),
+        }
         self.frame = ttk.Frame(parent, **frameargs)
-
         tk.Listbox.__init__(self, self.frame, *args, relief="sunken", **kwargs)
-
-        self.vScroll = tk.Scrollbar(self.frame, orient="vertical")
-        self.vScroll.pack(side="right", expand=False, fill="y")
-
-        self.config(yscrollcommand=self.vScroll.set)
-        self.vScroll.config(command=self.yview)
-
-        self.hScroll = tk.Scrollbar(self.frame, orient="horizontal")
-        self.hScroll.pack(side="bottom", expand=False, fill="x")
-
-        self.config(xscrollcommand=self.hScroll.set)
-        self.hScroll.config(command=self.xview)
+        self.v_scroll = tk.Scrollbar(self.frame, orient="vertical")
+        self.v_scroll.pack(side="right", expand=False, fill="y")
+        self.config(yscrollcommand=self.v_scroll.set)
+        self.v_scroll.config(command=self.yview)
+        self.h_scroll = tk.Scrollbar(self.frame, orient="horizontal")
+        self.h_scroll.pack(side="bottom", expand=False, fill="x")
+        self.config(xscrollcommand=self.h_scroll.set)
+        self.h_scroll.config(command=self.xview)
 
     def pack(self, *args, **kwargs):
         self.frame.pack(*args, **kwargs)
@@ -105,6 +111,9 @@ class ScrolledListbox(tk.Listbox):
 
 
 class WhoAmIFrame(ttk.Frame):
+    """
+    Header: Enter Account Name and Slip Path.  Refresh Balances and Copy Public Key.
+    """
 
     def __init__(self, parent, *args, **kwargs):
 

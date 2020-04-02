@@ -250,3 +250,28 @@ def getPublicKeyListFromNano(bip32_paths, confirm_on_device = False):
 
     dongle.close()
     return Addresses
+
+
+def is_valid_account_name(name):
+    """
+    Non-exhaustive check on account name validity.
+
+    Will not false-fail a valid name, but might false-pass an invalid name if
+    it doesn't follow some of the nitty-gritty rules. This is tolerable.
+
+    Full rule set here:
+
+    https://github.com/bitshares/bitshares-core/blob/master/libraries/protocol/account.cpp, or here (permalink):
+    https://github.com/bitshares/bitshares-core/blob/a7f4f071324c81a6033965e79141fffeb143c03f/libraries/protocol/account.cpp#L30
+    """
+    if len(name) < 3:
+        return False
+    if len(name) > 63:
+        return False
+    ok_first = "qwertyuiopasdfghjklzxcvbnm"
+    if not name[0] in ok_first:
+        return False
+    ok = "qwertyuiopasdfghjklzxcvbnm0123456789-."
+    if not all(c in ok for c in name):
+        return False
+    return True
