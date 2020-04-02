@@ -168,6 +168,31 @@ bool getBtsAssetDescription(const bts_asset_type_t asset, bts_asset_description_
         strcpy(desc->symbol, "ESCODEX.BTC");
         break;
 
+    case 5641:
+        desc->precision = 4;
+        strcpy(desc->symbol, "HONEST.CNY");
+        break;
+
+    case 5649:
+        desc->precision = 4;
+        strcpy(desc->symbol, "HONEST.USD");
+        break;
+
+    case 5650:
+        desc->precision = 8;
+        strcpy(desc->symbol, "HONEST.BTC");
+        break;
+
+    case 5651:
+        desc->precision = 8;
+        strcpy(desc->symbol, "HONEST.XAU");
+        break;
+
+    case 5652:
+        desc->precision = 8;
+        strcpy(desc->symbol, "HONEST.XAG");
+        break;
+
     default:
         known = false;
         desc->precision = 0;
