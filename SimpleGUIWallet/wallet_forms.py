@@ -18,8 +18,7 @@ from tkinter.scrolledtext import ScrolledText
 
 # BitShares modules:
 
-from bitshares.block import Block, BlockHeader
-from bitsharesbase.operations import getOperationNameForId
+from bitshares.block import Block
 
 # Third-party:
 
@@ -29,6 +28,7 @@ import version as version
 
 from logger import Logger
 from wallet_actions import is_valid_account_name
+from wallet_actions import pprintHistoryItem
 
 
 ##
@@ -274,28 +274,12 @@ class HistoryListFrame(ttk.Frame):
             self.HistItems.append(item)
         self.refresh()
 
-    def pprintHistoryItem(self, item, resolve_time=True):
-        block_time = "..."
-        if resolve_time:
-            block = BlockHeader(item["block_num"]) # This can be slow, waits on API call
-            block_time = block.time()
-        if item['op'][0] == 0:
-            if (item['op'][1]['to']==self.accountId) and (item['op'][1]['from']!=self.accountId):
-                op_desc = "Receive"
-            elif (item['op'][1]['to']!=self.accountId) and (item['op'][1]['from']==self.accountId):
-                op_desc = "Send"
-            else:
-                op_desc = "Transfer"
-        else:
-            op_desc = "%s"%getOperationNameForId(item['op'][0])
-        return "%s - %s (Block: %d)" % (op_desc, block_time, item['block_num'])
-
     def refresh(self):
         self.lst_assets.delete(0, tk.END)
         count = 0
         for item in self.HistItems:
             resolve_time = (count < 3) # Limit how many we get full date for (API call.. slow)
-            self.lst_assets.insert(tk.END, self.pprintHistoryItem(item, resolve_time=resolve_time))
+            self.lst_assets.insert(tk.END, pprintHistoryItem(item, self.accountId, resolve_time=resolve_time))
             count+=1
 
     def on_click_rawtx(self, *args):
@@ -936,6 +920,7 @@ class AboutFrame(ttk.Frame):
 
     def __init__(self, parent, *args, **kwargs):
 
+        self.txtvar_api_node = kwargs.pop('txtvar_api_node', None)
         ttk.Frame.__init__(self, parent, *args, **kwargs)
 
         ##
@@ -949,8 +934,16 @@ class AboutFrame(ttk.Frame):
         ## App Version
         ##
 
-        labelAppVersion = ttk.Label(self, text="SimpleGUIWallet, version "+version.VERSION, font=("fixed", 16),)
+        labelAppVersion = ttk.Label(self, text="SimpleGUIWallet, version "+version.VERSION, font=("fixed", 18),)
         labelAppVersion.pack(pady=4)
+
+        ## Node URL:
+
+        self.node_url_msg = tk.StringVar()
+        self.node_url_msg.set("No API node connection")
+        ttk.Label(self, textvariable=self.node_url_msg).pack(pady=6)
+
+        ## App Description:
 
         labelAppDescription = tk.Message(self, width=420, anchor="n", justify="center",
                                          background = ttk.Style().lookup("TFrame", "background"),
@@ -962,17 +955,25 @@ class AboutFrame(ttk.Frame):
             "Your account will need a key from the device listed in its \"authorities\" before you can sign transactions.")
         labelAppDescription.pack(expand=True, fill="x")
 
+        ## Tutorial Link:
+
         labelAppTutorial = ttk.Label(self, text="A tutorial is available at https://how.bitshares.works/",
-                                     foreground="blue", font=("fixed","12", "italic"), cursor="hand2")
+                                     foreground="blue", font=("fixed","16", "italic"), cursor="hand2")
         labelAppTutorial.pack(pady=4)
         labelAppTutorial.bind("<ButtonRelease-1>", self.on_click_tutorial)
 
-        ##
         ## Lower Spacer:
-        ##
 
         lblSpacerActiveBottom = ttk.Label(self, text="")
         lblSpacerActiveBottom.pack(expand=True, fill="y")
+
+        ## Behaviors:
+
+        self.bind("<FocusIn>", self.on_tab_focus)
+
+
+    def on_tab_focus(self, *args):
+        self.node_url_msg.set("Using API Node:  " + self.txtvar_api_node.get())
 
     def on_click_tutorial(self, *args):
         try:

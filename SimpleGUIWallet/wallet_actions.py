@@ -18,6 +18,11 @@ import struct
 import json
 from logger import Logger
 
+# BitShares modules:
+
+from bitshares.block import Block, BlockHeader
+from bitsharesbase.operations import getOperationNameForId
+
 
 def initBlockchainObject(api_node):
     global blockchain
@@ -250,6 +255,31 @@ def getPublicKeyListFromNano(bip32_paths, confirm_on_device = False):
 
     dongle.close()
     return Addresses
+
+
+def pprintHistoryItem(item, selfId, resolve_time=True):
+    """
+    Returns a "pretty-printed" string identifying a history item by operation
+    name, along with block number in which is occurs and, optionally, the block
+    time.  Arg `selfId` is an account Id, and Transfer operations are rewritten
+    as "receive" if selfId is the recipient or "send" if selfId is the sender,
+    else the operation name is left as "transfer".
+    """
+    block_time = "..."
+    if resolve_time:
+        # Resolving time can be slow, as it waits on API call to retireve block header.
+        block = BlockHeader(item["block_num"], blockchain_instance=blockchain)
+        block_time = block.time()
+    if item['op'][0] == 0:
+        if (item['op'][1]['to']==selfId) and (item['op'][1]['from']!=selfId):
+            op_desc = "Receive"
+        elif (item['op'][1]['to']!=selfId) and (item['op'][1]['from']==selfId):
+            op_desc = "Send"
+        else:
+            op_desc = "Transfer"
+    else:
+        op_desc = "%s"%getOperationNameForId(item['op'][0])
+    return "%s - %s (Block: %d)" % (op_desc, block_time, item['block_num'])
 
 
 def is_valid_account_name(name):

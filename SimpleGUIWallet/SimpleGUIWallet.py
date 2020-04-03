@@ -123,6 +123,7 @@ if __name__ == "__main__":
     paned_middle_bottom.add(frame_bottom)
 
     # Form Variables:
+    var_api_node_url = StringVar(gui, value = "(not connected)")
     var_from_account_name = StringVar(gui, value = "")
     var_bip32_path = StringVar(gui, value = bip32_path)
     var_bip32_key = StringVar(gui, value = "")
@@ -255,7 +256,7 @@ if __name__ == "__main__":
     ## About Tab:
     ##
 
-    form_about = AboutFrame(tabbed_Active)
+    form_about = AboutFrame(tabbed_Active, txtvar_api_node=var_api_node_url)
     form_about.pack()
 
     ## Finalize tabbed container:
@@ -283,7 +284,9 @@ if __name__ == "__main__":
     if len(tmp_keys) == 1:
         var_bip32_key.set(tmp_keys[0])
     Logger.Write("Initializing: Looking for BitShares network...")
+    global blockchain
     blockchain = initBlockchainObject(args.node)
+    var_api_node_url.set(blockchain.rpc.connection.url)
     var_from_account_name.set(default_sender.strip().lower())
     if is_valid_account_name(var_from_account_name.get()):
         Logger.Write("Getting account info for '%s'..."%var_from_account_name.get())
