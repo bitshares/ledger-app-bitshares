@@ -954,7 +954,7 @@ class AboutFrame(ttk.Frame):
         ## Tutorial Link:
 
         labelAppTutorial = ttk.Label(self, text="A tutorial is available at https://how.bitshares.works/",
-                                     foreground="blue", font=("fixed","16", "italic"), cursor="hand2")
+                                     foreground="blue", font=("fixed","14", "italic"), cursor="hand2")
         labelAppTutorial.pack(pady=4)
         labelAppTutorial.bind("<ButtonRelease-1>", self.on_click_tutorial)
 
