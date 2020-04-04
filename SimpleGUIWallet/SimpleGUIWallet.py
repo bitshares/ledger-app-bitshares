@@ -33,18 +33,9 @@ import struct
 import argparse
 from tkinter import *
 import ttk
-from bitshares import BitShares
 from bitsharesbase import operations
-from bitsharesbase.signedtransactions import Signed_Transaction
 from bitshares.account import Account
-from bitshares.amount import Amount
-from bitshares.asset import Asset
-from bitshares.memo import Memo
-from asn1 import Encoder, Numbers
 from graphenecommon.exceptions import AccountDoesNotExistsException
-from graphenecommon.exceptions import AssetDoesNotExistsException
-from grapheneapi.exceptions import RPCError
-from grapheneapi.exceptions import NumRetriesReached
 from wallet_forms import *
 from wallet_actions import *
 from logger import Logger

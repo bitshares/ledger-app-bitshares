@@ -16,10 +16,6 @@ import ttk
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 
-# BitShares modules:
-
-from bitshares.block import Block
-
 # Third-party:
 
 import version as version
@@ -29,6 +25,7 @@ import version as version
 from logger import Logger
 from wallet_actions import is_valid_account_name
 from wallet_actions import pprintHistoryItem
+from wallet_actions import getTransactionFromHistoryItem
 
 
 ##
@@ -287,8 +284,7 @@ class HistoryListFrame(ttk.Frame):
         Logger.Clear()
         Logger.Write("Retrieving transaction from block %d..."%self.HistItems[idx]["block_num"])
         try:
-            block=Block(self.HistItems[idx]["block_num"])
-            trx=block.get('transactions')[self.HistItems[idx]["trx_in_block"]]
+            trx = getTransactionFromHistoryItem(self.HistItems[idx])
             self.tx_json_tkvar.set(json.dumps(trx))
             Logger.Write("Transaction JSON is in 'Raw Transactions' tab.")
         except Exception as e:

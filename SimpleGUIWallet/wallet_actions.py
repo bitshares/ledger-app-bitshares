@@ -257,6 +257,12 @@ def getPublicKeyListFromNano(bip32_paths, confirm_on_device = False):
     return Addresses
 
 
+def getTransactionFromHistoryItem(hist_item):
+    block = Block(hist_item["block_num"], blockchain_instance=blockchain)
+    trx = block.get("transactions")[hist_item["trx_in_block"]]
+    return trx
+
+
 def pprintHistoryItem(item, selfId, resolve_time=True):
     """
     Returns a "pretty-printed" string identifying a history item by operation
