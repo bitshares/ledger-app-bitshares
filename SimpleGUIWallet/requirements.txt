@@ -30,4 +30,4 @@ scrypt==0.8.13
 six==1.14.0
 urllib3==1.25.8
 websocket-client==0.56.0
-websockets==8.0.2
+websockets==9.1
