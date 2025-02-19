@@ -953,7 +953,7 @@ class AboutFrame(ttk.Frame):
 
         ## Tutorial Link:
 
-        labelAppTutorial = ttk.Label(self, text="A tutorial is available at https://how.bitshares.works/",
+        labelAppTutorial = ttk.Label(self, text="A tutorial is available at https://docs.bitshares.eu/",
                                      foreground="blue", font=("fixed","14", "italic"), cursor="hand2")
         labelAppTutorial.pack(pady=4)
         labelAppTutorial.bind("<ButtonRelease-1>", self.on_click_tutorial)
@@ -973,7 +973,7 @@ class AboutFrame(ttk.Frame):
 
     def on_click_tutorial(self, *args):
         try:
-            webbrowser.open("https://how.bitshares.works/en/master/user_guide/ledger_nano.html")
+            webbrowser.open("https://docs.bitshares.eu/en/master/user_guide/ledger_nano.html")
         except Exception:
             pass
 
