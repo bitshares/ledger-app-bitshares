@@ -94,7 +94,7 @@ Note: You do not need to retrieve keys from the Nano on a routine basis.  All yo
 
 _A tutorial for how to set up a BitShares account to be controlled by your Ledger Nano can be found here:_
 
-* **[Securing BitShares with Ledger Nano (how.bitshares.works)](https://how.bitshares.works/en/master/user_guide/ledger_nano.html)**
+* **[Securing BitShares with Ledger Nano (docs.bitshares.eu)](https://docs.bitshares.eu/en/master/user_guide/ledger_nano.html)**
 
 **Important:** before copying a key from your Nano device to assign to your BitShares Account, be sure to click the "Confirm Address" button on the Public Keys tab. Doing so will allow you to view the key on your Nano's screen to ensure that the key on the device matches the key as reported by _SimpleGUIWallet_.
 
